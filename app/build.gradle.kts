@@ -56,12 +56,18 @@ dependencies {
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
+    implementation(libs.hilt.navigation.compose)
 
 
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging.interceptor)
+
+    implementation(libs.datastore.preferences)
+    implementation(libs.datastore)
+
+    implementation(libs.navigation.compose)
 
 
     testImplementation(libs.junit)
