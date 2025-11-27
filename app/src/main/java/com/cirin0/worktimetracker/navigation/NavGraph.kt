@@ -7,6 +7,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.cirin0.worktimetracker.features.auth.presentation.login.LoginScreen
+import com.cirin0.worktimetracker.features.auth.presentation.register.RegisterScreen
 import com.cirin0.worktimetracker.features.home.MainScreen
 
 @Composable
@@ -32,7 +33,16 @@ fun NavGraph(
                 }
             )
         }
-        composable(Screen.Register.route) {}
+        composable(Screen.Register.route) {
+            RegisterScreen(
+                onNavigateToLogin = {
+                    navController.navigate(Screen.Login.route)
+                },
+                onRegisterSuccess = {
+                    navController.popBackStack()
+                }
+            )
+        }
         composable(Screen.Main.route) {
             MainScreen()
         }
