@@ -82,4 +82,11 @@ class LoginViewModel @Inject constructor(
 
         return isValid
     }
+
+    fun logout() {
+        viewModelScope.launch {
+            authRepository.logout()
+            _state.update { it.copy(isLoggedIn = false) }
+        }
+    }
 }

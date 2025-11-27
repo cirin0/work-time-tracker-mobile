@@ -26,7 +26,7 @@ annotation class RemoteUrl
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
     private const val LOCAL_URL = "http://10.0.2.2:8000/api/"
-    private const val REMOTE_URL = "http://localhost:8000/api/"
+    private const val REMOTE_URL = "http://192.168.0.52:8000/api/"
 
     @LocalUrl
     @Provides
@@ -76,7 +76,7 @@ object NetworkModule {
     fun provideRetrofit(
         okHttpClient: OkHttpClient,
         gsonConverterFactory: GsonConverterFactory,
-        @LocalUrl baseUrl: String
+        @RemoteUrl baseUrl: String
     ): Retrofit {
         return Retrofit.Builder()
             .baseUrl(baseUrl)
