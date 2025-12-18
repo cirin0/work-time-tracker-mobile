@@ -25,8 +25,8 @@ annotation class RemoteUrl
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
-    private const val LOCAL_URL = "http://10.0.2.2:8000/api/"
-    private const val REMOTE_URL = "http://192.168.0.52:8000/api/"
+    private const val LOCAL_URL = "http://192.168.0.52:8000/api/"
+    private const val REMOTE_URL = "https://worktimetrack.dev/api/"
 
     @LocalUrl
     @Provides

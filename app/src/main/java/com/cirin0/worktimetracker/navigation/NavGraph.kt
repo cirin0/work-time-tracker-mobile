@@ -22,7 +22,11 @@ fun NavGraph(
         composable(Screen.Login.route) {
             LoginScreen(
                 onNavigateToRegister = {
-                    navController.navigate(Screen.Register.route)
+                    navController.navigate(Screen.Register.route) {
+                        popUpTo(Screen.Login.route) {
+                            inclusive = false
+                        }
+                    }
                 },
                 onLoginSuccess = {
                     navController.navigate(Screen.Main.route) {
@@ -36,7 +40,11 @@ fun NavGraph(
         composable(Screen.Register.route) {
             RegisterScreen(
                 onNavigateToLogin = {
-                    navController.navigate(Screen.Login.route)
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Register.route) {
+                            inclusive = false
+                        }
+                    }
                 },
                 onRegisterSuccess = {
                     navController.popBackStack()
