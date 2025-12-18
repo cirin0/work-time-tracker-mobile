@@ -19,15 +19,39 @@ class RegisterViewModel @Inject constructor(
     val state = _state.asStateFlow()
 
     fun onNameChange(name: String) {
-        _state.update { it.copy(name = name, nameError = null, error = null) }
+        _state.update { 
+            val newState = it.copy(
+                name = name, 
+                nameError = null, 
+                error = null,
+                hasInteractedWithName = true
+            )
+            newState.copy(nameError = validateName(newState.name, newState.hasInteractedWithName))
+        }
     }
 
     fun onEmailChange(email: String) {
-        _state.update { it.copy(email = email, emailError = null, error = null) }
+        _state.update { 
+            val newState = it.copy(
+                email = email, 
+                emailError = null, 
+                error = null,
+                hasInteractedWithEmail = true
+            )
+            newState.copy(emailError = validateEmail(newState.email, newState.hasInteractedWithEmail))
+        }
     }
 
     fun onPasswordChange(password: String) {
-        _state.update { it.copy(password = password, passwordError = null, error = null) }
+        _state.update { 
+            val newState = it.copy(
+                password = password, 
+                passwordError = null, 
+                error = null,
+                hasInteractedWithPassword = true
+            )
+            newState.copy(passwordError = validatePassword(newState.password, newState.hasInteractedWithPassword))
+        }
     }
 
     fun register() {
@@ -66,32 +90,43 @@ class RegisterViewModel @Inject constructor(
     }
 
     private fun validateInput(): Boolean {
+        val currentState = _state.value
         var isValid = true
 
-        if (_state.value.name.isBlank()) {
-            _state.update { it.copy(nameError = "Name is required") }
-            isValid = false
-        } else if (_state.value.name.length < 3) {
-            _state.update { it.copy(nameError = "Name must be at least 3 characters") }
-            isValid = false
+        val nameError = validateName(currentState.name, true)
+        val emailError = validateEmail(currentState.email, true)
+        val passwordError = validatePassword(currentState.password, true)
+
+        _state.update { 
+            it.copy(
+                nameError = nameError,
+                emailError = emailError,
+                passwordError = passwordError
+            )
         }
 
-        if (_state.value.email.isBlank()) {
-            _state.update { it.copy(emailError = "Email is required") }
-            isValid = false
-        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(_state.value.email).matches()) {
-            _state.update { it.copy(emailError = "Invalid email format") }
-            isValid = false
-        }
-
-        if (_state.value.password.isBlank()) {
-            _state.update { it.copy(passwordError = "Password is required") }
-            isValid = false
-        } else if (_state.value.password.length < 6) {
-            _state.update { it.copy(passwordError = "Password must be at least 6 characters") }
-            isValid = false
-        }
-
+        isValid = nameError == null && emailError == null && passwordError == null
         return isValid
+    }
+
+    private fun validateName(name: String, hasInteracted: Boolean): String? {
+        if (!hasInteracted && name.isBlank()) return null
+        if (name.isBlank()) return "Name is required"
+        if (name.length < 3) return "Name must be at least 3 characters"
+        return null
+    }
+
+    private fun validateEmail(email: String, hasInteracted: Boolean): String? {
+        if (!hasInteracted && email.isBlank()) return null
+        if (email.isBlank()) return "Email is required"
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) return "Invalid email format"
+        return null
+    }
+
+    private fun validatePassword(password: String, hasInteracted: Boolean): String? {
+        if (!hasInteracted && password.isBlank()) return null
+        if (password.isBlank()) return "Password is required"
+        if (password.length < 6) return "Password must be at least 6 characters"
+        return null
     }
 }

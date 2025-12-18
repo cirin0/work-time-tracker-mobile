@@ -10,10 +10,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -65,6 +69,7 @@ fun LoginScreen(
             onValueChange = viewModel::onEmailChange,
             label = { Text("Email") },
             modifier = Modifier.fillMaxWidth(),
+            leadingIcon = { Icon(imageVector = Icons.Default.Email, contentDescription = null) },
             isError = state.emailError != null,
             supportingText = state.emailError?.let { { Text(it) } },
             singleLine = true
@@ -77,6 +82,7 @@ fun LoginScreen(
             onValueChange = viewModel::onPasswordChange,
             label = { Text("Password") },
             modifier = Modifier.fillMaxWidth(),
+            leadingIcon = { Icon(imageVector = Icons.Default.Lock, contentDescription = null) },
             visualTransformation = PasswordVisualTransformation(),
             isError = state.passwordError != null,
             supportingText = state.passwordError?.let { { Text(it) } },

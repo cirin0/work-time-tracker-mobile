@@ -20,11 +20,27 @@ class LoginViewModel @Inject constructor(
     val state = _state.asStateFlow()
 
     fun onEmailChange(email: String) {
-        _state.update { it.copy(email = email, emailError = null, error = null) }
+        _state.update { 
+            val newState = it.copy(
+                email = email, 
+                emailError = null, 
+                error = null,
+                hasInteractedWithEmail = true
+            )
+            newState.copy(emailError = validateEmail(newState.email, newState.hasInteractedWithEmail))
+        }
     }
 
     fun onPasswordChange(password: String) {
-        _state.update { it.copy(password = password, passwordError = null, error = null) }
+        _state.update { 
+            val newState = it.copy(
+                password = password, 
+                passwordError = null, 
+                error = null,
+                hasInteractedWithPassword = true
+            )
+            newState.copy(passwordError = validatePassword(newState.password, newState.hasInteractedWithPassword))
+        }
     }
 
     fun login() {
@@ -62,25 +78,35 @@ class LoginViewModel @Inject constructor(
     }
 
     private fun validateInput(): Boolean {
+        val currentState = _state.value
         var isValid = true
 
-        if (_state.value.email.isBlank()) {
-            _state.update { it.copy(emailError = "Email is required") }
-            isValid = false
-        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(_state.value.email).matches()) {
-            _state.update { it.copy(emailError = "Invalid email format") }
-            isValid = false
+        val emailError = validateEmail(currentState.email, true)
+        val passwordError = validatePassword(currentState.password, true)
+
+        _state.update { 
+            it.copy(
+                emailError = emailError,
+                passwordError = passwordError
+            )
         }
 
-        if (_state.value.password.isBlank()) {
-            _state.update { it.copy(passwordError = "Password is required") }
-            isValid = false
-        } else if (_state.value.password.length < 6) {
-            _state.update { it.copy(passwordError = "Password must be at least 6 characters") }
-            isValid = false
-        }
-
+        isValid = emailError == null && passwordError == null
         return isValid
+    }
+
+    private fun validateEmail(email: String, hasInteracted: Boolean): String? {
+        if (!hasInteracted && email.isBlank()) return null
+        if (email.isBlank()) return "Email is required"
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) return "Invalid email format"
+        return null
+    }
+
+    private fun validatePassword(password: String, hasInteracted: Boolean): String? {
+        if (!hasInteracted && password.isBlank()) return null
+        if (password.isBlank()) return "Password is required"
+        if (password.length < 6) return "Password must be at least 6 characters"
+        return null
     }
 
     fun logout() {
