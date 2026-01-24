@@ -9,7 +9,7 @@ import com.cirin0.worktimetracker.core.network.apiCall
 import com.cirin0.worktimetracker.features.auth.data.api.AuthApi
 import com.cirin0.worktimetracker.features.auth.data.model.LoginRequest
 import com.cirin0.worktimetracker.features.auth.data.model.RegisterRequest
-import com.cirin0.worktimetracker.features.auth.data.model.User
+import com.cirin0.worktimetracker.features.profile.data.model.User
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import kotlinx.coroutines.flow.Flow
@@ -67,13 +67,6 @@ class AuthRepository @Inject constructor(
             val response = authApi.logout()
             clearToken()
             response.message
-        }
-    }
-
-    suspend fun getCurrentUser(): ApiResponse<User> {
-        return apiCall {
-            val user = authApi.getCurrentUser()
-            user
         }
     }
 }

@@ -7,9 +7,7 @@ import com.cirin0.worktimetracker.features.auth.data.model.LogoutResponse
 import com.cirin0.worktimetracker.features.auth.data.model.RefreshResponse
 import com.cirin0.worktimetracker.features.auth.data.model.RegisterRequest
 import com.cirin0.worktimetracker.features.auth.data.model.RegisterResponse
-import com.cirin0.worktimetracker.features.auth.data.model.User
 import retrofit2.http.Body
-import retrofit2.http.GET
 import retrofit2.http.POST
 
 interface AuthApi {
@@ -25,7 +23,4 @@ interface AuthApi {
 
     @POST(Constants.ApiRoutes.LOGOUT)
     suspend fun logout(): LogoutResponse
-
-    @GET(Constants.ApiRoutes.ME)
-    suspend fun getCurrentUser(): User
 }
