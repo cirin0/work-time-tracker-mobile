@@ -1,4 +1,4 @@
-package com.cirin0.worktimetracker.features.auth.data.model
+package com.cirin0.worktimetracker.features.profile.data.model
 
 import com.google.gson.annotations.SerializedName
 
