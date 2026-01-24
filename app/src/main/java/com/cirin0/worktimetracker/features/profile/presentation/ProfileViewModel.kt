@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.File
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
@@ -36,7 +37,9 @@ class ProfileViewModel @Inject constructor(
                         it.copy(
                             user = response.data,
                             isLoading = false,
-                            error = null
+                            error = null,
+                            editName = response.data.name,
+                            editEmail = response.data.email
                         )
                     }
                 }
@@ -55,6 +58,140 @@ class ProfileViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    fun openEditDialog() {
+        _state.update {
+            it.copy(
+                isEditDialogOpen = true,
+                editName = it.user?.name ?: "",
+                editEmail = it.user?.email ?: "",
+                nameError = null,
+                emailError = null,
+                updateError = null
+            )
+        }
+    }
+
+    fun closeEditDialog() {
+        _state.update {
+            it.copy(
+                isEditDialogOpen = false,
+                nameError = null,
+                emailError = null,
+                updateError = null
+            )
+        }
+    }
+
+    fun onNameChange(name: String) {
+        _state.update {
+            it.copy(
+                editName = name,
+                nameError = null,
+                updateError = null
+            )
+        }
+    }
+
+    fun onEmailChange(email: String) {
+        _state.update {
+            it.copy(
+                editEmail = email,
+                emailError = null,
+                updateError = null
+            )
+        }
+    }
+
+    fun updateProfile() {
+        val currentState = _state.value
+
+        val nameError = if (currentState.editName.isBlank()) "Ім'я не може бути порожнім" else null
+        val emailError = if (currentState.editEmail.isBlank()) {
+            "Email не може бути порожнім"
+        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(currentState.editEmail).matches()) {
+            "Невірний формат email"
+        } else null
+
+        if (nameError != null || emailError != null) {
+            _state.update {
+                it.copy(
+                    nameError = nameError,
+                    emailError = emailError
+                )
+            }
+            return
+        }
+
+        viewModelScope.launch {
+            _state.update { it.copy(isUpdating = true, updateError = null, updateSuccess = false) }
+            when (val response = profileRepository.updateProfile(
+                currentState.editName,
+                currentState.editEmail
+            )) {
+                is ApiResponse.Success -> {
+                    _state.update {
+                        it.copy(
+                            user = response.data,
+                            isUpdating = false,
+                            updateSuccess = true,
+                            isEditDialogOpen = false,
+                            editName = response.data.name,
+                            editEmail = response.data.email
+                        )
+                    }
+                }
+
+                is ApiResponse.Error -> {
+                    _state.update {
+                        it.copy(
+                            isUpdating = false,
+                            updateError = response.message
+                        )
+                    }
+                }
+
+                is ApiResponse.Loading -> {
+                    _state.update { it.copy(isUpdating = true) }
+                }
+            }
+        }
+    }
+
+    fun updateAvatar(imageFile: File) {
+        viewModelScope.launch {
+            _state.update { it.copy(isUpdating = true, updateError = null, updateSuccess = false) }
+            when (val response = profileRepository.updateAvatar(imageFile)) {
+                is ApiResponse.Success -> {
+                    _state.update {
+                        it.copy(
+                            user = response.data,
+                            isUpdating = false,
+                            updateSuccess = true
+                        )
+                    }
+                }
+
+                is ApiResponse.Error -> {
+                    _state.update {
+                        it.copy(
+                            isUpdating = false,
+                            updateError = response.message
+                        )
+                    }
+                }
+
+                is ApiResponse.Loading -> {
+                    _state.update { it.copy(isUpdating = true) }
+                }
+            }
+            loadUserProfile()
+        }
+    }
+
+    fun clearUpdateSuccess() {
+        _state.update { it.copy(updateSuccess = false) }
     }
 
     fun logout() {

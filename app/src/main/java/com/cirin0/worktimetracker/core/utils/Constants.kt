@@ -11,6 +11,8 @@ object Constants {
         const val REFRESH = "auth/refresh"
         const val LOGOUT = "auth/logout"
         const val ME = "me"
+        const val UPDATE_PROFILE = "me"
+        const val UPDATE_AVATAR = "me/avatar"
         const val USERS = "users"
         const val MESSAGES = "messages/{userId}"
     }
