@@ -14,7 +14,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.WorkTimeTracker"
         android:usesCleartextTraffic="true">
-        <!--        android:networkSecurityConfig="@/network_security_config">-->
         <activity
             android:name=".MainActivity"
             android:exported="true"
