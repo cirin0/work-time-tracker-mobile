@@ -3,6 +3,7 @@ package com.cirin0.worktimetracker.features.profile.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cirin0.worktimetracker.core.network.ApiResponse
+import com.cirin0.worktimetracker.core.utils.ConnectivityObserver
 import com.cirin0.worktimetracker.features.auth.data.repository.AuthRepository
 import com.cirin0.worktimetracker.features.profile.data.repository.ProfileRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,7 +17,8 @@ import java.io.File
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val profileRepository: ProfileRepository,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val connectivityObserver: ConnectivityObserver
 ) : ViewModel() {
     private val _state = MutableStateFlow(ProfileState())
     val state = _state.asStateFlow()
@@ -26,11 +28,26 @@ class ProfileViewModel @Inject constructor(
 
     init {
         loadUserProfile()
+        observeConnectivity()
+    }
+
+    private fun observeConnectivity() {
+        viewModelScope.launch {
+            connectivityObserver.observe().collect { status ->
+                val isOffline = status != ConnectivityObserver.Status.Available
+                _state.update { it.copy(isOffline = isOffline) }
+
+                if (status == ConnectivityObserver.Status.Available && _state.value.isCachedData) {
+                    loadUserProfile()
+                }
+            }
+        }
     }
 
     fun loadUserProfile() {
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
+            val isOffline = !connectivityObserver.isConnected()
             when (val response = profileRepository.getCurrentUser()) {
                 is ApiResponse.Success -> {
                     _state.update {
@@ -39,7 +56,8 @@ class ProfileViewModel @Inject constructor(
                             isLoading = false,
                             error = null,
                             editName = response.data.name,
-                            editEmail = response.data.email
+                            editEmail = response.data.email,
+                            isCachedData = isOffline
                         )
                     }
                 }

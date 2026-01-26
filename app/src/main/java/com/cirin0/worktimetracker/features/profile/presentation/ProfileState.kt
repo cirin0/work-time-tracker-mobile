@@ -14,4 +14,6 @@ data class ProfileState(
     val editEmail: String = "",
     val nameError: String? = null,
     val emailError: String? = null,
+    val isOffline: Boolean = false,
+    val isCachedData: Boolean = false
 )

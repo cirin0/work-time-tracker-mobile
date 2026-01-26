@@ -1,7 +1,7 @@
-
 package com.cirin0.worktimetracker
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -15,14 +15,17 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
+import com.cirin0.worktimetracker.core.utils.ConnectivityObserver
 import com.cirin0.worktimetracker.features.auth.data.repository.AuthRepository
 import com.cirin0.worktimetracker.features.home.ThemeViewModel
 import com.cirin0.worktimetracker.navigation.NavGraph
 import com.cirin0.worktimetracker.navigation.Screen
 import com.cirin0.worktimetracker.ui.theme.WorkTimeTrackerTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -31,9 +34,33 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var authRepository: AuthRepository
 
+    @Inject
+    lateinit var connectivityObserver: ConnectivityObserver
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        lifecycleScope.launch {
+            connectivityObserver.observe().collect { status ->
+                when (status) {
+                    ConnectivityObserver.Status.Unavailable,
+                    ConnectivityObserver.Status.Lost -> {
+                        Toast.makeText(
+                            this@MainActivity,
+                            "Немає підключення до інтернету",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+
+                    ConnectivityObserver.Status.Available -> {
+                        // show "Back online" message
+                    }
+
+                    else -> {}
+                }
+            }
+        }
+
         setContent {
             val themeViewModel: ThemeViewModel = hiltViewModel()
             val useDarkTheme by themeViewModel.userThemePreference.collectAsState()

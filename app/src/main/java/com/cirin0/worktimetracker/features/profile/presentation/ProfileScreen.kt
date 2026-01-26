@@ -22,6 +22,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Person
@@ -136,6 +137,39 @@ fun ProfileScreen(
             }
 
             Spacer(modifier = Modifier.height(24.dp))
+
+            if (state.isOffline) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CloudOff,
+                            contentDescription = "Офлайн",
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.padding(4.dp))
+                        Text(
+                            text = if (state.isCachedData) "Офлайн режим - показано збережені дані"
+                            else "Немає підключення до інтернету",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+            }
 
             when {
                 state.isLoading -> {
@@ -354,28 +388,38 @@ fun ProfileScreen(
                 }
             },
             confirmButton = {
-                Button(
-                    onClick = { viewModel.updateProfile() },
-                    enabled = !state.isUpdating
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (state.isUpdating) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                    } else {
-                        Text("Зберегти")
+                    TextButton(
+                        onClick = { viewModel.closeEditDialog() },
+                        enabled = !state.isUpdating
+                    ) {
+                        Text("Скасувати")
+                    }
+                    Button(
+                        onClick = { viewModel.updateProfile() },
+                        enabled = state.isUpdating,
+                        modifier = Modifier.size(width = 120.dp, height = 40.dp)
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            if (!state.isUpdating) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    color = MaterialTheme.colorScheme.onPrimary
+                                )
+                            } else {
+                                Text("Зберегти")
+                            }
+                        }
                     }
                 }
             },
-            dismissButton = {
-                TextButton(
-                    onClick = { viewModel.closeEditDialog() },
-                    enabled = !state.isUpdating
-                ) {
-                    Text("Скасувати")
-                }
-            }
+            dismissButton = null
         )
     }
 }
