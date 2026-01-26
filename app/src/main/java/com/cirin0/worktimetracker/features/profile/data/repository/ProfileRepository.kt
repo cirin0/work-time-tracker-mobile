@@ -27,13 +27,13 @@ class ProfileRepository @Inject constructor(
         if (!connectivityObserver.isConnected()) {
             val cachedUser = userDao.getCachedUser()
             return if (cachedUser != null) {
-                ApiResponse.Success(cachedUser.toUser())
+                ApiResponse.Success(cachedUser.toUser(), fromCache = true)
             } else {
                 ApiResponse.Error("Немає підключення до інтернету та немає кешованих даних")
             }
         }
 
-        return apiCall {
+        val response = apiCall {
             val user = profileApi.getCurrentUser()
             val userWithAvatar = user.copy(
                 avatar = user.avatar?.let { path ->
@@ -43,6 +43,20 @@ class ProfileRepository @Inject constructor(
             )
             userDao.cacheUser(userWithAvatar.toCachedEntity())
             userWithAvatar
+        }
+
+        // If network request failed, try to return cached data
+        return if (response is ApiResponse.Error) {
+            val cachedUser = userDao.getCachedUser()
+            if (cachedUser != null) {
+                // Return cached data with fromCache flag
+                ApiResponse.Success(cachedUser.toUser(), fromCache = true)
+            } else {
+                // No cached data available, return the error
+                response
+            }
+        } else {
+            response
         }
     }
 

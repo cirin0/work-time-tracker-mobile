@@ -15,5 +15,6 @@ data class ProfileState(
     val nameError: String? = null,
     val emailError: String? = null,
     val isOffline: Boolean = false,
-    val isCachedData: Boolean = false
+    val isCachedData: Boolean = false,
+    val showServerUnavailableWarning: Boolean = false
 )

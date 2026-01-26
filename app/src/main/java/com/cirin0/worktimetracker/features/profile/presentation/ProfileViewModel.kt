@@ -57,7 +57,8 @@ class ProfileViewModel @Inject constructor(
                             error = null,
                             editName = response.data.name,
                             editEmail = response.data.email,
-                            isCachedData = isOffline
+                            isCachedData = response.fromCache,
+                            showServerUnavailableWarning = response.fromCache && !isOffline
                         )
                     }
                 }

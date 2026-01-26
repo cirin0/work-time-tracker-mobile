@@ -22,12 +22,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -138,13 +138,13 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            if (state.isOffline) {
+            if (state.showServerUnavailableWarning) {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 16.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer
                     )
                 ) {
                     Row(
@@ -155,16 +155,15 @@ fun ProfileScreen(
                         horizontalArrangement = Arrangement.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.CloudOff,
-                            contentDescription = "Офлайн",
-                            tint = MaterialTheme.colorScheme.error,
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = "Попередження",
+                            tint = MaterialTheme.colorScheme.tertiary,
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.padding(4.dp))
                         Text(
-                            text = if (state.isCachedData) "Офлайн режим - показано збережені дані"
-                            else "Немає підключення до інтернету",
-                            color = MaterialTheme.colorScheme.error,
+                            text = "Сервер недоступний - показано збережені дані",
+                            color = MaterialTheme.colorScheme.onTertiaryContainer,
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
@@ -400,14 +399,14 @@ fun ProfileScreen(
                     }
                     Button(
                         onClick = { viewModel.updateProfile() },
-                        enabled = state.isUpdating,
+                        enabled = !state.isUpdating,
                         modifier = Modifier.size(width = 120.dp, height = 40.dp)
                     ) {
                         Box(
                             contentAlignment = Alignment.Center,
                             modifier = Modifier.fillMaxSize()
                         ) {
-                            if (!state.isUpdating) {
+                            if (state.isUpdating) {
                                 CircularProgressIndicator(
                                     modifier = Modifier.size(20.dp),
                                     color = MaterialTheme.colorScheme.onPrimary
