@@ -1,4 +1,4 @@
-package com.cirin0.worktimetracker.features.home
+package com.cirin0.worktimetracker.features.test
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,8 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun MainScreen(
-) {
+fun TestScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -22,15 +21,16 @@ fun MainScreen(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Work Time Tracker",
+            text = "Тест",
             style = MaterialTheme.typography.headlineLarge,
             color = MaterialTheme.colorScheme.primary
         )
 
         Text(
-            text = "Track your productivity, boost your success",
+            text = "Екран тестування",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 8.dp)
         )
     }
 }

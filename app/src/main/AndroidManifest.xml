@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:name=".app.App"
@@ -14,7 +15,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.WorkTimeTracker"
         android:usesCleartextTraffic="true">
-        <!--        android:networkSecurityConfig="@/network_security_config">-->
         <activity
             android:name=".MainActivity"
             android:exported="true"

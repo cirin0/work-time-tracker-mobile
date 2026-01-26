@@ -4,12 +4,13 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.cirin0.worktimetracker.core.database.dao.UserDao
 import com.cirin0.worktimetracker.core.network.ApiResponse
 import com.cirin0.worktimetracker.core.network.apiCall
 import com.cirin0.worktimetracker.features.auth.data.api.AuthApi
 import com.cirin0.worktimetracker.features.auth.data.model.LoginRequest
 import com.cirin0.worktimetracker.features.auth.data.model.RegisterRequest
-import com.cirin0.worktimetracker.features.auth.data.model.User
+import com.cirin0.worktimetracker.features.profile.data.model.User
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import kotlinx.coroutines.flow.Flow
@@ -19,7 +20,8 @@ import kotlinx.coroutines.flow.map
 @Singleton
 class AuthRepository @Inject constructor(
     private val dataStore: DataStore<Preferences>,
-    private val authApi: AuthApi
+    private val authApi: AuthApi,
+    private val userDao: UserDao
 ) {
     companion object {
         private val TOKEN_KEY = stringPreferencesKey("auth_token")
@@ -66,14 +68,8 @@ class AuthRepository @Inject constructor(
         return apiCall {
             val response = authApi.logout()
             clearToken()
+            userDao.clearCache()
             response.message
-        }
-    }
-
-    suspend fun getCurrentUser(): ApiResponse<User> {
-        return apiCall {
-            val user = authApi.getCurrentUser()
-            user
         }
     }
 }

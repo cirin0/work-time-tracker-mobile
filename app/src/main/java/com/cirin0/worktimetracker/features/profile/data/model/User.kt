@@ -1,9 +1,9 @@
-package com.cirin0.worktimetracker.features.auth.data.model
+package com.cirin0.worktimetracker.features.profile.data.model
 
 import com.google.gson.annotations.SerializedName
 
 data class User(
-    val id: String,
+    val id: Int,
     val name: String,
     val email: String,
     val role: String,

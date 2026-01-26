@@ -5,10 +5,11 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.cirin0.worktimetracker.features.auth.presentation.login.LoginScreen
 import com.cirin0.worktimetracker.features.auth.presentation.register.RegisterScreen
-import com.cirin0.worktimetracker.features.home.MainScreen
+import com.cirin0.worktimetracker.features.profile.presentation.ProfileScreen
 
 @Composable
 fun NavGraph(
@@ -52,7 +53,28 @@ fun NavGraph(
             )
         }
         composable(Screen.Main.route) {
-            MainScreen()
+            val bottomNavController = rememberNavController()
+            MainScaffold(
+                navController = bottomNavController,
+                onLogoutSuccess = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Main.route) {
+                            inclusive = true
+                        }
+                    }
+                }
+            )
+        }
+        composable(Screen.Profile.route) {
+            ProfileScreen(
+                onLogoutSuccess = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Main.route) {
+                            inclusive = true
+                        }
+                    }
+                }
+            )
         }
         composable(Screen.Chat.route) {}
         composable(
