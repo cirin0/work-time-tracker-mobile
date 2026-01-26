@@ -1,4 +1,3 @@
-
 package com.cirin0.worktimetracker
 
 import android.os.Bundle
@@ -15,7 +14,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.rememberNavController
 import com.cirin0.worktimetracker.features.auth.data.repository.AuthRepository
 import com.cirin0.worktimetracker.features.home.ThemeViewModel
@@ -34,6 +33,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
         setContent {
             val themeViewModel: ThemeViewModel = hiltViewModel()
             val useDarkTheme by themeViewModel.userThemePreference.collectAsState()

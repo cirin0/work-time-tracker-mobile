@@ -1,6 +1,7 @@
 package com.cirin0.worktimetracker.core.di
 
 import com.cirin0.worktimetracker.core.network.AuthInterceptor
+import com.cirin0.worktimetracker.core.network.ContentTypeInterceptor
 import com.cirin0.worktimetracker.core.network.TokenRefreshInterceptor
 import com.cirin0.worktimetracker.core.utils.Constants
 import dagger.Module
@@ -39,6 +40,7 @@ object NetworkModule {
     @Singleton
     fun provideOkHttpClient(
         authInterceptor: AuthInterceptor,
+        contentTypeInterceptor: ContentTypeInterceptor,
         tokenRefreshInterceptor: TokenRefreshInterceptor,
         loggingInterceptor: HttpLoggingInterceptor
     ): OkHttpClient {
@@ -46,10 +48,11 @@ object NetworkModule {
             // Interceptors
             addInterceptor(authInterceptor)
             addInterceptor(tokenRefreshInterceptor)
+            addInterceptor(contentTypeInterceptor)
             addInterceptor(loggingInterceptor)
 
             // Timeouts
-            connectTimeout(30, TimeUnit.SECONDS)
+            connectTimeout(10, TimeUnit.SECONDS)
             readTimeout(30, TimeUnit.SECONDS)
             writeTimeout(30, TimeUnit.SECONDS)
 

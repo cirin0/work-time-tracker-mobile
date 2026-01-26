@@ -3,6 +3,7 @@ package com.cirin0.worktimetracker.features.profile.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cirin0.worktimetracker.core.network.ApiResponse
+import com.cirin0.worktimetracker.core.utils.ConnectivityObserver
 import com.cirin0.worktimetracker.features.auth.data.repository.AuthRepository
 import com.cirin0.worktimetracker.features.profile.data.repository.ProfileRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -11,11 +12,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.File
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val profileRepository: ProfileRepository,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val connectivityObserver: ConnectivityObserver
 ) : ViewModel() {
     private val _state = MutableStateFlow(ProfileState())
     val state = _state.asStateFlow()
@@ -25,18 +28,37 @@ class ProfileViewModel @Inject constructor(
 
     init {
         loadUserProfile()
+        observeConnectivity()
+    }
+
+    private fun observeConnectivity() {
+        viewModelScope.launch {
+            connectivityObserver.observe().collect { status ->
+                val isOffline = status != ConnectivityObserver.Status.Available
+                _state.update { it.copy(isOffline = isOffline) }
+
+                if (status == ConnectivityObserver.Status.Available && _state.value.isCachedData) {
+                    loadUserProfile()
+                }
+            }
+        }
     }
 
     fun loadUserProfile() {
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
+            val isOffline = !connectivityObserver.isConnected()
             when (val response = profileRepository.getCurrentUser()) {
                 is ApiResponse.Success -> {
                     _state.update {
                         it.copy(
                             user = response.data,
                             isLoading = false,
-                            error = null
+                            error = null,
+                            editName = response.data.name,
+                            editEmail = response.data.email,
+                            isCachedData = response.fromCache,
+                            showServerUnavailableWarning = response.fromCache && !isOffline
                         )
                     }
                 }
@@ -55,6 +77,140 @@ class ProfileViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    fun openEditDialog() {
+        _state.update {
+            it.copy(
+                isEditDialogOpen = true,
+                editName = it.user?.name ?: "",
+                editEmail = it.user?.email ?: "",
+                nameError = null,
+                emailError = null,
+                updateError = null
+            )
+        }
+    }
+
+    fun closeEditDialog() {
+        _state.update {
+            it.copy(
+                isEditDialogOpen = false,
+                nameError = null,
+                emailError = null,
+                updateError = null
+            )
+        }
+    }
+
+    fun onNameChange(name: String) {
+        _state.update {
+            it.copy(
+                editName = name,
+                nameError = null,
+                updateError = null
+            )
+        }
+    }
+
+    fun onEmailChange(email: String) {
+        _state.update {
+            it.copy(
+                editEmail = email,
+                emailError = null,
+                updateError = null
+            )
+        }
+    }
+
+    fun updateProfile() {
+        val currentState = _state.value
+
+        val nameError = if (currentState.editName.isBlank()) "Ім'я не може бути порожнім" else null
+        val emailError = if (currentState.editEmail.isBlank()) {
+            "Email не може бути порожнім"
+        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(currentState.editEmail).matches()) {
+            "Невірний формат email"
+        } else null
+
+        if (nameError != null || emailError != null) {
+            _state.update {
+                it.copy(
+                    nameError = nameError,
+                    emailError = emailError
+                )
+            }
+            return
+        }
+
+        viewModelScope.launch {
+            _state.update { it.copy(isUpdating = true, updateError = null, updateSuccess = false) }
+            when (val response = profileRepository.updateProfile(
+                currentState.editName,
+                currentState.editEmail
+            )) {
+                is ApiResponse.Success -> {
+                    _state.update {
+                        it.copy(
+                            user = response.data,
+                            isUpdating = false,
+                            updateSuccess = true,
+                            isEditDialogOpen = false,
+                            editName = response.data.name,
+                            editEmail = response.data.email
+                        )
+                    }
+                }
+
+                is ApiResponse.Error -> {
+                    _state.update {
+                        it.copy(
+                            isUpdating = false,
+                            updateError = response.message
+                        )
+                    }
+                }
+
+                is ApiResponse.Loading -> {
+                    _state.update { it.copy(isUpdating = true) }
+                }
+            }
+        }
+    }
+
+    fun updateAvatar(imageFile: File) {
+        viewModelScope.launch {
+            _state.update { it.copy(isUpdating = true, updateError = null, updateSuccess = false) }
+            when (val response = profileRepository.updateAvatar(imageFile)) {
+                is ApiResponse.Success -> {
+                    _state.update {
+                        it.copy(
+                            user = response.data,
+                            isUpdating = false,
+                            updateSuccess = true
+                        )
+                    }
+                }
+
+                is ApiResponse.Error -> {
+                    _state.update {
+                        it.copy(
+                            isUpdating = false,
+                            updateError = response.message
+                        )
+                    }
+                }
+
+                is ApiResponse.Loading -> {
+                    _state.update { it.copy(isUpdating = true) }
+                }
+            }
+            loadUserProfile()
+        }
+    }
+
+    fun clearUpdateSuccess() {
+        _state.update { it.copy(updateSuccess = false) }
     }
 
     fun logout() {
