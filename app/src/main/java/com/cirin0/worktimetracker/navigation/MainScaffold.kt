@@ -30,9 +30,12 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.navArgument
+import com.cirin0.worktimetracker.features.company.presentation.CompanyScreen
 import com.cirin0.worktimetracker.features.home.ConnectivityViewModel
 import com.cirin0.worktimetracker.features.home.MainScreen
 import com.cirin0.worktimetracker.features.profile.presentation.ProfileScreen
@@ -145,7 +148,22 @@ fun MainScaffold(
                 }
                 composable(Screen.Profile.route) {
                     ProfileScreen(
-                        onLogoutSuccess = onLogoutSuccess
+                        onLogoutSuccess = onLogoutSuccess,
+                        onNavigateToCompany = { companyId ->
+                            navController.navigate(Screen.Company.createRoute(companyId))
+                        }
+                    )
+                }
+                composable(
+                    route = Screen.Company.route,
+                    arguments = listOf(navArgument("companyId") { type = NavType.IntType })
+                ) { backStackEntry ->
+                    val companyId = backStackEntry.arguments?.getInt("companyId") ?: 0
+                    CompanyScreen(
+                        companyId = companyId,
+                        onNavigateBack = {
+                            navController.popBackStack()
+                        }
                     )
                 }
             }

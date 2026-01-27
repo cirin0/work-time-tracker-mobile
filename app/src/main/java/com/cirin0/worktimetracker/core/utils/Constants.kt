@@ -15,5 +15,6 @@ object Constants {
         const val UPDATE_AVATAR = "me/avatar"
         const val USERS = "users"
         const val MESSAGES = "messages/{userId}"
+        const val COMPANIES = "companies"
     }
 }
