@@ -16,5 +16,6 @@ object Constants {
         const val USERS = "users"
         const val MESSAGES = "messages/{userId}"
         const val COMPANIES = "companies"
+        const val TIME_ENTRIES = "time-entries"
     }
 }

@@ -15,4 +15,11 @@ sealed class Screen(val route: String) {
     object Company : Screen("company/{companyId}") {
         fun createRoute(companyId: Int) = "company/$companyId"
     }
+
+    object TimeEntries : Screen("time_entries")
+
+    object TimeEntryDetail : Screen("time_entry/{entryId}") {
+        fun createRoute(entryId: Int) = "time_entry/$entryId"
+    }
+
 }

@@ -8,10 +8,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Quiz
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -40,6 +40,8 @@ import com.cirin0.worktimetracker.features.home.ConnectivityViewModel
 import com.cirin0.worktimetracker.features.home.MainScreen
 import com.cirin0.worktimetracker.features.profile.presentation.ProfileScreen
 import com.cirin0.worktimetracker.features.test.TestScreen
+import com.cirin0.worktimetracker.features.timeentries.presentation.TimeEntriesScreen
+import com.cirin0.worktimetracker.features.timeentries.presentation.TimeEntryDetailScreen
 
 @Composable
 fun MainScaffold(
@@ -56,9 +58,9 @@ fun MainScaffold(
             label = "Головна"
         ),
         BottomNavItem(
-            route = Screen.Test.route,
-            icon = Icons.Default.Quiz,
-            label = "Тест"
+            route = Screen.TimeEntries.route,
+            icon = Icons.Default.AccessTime,
+            label = "Час"
         ),
         BottomNavItem(
             route = Screen.Profile.route,
@@ -143,8 +145,34 @@ fun MainScaffold(
                 composable(Screen.Main.route) {
                     MainScreen()
                 }
+                composable(Screen.TimeEntries.route) {
+                    TimeEntriesScreen(
+                        onNavigateToDetail = { entryId ->
+                            navController.navigate(Screen.TimeEntryDetail.createRoute(entryId))
+                        }
+                    )
+                }
+                composable(
+                    route = Screen.TimeEntryDetail.route,
+                    arguments = listOf(navArgument("entryId") { type = NavType.IntType })
+                ) { backStackEntry ->
+                    val entryId = backStackEntry.arguments?.getInt("entryId") ?: 0
+                    TimeEntryDetailScreen(
+                        timeEntryId = entryId,
+                        onNavigateBack = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
                 composable(Screen.Test.route) {
                     TestScreen()
+                }
+                composable(Screen.Chat.route) {}
+                composable(
+                    route = Screen.ChatDetail.route,
+                    arguments = listOf(navArgument("userId") { type = NavType.IntType })
+                ) { backStackEntry ->
+                    val userId = backStackEntry.arguments?.getInt("userId") ?: 0
                 }
                 composable(Screen.Profile.route) {
                     ProfileScreen(
