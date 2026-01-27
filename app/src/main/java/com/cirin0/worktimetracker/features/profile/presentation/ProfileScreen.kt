@@ -65,7 +65,8 @@ import java.io.FileOutputStream
 @Composable
 fun ProfileScreen(
     viewModel: ProfileViewModel = hiltViewModel(),
-    onLogoutSuccess: () -> Unit = {}
+    onLogoutSuccess: () -> Unit = {},
+    onNavigateToCompany: (Int) -> Unit = {}
 ) {
     val state by viewModel.state.collectAsState()
     val logoutState by viewModel.logoutState.collectAsState()
@@ -289,7 +290,8 @@ fun ProfileScreen(
                         ProfileInfoCard(
                             icon = Icons.Default.Business,
                             title = "Компанія",
-                            value = company.name
+                            value = company.name,
+                            onClick = { onNavigateToCompany(company.id) }
                         )
                     }
 
@@ -427,10 +429,19 @@ fun ProfileScreen(
 fun ProfileInfoCard(
     icon: ImageVector,
     title: String,
-    value: String
+    value: String,
+    onClick: (() -> Unit)? = null
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (onClick != null) {
+                    Modifier.clickable { onClick() }
+                } else {
+                    Modifier
+                }
+            ),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
