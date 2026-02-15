@@ -4,6 +4,7 @@ import com.cirin0.worktimetracker.core.network.AuthInterceptor
 import com.cirin0.worktimetracker.core.network.ContentTypeInterceptor
 import com.cirin0.worktimetracker.core.network.TokenRefreshInterceptor
 import com.cirin0.worktimetracker.core.utils.Constants
+import com.google.gson.Gson
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -20,8 +21,8 @@ import java.util.concurrent.TimeUnit
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    private const val LOCAL_DOMAIN = "http://192.168.0.253:8000"
-    private const val REMOTE_DOMAIN = "https://worktimetrack.dev"
+    private const val LOCAL_DOMAIN = "http://192.168.0.52:8000"
+    private const val REMOTE_DOMAIN = "https://work-time-tracker-api-cpdeb7e7b9axazd0.swedencentral-01.azurewebsites.net"
 
     @Provides
     @Singleton
@@ -65,6 +66,12 @@ object NetworkModule {
     @Singleton
     fun provideGsonConverterFactory(): GsonConverterFactory {
         return GsonConverterFactory.create()
+    }
+
+    @Provides
+    @Singleton
+    fun provideGson(): Gson {
+        return Gson()
     }
 
     @Provides
