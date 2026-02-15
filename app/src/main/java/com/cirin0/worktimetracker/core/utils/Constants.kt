@@ -14,8 +14,17 @@ object Constants {
         const val UPDATE_PROFILE = "me"
         const val UPDATE_AVATAR = "me/avatar"
         const val USERS = "users"
-        const val MESSAGES = "messages/{userId}"
         const val COMPANIES = "companies"
         const val TIME_ENTRIES = "time-entries"
+        const val MESSAGES = "messages"
+        const val MESSAGES_BY_RECEIVER = "messages/{receiverId}"
+    }
+
+    object Reverb {
+        const val HOST = "192.168.0.52"
+        const val PORT = 8080
+        const val APP_KEY = "9smphaclcxahdff41mik"
+        const val CLUSTER = "eu"
+        const val USE_TLS = false
     }
 }

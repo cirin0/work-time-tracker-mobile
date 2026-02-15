@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Home
@@ -38,10 +39,14 @@ import androidx.navigation.navArgument
 import com.cirin0.worktimetracker.features.company.presentation.CompanyScreen
 import com.cirin0.worktimetracker.features.home.ConnectivityViewModel
 import com.cirin0.worktimetracker.features.home.MainScreen
+import com.cirin0.worktimetracker.features.message.presentation.ChatListScreen
+import com.cirin0.worktimetracker.features.message.presentation.ChatScreen
 import com.cirin0.worktimetracker.features.profile.presentation.ProfileScreen
 import com.cirin0.worktimetracker.features.test.TestScreen
 import com.cirin0.worktimetracker.features.timeentries.presentation.TimeEntriesScreen
 import com.cirin0.worktimetracker.features.timeentries.presentation.TimeEntryDetailScreen
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
 
 @Composable
 fun MainScaffold(
@@ -63,6 +68,11 @@ fun MainScaffold(
             label = "Час"
         ),
         BottomNavItem(
+            route = Screen.ChatList.route,
+            icon = Icons.AutoMirrored.Filled.Chat,
+            label = "Чат"
+        ),
+        BottomNavItem(
             route = Screen.Profile.route,
             icon = Icons.Default.Person,
             label = "Профіль"
@@ -71,36 +81,41 @@ fun MainScaffold(
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentDestination = navBackStackEntry?.destination
+            val navBackStackEntry by navController.currentBackStackEntryAsState()
+            val currentDestination = navBackStackEntry?.destination
 
-                bottomNavItems.forEach { item ->
-                    val isSelected =
-                        currentDestination?.hierarchy?.any { it.route == item.route } == true
-                    NavigationBarItem(
-                        icon = {
-                            Icon(
-                                imageVector = item.icon,
-                                contentDescription = item.label
-                            )
-                        },
-                        label = {
-                            if (isSelected) {
-                                Text(item.label)
-                            }
-                        },
-                        selected = isSelected,
-                        onClick = {
-                            navController.navigate(item.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
+            // Hide bottom bar on ChatScreen
+            val shouldShowBottomBar = currentDestination?.route?.startsWith("chat/") != true
+
+            if (shouldShowBottomBar) {
+                NavigationBar {
+                    bottomNavItems.forEach { item ->
+                        val isSelected =
+                            currentDestination?.hierarchy?.any { it.route == item.route } == true
+                        NavigationBarItem(
+                            icon = {
+                                Icon(
+                                    imageVector = item.icon,
+                                    contentDescription = item.label
+                                )
+                            },
+                            label = {
+                                if (isSelected) {
+                                    Text(item.label)
                                 }
-                                launchSingleTop = true
-                                restoreState = true
+                            },
+                            selected = isSelected,
+                            onClick = {
+                                navController.navigate(item.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
                             }
-                        }
-                    )
+                        )
+                    }
                 }
             }
         }
@@ -167,12 +182,44 @@ fun MainScaffold(
                 composable(Screen.Test.route) {
                     TestScreen()
                 }
-                composable(Screen.Chat.route) {}
+                composable(Screen.ChatList.route) {
+                    ChatListScreen(
+                        onNavigateToChat = { receiverId, receiverName, receiverAvatar ->
+                            navController.navigate(
+                                Screen.Chat.createRoute(
+                                    receiverId,
+                                    receiverName,
+                                    receiverAvatar
+                                )
+                            )
+                        }
+                    )
+                }
                 composable(
-                    route = Screen.ChatDetail.route,
-                    arguments = listOf(navArgument("userId") { type = NavType.IntType })
+                    route = Screen.Chat.route,
+                    arguments = listOf(
+                        navArgument("receiverId") { type = NavType.IntType },
+                        navArgument("receiverName") { type = NavType.StringType },
+                        navArgument("receiverAvatar") {
+                            type = NavType.StringType
+                            nullable = true
+                            defaultValue = null
+                        }
+                    )
                 ) { backStackEntry ->
-                    val userId = backStackEntry.arguments?.getInt("userId") ?: 0
+                    val receiverId = backStackEntry.arguments?.getInt("receiverId") ?: 0
+                    val receiverName = backStackEntry.arguments?.getString("receiverName") ?: ""
+                    val receiverAvatar = backStackEntry.arguments?.getString("receiverAvatar")
+                        ?.takeIf { it != "null" }
+                        ?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.toString()) }
+                    ChatScreen(
+                        receiverId = receiverId,
+                        receiverName = receiverName,
+                        receiverAvatar = receiverAvatar,
+                        onNavigateBack = {
+                            navController.popBackStack()
+                        }
+                    )
                 }
                 composable(Screen.Profile.route) {
                     ProfileScreen(
