@@ -16,14 +16,16 @@ class TimeEntriesRepository @Inject constructor(
     suspend fun startTimeEntry(
         startComment: String?,
         latitude: Double?,
-        longitude: Double?
+        longitude: Double?,
+        qrCode: String?
     ): ApiResponse<TimeEntry> {
         return apiCall {
             val response = api.startTimeEntry(
                 TimeEntryRequest(
                     startComment = startComment,
                     latitude = latitude,
-                    longitude = longitude
+                    longitude = longitude,
+                    qrCode = qrCode
                 )
             )
             response.data ?: throw Exception("Failed to start time entry")

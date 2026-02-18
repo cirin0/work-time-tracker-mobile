@@ -18,6 +18,8 @@ coil = "2.7.0"
 room = "2.8.4"
 pusher-java-client = "2.4.4"
 playServicesLocation = "21.3.0"
+cameraX = "1.5.3"
+mlkitBarcodeScanning = "17.3.0"
 
 # додам пізніше
 dotlottieAndroid = "0.5.0"
@@ -76,6 +78,15 @@ pusher-java-client = { group = "com.pusher", name = "pusher-java-client", versio
 
 # Google Play Services Location
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
+
+# CameraX
+camerax-core = { group = "androidx.camera", name = "camera-core", version.ref = "cameraX" }
+camerax-camera2 = { group = "androidx.camera", name = "camera-camera2", version.ref = "cameraX" }
+camerax-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "cameraX" }
+camerax-view = { group = "androidx.camera", name = "camera-view", version.ref = "cameraX" }
+
+# ML Kit Barcode Scanning
+mlkit-barcode-scanning = { group = "com.google.mlkit", name = "barcode-scanning", version.ref = "mlkitBarcodeScanning" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
