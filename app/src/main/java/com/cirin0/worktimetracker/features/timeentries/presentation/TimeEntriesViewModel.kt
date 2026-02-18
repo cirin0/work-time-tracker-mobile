@@ -3,6 +3,9 @@ package com.cirin0.worktimetracker.features.timeentries.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cirin0.worktimetracker.core.network.ApiResponse
+import com.cirin0.worktimetracker.core.utils.GpsLocationResult
+import com.cirin0.worktimetracker.core.utils.LocationManager
+import com.cirin0.worktimetracker.features.profile.data.repository.ProfileRepository
 import com.cirin0.worktimetracker.features.timeentries.data.repository.TimeEntriesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
@@ -13,15 +16,34 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel
 class TimeEntriesViewModel @Inject constructor(
-    private val repository: TimeEntriesRepository
+    private val repository: TimeEntriesRepository,
+    private val locationManager: LocationManager,
+    private val profileRepository: ProfileRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(TimeEntriesState())
     val state: StateFlow<TimeEntriesState> = _state.asStateFlow()
 
     init {
+        loadUserData()
         loadActiveEntry()
         loadTimeEntries()
+    }
+
+    private fun loadUserData() {
+        viewModelScope.launch {
+            when (val result = profileRepository.getCurrentUser()) {
+                is ApiResponse.Success -> {
+                    _state.value = _state.value.copy(user = result.data)
+                }
+
+                is ApiResponse.Error -> {
+                    // User data failed to load, but we can still show the screen
+                }
+
+                is ApiResponse.Loading -> {}
+            }
+        }
     }
 
     fun loadActiveEntry() {
@@ -49,40 +71,128 @@ class TimeEntriesViewModel @Inject constructor(
 
     fun startTimeEntry() {
         viewModelScope.launch {
-            _state.value = _state.value.copy(isLoading = true, error = null)
-            val comment = _state.value.startComment.takeIf { it.isNotBlank() }
-            when (val result = repository.startTimeEntry(comment)) {
-                is ApiResponse.Success -> {
-                    _state.value = _state.value.copy(
-                        activeEntry = result.data,
-                        isLoading = false,
-                        startComment = ""
-                    )
-                    loadTimeEntries()
-                }
+            val user = _state.value.user
 
-                is ApiResponse.Error -> {
-                    _state.value = _state.value.copy(
-                        isLoading = false,
-                        error = result.message
-                    )
-                }
+            // Determine if GPS is needed based on work mode
+            val needsGPS = when {
+                user == null -> true // Default to requiring GPS if user data not loaded
+                user.isRemote() -> false // Remote workers don't need GPS
+                user.requiresGPS() -> true // Office workers always need GPS
+                user.isHybrid() -> _state.value.isInOffice // Hybrid - depends on checkbox
+                else -> true
+            }
 
-                is ApiResponse.Loading -> {}
+            if (needsGPS) {
+                // Office mode or hybrid in office - get GPS location
+                _state.value = _state.value.copy(isLoadingLocation = true, error = null)
+
+                when (val locationResult = locationManager.getCurrentLocation()) {
+                    is GpsLocationResult.Success -> {
+                        _state.value = _state.value.copy(
+                            isLoadingLocation = false,
+                            currentLatitude = locationResult.location.latitude,
+                            currentLongitude = locationResult.location.longitude,
+                            locationPermissionDenied = false,
+                            isLoading = true
+                        )
+
+                        val comment = _state.value.startComment.takeIf { it.isNotBlank() }
+                        when (val result = repository.startTimeEntry(
+                            comment,
+                            locationResult.location.latitude,
+                            locationResult.location.longitude
+                        )) {
+                            is ApiResponse.Success -> {
+                                _state.value = _state.value.copy(
+                                    activeEntry = result.data,
+                                    isLoading = false,
+                                    startComment = ""
+                                )
+                                loadTimeEntries()
+                            }
+
+                            is ApiResponse.Error -> {
+                                _state.value = _state.value.copy(
+                                    isLoading = false,
+                                    error = result.message
+                                )
+                            }
+
+                            is ApiResponse.Loading -> {}
+                        }
+                    }
+
+                    is GpsLocationResult.PermissionDenied -> {
+                        _state.value = _state.value.copy(
+                            isLoadingLocation = false,
+                            isLoading = false,
+                            locationPermissionDenied = true,
+                            error = "Location permission is required to start work"
+                        )
+                    }
+
+                    is GpsLocationResult.Error -> {
+                        _state.value = _state.value.copy(
+                            isLoadingLocation = false,
+                            isLoading = false,
+                            error = "Failed to get location: ${locationResult.message}"
+                        )
+                    }
+                }
+            } else {
+                _state.value = _state.value.copy(isLoading = true, error = null)
+                val comment = _state.value.startComment.takeIf { it.isNotBlank() }
+
+                when (val result = repository.startTimeEntry(comment, null, null)) {
+                    is ApiResponse.Success -> {
+                        _state.value = _state.value.copy(
+                            activeEntry = result.data,
+                            isLoading = false,
+                            startComment = ""
+                        )
+                        loadTimeEntries()
+                    }
+
+                    is ApiResponse.Error -> {
+                        _state.value = _state.value.copy(
+                            isLoading = false,
+                            error = result.message
+                        )
+                    }
+
+                    is ApiResponse.Loading -> {}
+                }
             }
         }
     }
 
     fun stopTimeEntry() {
         viewModelScope.launch {
+            if (_state.value.pinCode.length != 4) {
+                _state.value = _state.value.copy(
+                    error = "PIN-код має містити 4 цифри"
+                )
+                return@launch
+            }
+
+            if (!_state.value.pinCode.all { it.isDigit() }) {
+                _state.value = _state.value.copy(
+                    error = "PIN-код має містити тільки цифри"
+                )
+                return@launch
+            }
+
             _state.value = _state.value.copy(isLoading = true, error = null)
             val comment = _state.value.stopComment.takeIf { it.isNotBlank() }
-            when (val result = repository.stopTimeEntry(comment)) {
+            val pinCode = _state.value.pinCode
+
+            when (val result = repository.stopTimeEntry(comment, pinCode)) {
                 is ApiResponse.Success -> {
                     _state.value = _state.value.copy(
                         activeEntry = null,
                         isLoading = false,
-                        stopComment = ""
+                        stopComment = "",
+                        pinCode = ""
                     )
                     loadTimeEntries()
                 }
@@ -107,8 +217,33 @@ class TimeEntriesViewModel @Inject constructor(
         _state.value = _state.value.copy(stopComment = comment)
     }
 
+    fun updatePinCode(pinCode: String) {
+        if (pinCode.all { it.isDigit() } && pinCode.length <= 4) {
+            _state.value = _state.value.copy(pinCode = pinCode, error = null)
+        }
+    }
+
+    fun toggleIsInOffice(isInOffice: Boolean) {
+        _state.value = _state.value.copy(isInOffice = isInOffice)
+    }
+
     fun clearError() {
         _state.value = _state.value.copy(error = null)
+    }
+
+    fun hasLocationPermission(): Boolean {
+        return locationManager.hasLocationPermission()
+    }
+
+    fun onPermissionResult(granted: Boolean) {
+        if (granted) {
+            _state.value = _state.value.copy(locationPermissionDenied = false)
+        } else {
+            _state.value = _state.value.copy(
+                locationPermissionDenied = true,
+                error = "Location permission is required to track work time"
+            )
+        }
     }
 
     fun loadTimeEntries() {

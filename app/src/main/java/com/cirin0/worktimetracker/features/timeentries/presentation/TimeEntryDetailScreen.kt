@@ -150,8 +150,8 @@ private fun TimeEntryDetailContent(
             }
 
 
-            DetailRow("Створено", formatDateTime(timeEntry.createdAt))
-            DetailRow("Оновлено", formatDateTime(timeEntry.updatedAt))
+            DetailRow("Створено", timeEntry.createdAt?.let { formatDateTime(it) } ?: "-")
+            DetailRow("Оновлено", timeEntry.updatedAt?.let { formatDateTime(it) } ?: "-")
         }
     }
 }

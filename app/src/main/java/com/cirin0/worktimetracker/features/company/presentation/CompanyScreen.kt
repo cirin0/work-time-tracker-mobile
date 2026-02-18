@@ -271,14 +271,15 @@ fun CompanyScreen(
                                     .fillMaxWidth()
                                     .padding(16.dp)
                             ) {
+                                val employeesList = company.getEmployeesList()
                                 Text(
-                                    text = "Працівники (${company.employees.size})",
+                                    text = "Працівники (${employeesList.size})",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold
                                 )
                                 Spacer(modifier = Modifier.height(12.dp))
 
-                                company.employees.forEach { employee ->
+                                employeesList.forEach { employee ->
                                     EmployeeItem(employee = employee)
                                     Spacer(modifier = Modifier.height(8.dp))
                                 }

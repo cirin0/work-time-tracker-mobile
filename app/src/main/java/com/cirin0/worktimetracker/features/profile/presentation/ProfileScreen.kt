@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Business
@@ -27,6 +28,7 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -56,6 +58,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil.compose.AsyncImage
@@ -94,7 +98,12 @@ fun ProfileScreen(
 
     LaunchedEffect(state.updateSuccess) {
         if (state.updateSuccess) {
-            snackbarHostState.showSnackbar("Профіль успішно оновлено")
+            val message = if (state.pinCode.isNotEmpty() || state.newPinCode.isNotEmpty()) {
+                "PIN-код успішно оновлено"
+            } else {
+                "Профіль успішно оновлено"
+            }
+            snackbarHostState.showSnackbar(message)
             viewModel.clearUpdateSuccess()
         }
     }
@@ -272,6 +281,21 @@ fun ProfileScreen(
                     Spacer(modifier = Modifier.height(32.dp))
 
                     ProfileInfoCard(
+                        icon = Icons.Default.Security,
+                        title = "PIN-код",
+                        value = if (user.hasPinCode) "Встановлено" else "Не встановлено",
+                        onClick = {
+                            if (user.hasPinCode) {
+                                viewModel.openUpdatePinCodeDialog()
+                            } else {
+                                viewModel.openPinCodeDialog()
+                            }
+                        }
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    ProfileInfoCard(
                         icon = Icons.Default.Email,
                         title = "Email",
                         value = user.email
@@ -284,6 +308,21 @@ fun ProfileScreen(
                         title = "ID",
                         value = user.id.toString()
                     )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    ProfileInfoCard(
+                        icon = Icons.Default.Schedule,
+                        title = "Режим роботи",
+                        value = when (user.workMode) {
+                            "office" -> "Офіс"
+                            "remote" -> "Віддалено"
+                            "hybrid" -> "Гібрид"
+                            else -> user.workMode
+                        }
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     user.company?.let { company ->
                         Spacer(modifier = Modifier.height(12.dp))
@@ -345,6 +384,105 @@ fun ProfileScreen(
         SnackbarHost(
             hostState = snackbarHostState,
             modifier = Modifier.align(Alignment.BottomCenter)
+        )
+    }
+
+    if (state.isPinCodeDialogOpen) {
+        AlertDialog(
+            onDismissRequest = { viewModel.closePinCodeDialog() },
+            title = { Text("Встановити PIN-код") },
+            text = {
+                Column {
+                    Text("Введіть 4 цифри для вашого PIN-коду. Обов'язково запам'ятайте його.")
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedTextField(
+                        value = state.pinCode,
+                        onValueChange = { viewModel.onPinCodeChange(it) },
+                        label = { Text("PIN-код") },
+                        isError = state.pinCodeError != null,
+                        supportingText = state.pinCodeError?.let { { Text(it) } },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    if (state.updateError != null) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = state.updateError!!,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { viewModel.setupPinCode() },
+                    enabled = !state.isUpdating && state.pinCode.length == 4
+                ) {
+                    Text("Встановити")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.closePinCodeDialog() }) {
+                    Text("Скасувати")
+                }
+            }
+        )
+    }
+
+    if (state.isUpdatePinCodeDialogOpen) {
+        AlertDialog(
+            onDismissRequest = { viewModel.closeUpdatePinCodeDialog() },
+            title = { Text("Оновити PIN-код") },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = state.currentPinCode,
+                        onValueChange = { viewModel.onCurrentPinCodeChange(it) },
+                        label = { Text("Поточний PIN-код") },
+                        isError = state.currentPinCodeError != null,
+                        supportingText = state.currentPinCodeError?.let { { Text(it) } },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = state.newPinCode,
+                        onValueChange = { viewModel.onNewPinCodeChange(it) },
+                        label = { Text("Новий PIN-код") },
+                        isError = state.newPinCodeError != null,
+                        supportingText = state.newPinCodeError?.let { { Text(it) } },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    if (state.updateError != null) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = state.updateError!!,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { viewModel.updatePinCode() },
+                    enabled = !state.isUpdating && state.currentPinCode.length == 4 && state.newPinCode.length == 4
+                ) {
+                    Text("Оновити")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.closeUpdatePinCodeDialog() }) {
+                    Text("Скасувати")
+                }
+            }
         )
     }
 

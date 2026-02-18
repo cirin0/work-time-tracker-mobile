@@ -17,6 +17,7 @@ datastore = "1.2.0"
 coil = "2.7.0"
 room = "2.8.4"
 pusher-java-client = "2.4.4"
+playServicesLocation = "21.3.0"
 
 # додам пізніше
 dotlottieAndroid = "0.5.0"
@@ -72,6 +73,9 @@ room-compiler = { group = "androidx.room", name = "room-compiler", version.ref =
 
 # pusher
 pusher-java-client = { group = "com.pusher", name = "pusher-java-client", version.ref = "pusher-java-client" }
+
+# Google Play Services Location
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
