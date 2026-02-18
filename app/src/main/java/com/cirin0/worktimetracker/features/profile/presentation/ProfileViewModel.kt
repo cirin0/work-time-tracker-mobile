@@ -163,10 +163,11 @@ class ProfileViewModel @Inject constructor(
                 }
 
                 is ApiResponse.Error -> {
+                    val translatedError = translateError(response)
                     _state.update {
                         it.copy(
                             isUpdating = false,
-                            updateError = response.message
+                            updateError = translatedError
                         )
                     }
                 }
@@ -193,10 +194,11 @@ class ProfileViewModel @Inject constructor(
                 }
 
                 is ApiResponse.Error -> {
+                    val translatedError = translateError(response)
                     _state.update {
                         it.copy(
                             isUpdating = false,
-                            updateError = response.message
+                            updateError = translatedError
                         )
                     }
                 }
@@ -211,6 +213,225 @@ class ProfileViewModel @Inject constructor(
 
     fun clearUpdateSuccess() {
         _state.update { it.copy(updateSuccess = false) }
+    }
+
+    fun openPinCodeDialog() {
+        _state.update {
+            it.copy(
+                isPinCodeDialogOpen = true,
+                pinCode = "",
+                pinCodeError = null,
+                updateError = null
+            )
+        }
+    }
+
+    fun closePinCodeDialog() {
+        _state.update {
+            it.copy(
+                isPinCodeDialogOpen = false,
+                pinCode = "",
+                pinCodeError = null
+            )
+        }
+    }
+
+    fun onPinCodeChange(pin: String) {
+        if (pin.length <= 4 && pin.all { it.isDigit() }) {
+            _state.update {
+                it.copy(
+                    pinCode = pin,
+                    pinCodeError = null
+                )
+            }
+        }
+    }
+
+    fun setupPinCode() {
+        val pinCode = _state.value.pinCode
+        if (pinCode.length != 4) {
+            _state.update { it.copy(pinCodeError = "PIN-код має складатися з 4 цифр") }
+            return
+        }
+
+        viewModelScope.launch {
+            _state.update { it.copy(isUpdating = true, updateError = null, updateSuccess = false) }
+            when (val response = profileRepository.setupPinCode(pinCode)) {
+                is ApiResponse.Success -> {
+                    _state.update {
+                        it.copy(
+                            isUpdating = false,
+                            updateSuccess = true,
+                            isPinCodeDialogOpen = false,
+                            pinCode = ""
+                        )
+                    }
+                    loadUserProfile()
+                }
+
+                is ApiResponse.Error -> {
+                    val translatedError = translateError(response)
+                    _state.update {
+                        it.copy(
+                            isUpdating = false,
+                            updateError = translatedError
+                        )
+                    }
+                }
+
+                is ApiResponse.Loading -> {
+                    _state.update { it.copy(isUpdating = true) }
+                }
+            }
+        }
+    }
+
+    fun openUpdatePinCodeDialog() {
+        _state.update {
+            it.copy(
+                isUpdatePinCodeDialogOpen = true,
+                currentPinCode = "",
+                newPinCode = "",
+                currentPinCodeError = null,
+                newPinCodeError = null,
+                updateError = null
+            )
+        }
+    }
+
+    fun closeUpdatePinCodeDialog() {
+        _state.update {
+            it.copy(
+                isUpdatePinCodeDialogOpen = false,
+                currentPinCode = "",
+                newPinCode = "",
+                currentPinCodeError = null,
+                newPinCodeError = null
+            )
+        }
+    }
+
+    fun onCurrentPinCodeChange(pin: String) {
+        if (pin.length <= 4 && pin.all { it.isDigit() }) {
+            _state.update {
+                it.copy(
+                    currentPinCode = pin,
+                    currentPinCodeError = null
+                )
+            }
+        }
+    }
+
+    fun onNewPinCodeChange(pin: String) {
+        if (pin.length <= 4 && pin.all { it.isDigit() }) {
+            _state.update {
+                it.copy(
+                    newPinCode = pin,
+                    newPinCodeError = null
+                )
+            }
+        }
+    }
+
+    fun updatePinCode() {
+        val currentPin = _state.value.currentPinCode
+        val newPin = _state.value.newPinCode
+
+        val currentError = if (currentPin.length != 4) "PIN-код має складатися з 4 цифр" else null
+        val newError = if (newPin.length != 4) "PIN-код має складатися з 4 цифр" else null
+
+        if (currentError != null || newError != null) {
+            _state.update {
+                it.copy(
+                    currentPinCodeError = currentError,
+                    newPinCodeError = newError
+                )
+            }
+            return
+        }
+
+        viewModelScope.launch {
+            _state.update { it.copy(isUpdating = true, updateError = null, updateSuccess = false) }
+            when (val response = profileRepository.updatePinCode(currentPin, newPin)) {
+                is ApiResponse.Success -> {
+                    _state.update {
+                        it.copy(
+                            isUpdating = false,
+                            updateSuccess = true,
+                            isUpdatePinCodeDialogOpen = false,
+                            currentPinCode = "",
+                            newPinCode = ""
+                        )
+                    }
+                    loadUserProfile()
+                }
+
+                is ApiResponse.Error -> {
+                    val translatedError = translateError(response)
+                    _state.update {
+                        it.copy(
+                            isUpdating = false,
+                            updateError = translatedError
+                        )
+                    }
+                }
+
+                is ApiResponse.Loading -> {
+                    _state.update { it.copy(isUpdating = true) }
+                }
+            }
+        }
+    }
+
+    private fun translateError(error: ApiResponse.Error): String {
+        if (error.code == 422 && error.errors != null) {
+            val allErrors = error.errors.values.flatten()
+            if (allErrors.isNotEmpty()) {
+                val firstError = allErrors.first()
+                return when {
+                    firstError.contains(
+                        "pin code is required",
+                        ignoreCase = true
+                    ) -> "Пін-код обов'язковий."
+
+                    firstError.contains(
+                        "pin code must be exactly 4 digits",
+                        ignoreCase = true
+                    ) -> "Пін-код має складатися рівно з 4 цифр."
+
+                    firstError.contains(
+                        "pin code must contain only digits",
+                        ignoreCase = true
+                    ) -> "Пін-код має містити лише цифри."
+
+                    firstError.contains(
+                        "must be different from the current one",
+                        ignoreCase = true
+                    ) -> "Новий пін-код має відрізнятися від поточного."
+
+                    firstError.contains(
+                        "current pin code is incorrect",
+                        ignoreCase = true
+                    ) -> "Поточний пін-код невірний."
+
+                    else -> firstError
+                }
+            }
+        }
+
+        return when {
+            error.message.contains(
+                "current pin code is incorrect",
+                ignoreCase = true
+            ) -> "Поточний пін-код невірний."
+
+            error.message.contains(
+                "must be different from the current one",
+                ignoreCase = true
+            ) -> "Новий пін-код має відрізнятися від поточного."
+
+            else -> error.message
+        }
     }
 
     fun logout() {

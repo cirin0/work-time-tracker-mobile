@@ -13,6 +13,8 @@ object Constants {
         const val ME = "me"
         const val UPDATE_PROFILE = "me"
         const val UPDATE_AVATAR = "me/avatar"
+        const val SETUP_PIN_CODE = "me/pin-code"
+        const val UPDATE_PIN_CODE = "me/pin-code"
         const val USERS = "users"
         const val COMPANIES = "companies"
         const val TIME_ENTRIES = "time-entries"

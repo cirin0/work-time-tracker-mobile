@@ -1,6 +1,9 @@
 package com.cirin0.worktimetracker.features.profile.data.api
 
 import com.cirin0.worktimetracker.core.utils.Constants
+import com.cirin0.worktimetracker.features.profile.data.model.MessageResponse
+import com.cirin0.worktimetracker.features.profile.data.model.SetupPinCodeRequest
+import com.cirin0.worktimetracker.features.profile.data.model.UpdatePinCodeRequest
 import com.cirin0.worktimetracker.features.profile.data.model.UpdateProfileRequest
 import com.cirin0.worktimetracker.features.profile.data.model.UpdateProfileResponse
 import com.cirin0.worktimetracker.features.profile.data.model.User
@@ -22,4 +25,10 @@ interface ProfileApi {
     @Multipart
     @POST(Constants.ApiRoutes.UPDATE_AVATAR)
     suspend fun updateAvatar(@Part avatar: MultipartBody.Part): User
+
+    @POST(Constants.ApiRoutes.SETUP_PIN_CODE)
+    suspend fun setupPinCode(@Body request: SetupPinCodeRequest): MessageResponse
+
+    @PATCH(Constants.ApiRoutes.UPDATE_PIN_CODE)
+    suspend fun updatePinCode(@Body request: UpdatePinCodeRequest): MessageResponse
 }
