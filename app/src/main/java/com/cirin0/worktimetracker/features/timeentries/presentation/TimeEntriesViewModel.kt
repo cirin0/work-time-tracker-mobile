@@ -71,9 +71,10 @@ class TimeEntriesViewModel @Inject constructor(
 
     fun startTimeEntry() {
         viewModelScope.launch {
+            _state.value = _state.value.copy(qrCodeScanSuccess = false)
+
             val user = _state.value.user
 
-            // Determine if GPS is needed based on work mode
             val needsGPS = when {
                 user == null -> true // Default to requiring GPS if user data not loaded
                 user.isRemote() -> false // Remote workers don't need GPS
@@ -83,7 +84,6 @@ class TimeEntriesViewModel @Inject constructor(
             }
 
             if (needsGPS) {
-                // Office mode or hybrid in office - get GPS location
                 _state.value = _state.value.copy(isLoadingLocation = true, error = null)
 
                 when (val locationResult = locationManager.getCurrentLocation()) {
@@ -97,16 +97,19 @@ class TimeEntriesViewModel @Inject constructor(
                         )
 
                         val comment = _state.value.startComment.takeIf { it.isNotBlank() }
+                        val qrCode = _state.value.qrCodeScanned
                         when (val result = repository.startTimeEntry(
                             comment,
                             locationResult.location.latitude,
-                            locationResult.location.longitude
+                            locationResult.location.longitude,
+                            qrCode
                         )) {
                             is ApiResponse.Success -> {
                                 _state.value = _state.value.copy(
                                     activeEntry = result.data,
                                     isLoading = false,
-                                    startComment = ""
+                                    startComment = "",
+                                    qrCodeScanned = null
                                 )
                                 loadTimeEntries()
                             }
@@ -114,6 +117,7 @@ class TimeEntriesViewModel @Inject constructor(
                             is ApiResponse.Error -> {
                                 _state.value = _state.value.copy(
                                     isLoading = false,
+                                    qrCodeScanSuccess = false,
                                     error = result.message
                                 )
                             }
@@ -127,6 +131,7 @@ class TimeEntriesViewModel @Inject constructor(
                             isLoadingLocation = false,
                             isLoading = false,
                             locationPermissionDenied = true,
+                            qrCodeScanSuccess = false,
                             error = "Location permission is required to start work"
                         )
                     }
@@ -135,6 +140,7 @@ class TimeEntriesViewModel @Inject constructor(
                         _state.value = _state.value.copy(
                             isLoadingLocation = false,
                             isLoading = false,
+                            qrCodeScanSuccess = false,
                             error = "Failed to get location: ${locationResult.message}"
                         )
                     }
@@ -142,13 +148,15 @@ class TimeEntriesViewModel @Inject constructor(
             } else {
                 _state.value = _state.value.copy(isLoading = true, error = null)
                 val comment = _state.value.startComment.takeIf { it.isNotBlank() }
+                val qrCode = _state.value.qrCodeScanned
 
-                when (val result = repository.startTimeEntry(comment, null, null)) {
+                when (val result = repository.startTimeEntry(comment, null, null, qrCode)) {
                     is ApiResponse.Success -> {
                         _state.value = _state.value.copy(
                             activeEntry = result.data,
                             isLoading = false,
-                            startComment = ""
+                            startComment = "",
+                            qrCodeScanned = null
                         )
                         loadTimeEntries()
                     }
@@ -156,6 +164,7 @@ class TimeEntriesViewModel @Inject constructor(
                     is ApiResponse.Error -> {
                         _state.value = _state.value.copy(
                             isLoading = false,
+                            qrCodeScanSuccess = false,
                             error = result.message
                         )
                     }
@@ -242,6 +251,39 @@ class TimeEntriesViewModel @Inject constructor(
             _state.value = _state.value.copy(
                 locationPermissionDenied = true,
                 error = "Location permission is required to track work time"
+            )
+        }
+    }
+
+    fun showQRScanner() {
+        _state.value = _state.value.copy(showQRScanner = true, error = null)
+    }
+
+    fun hideQRScanner() {
+        _state.value = _state.value.copy(
+            showQRScanner = false,
+            qrCodeScanned = null,
+            qrCodeScanSuccess = false
+        )
+    }
+
+    fun onQRCodeScanned(qrCode: String) {
+        _state.value = _state.value.copy(
+            qrCodeScanned = qrCode,
+            showQRScanner = false,
+            qrCodeScanSuccess = true
+        )
+        // Don't auto-start here - let the UI handle GPS permission check
+    }
+
+    fun onCameraPermissionResult(granted: Boolean) {
+        if (granted) {
+            _state.value = _state.value.copy(cameraPermissionDenied = false)
+        } else {
+            _state.value = _state.value.copy(
+                cameraPermissionDenied = true,
+                showQRScanner = false,
+                error = "Для сканування QR-коду потрібен доступ до камери"
             )
         }
     }

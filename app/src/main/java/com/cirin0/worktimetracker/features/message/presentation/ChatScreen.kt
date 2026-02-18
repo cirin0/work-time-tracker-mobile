@@ -50,10 +50,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.cirin0.worktimetracker.core.utils.DateUtils
 import com.cirin0.worktimetracker.features.message.data.model.Message
 import com.cirin0.worktimetracker.features.message.presentation.chat.ChatViewModel
-import java.text.SimpleDateFormat
-import java.util.Locale
 
 @Composable
 fun ChatScreen(
@@ -376,13 +375,5 @@ fun MessageInput(
 }
 
 private fun formatTime(dateString: String): String {
-    return try {
-        val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
-        val outputFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-        val date = inputFormat.parse(dateString)
-        date?.let { outputFormat.format(it) } ?: dateString
-    } catch (e: Exception) {
-        dateString
-    }
+    return DateUtils.formatTime(dateString)
 }
-

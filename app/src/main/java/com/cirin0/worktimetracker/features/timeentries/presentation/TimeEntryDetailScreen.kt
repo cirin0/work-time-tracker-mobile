@@ -33,9 +33,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.cirin0.worktimetracker.core.utils.DateUtils
 import com.cirin0.worktimetracker.features.timeentries.data.model.TimeEntry
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -177,13 +176,7 @@ private fun DetailRow(label: String, value: String) {
 }
 
 private fun formatDateTime(timeString: String): String {
-    return try {
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-        val dateTime = LocalDateTime.parse(timeString, formatter)
-        dateTime.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss"))
-    } catch (e: Exception) {
-        timeString
-    }
+    return DateUtils.formatDateTime(timeString)
 }
 
 @SuppressLint("DefaultLocale")

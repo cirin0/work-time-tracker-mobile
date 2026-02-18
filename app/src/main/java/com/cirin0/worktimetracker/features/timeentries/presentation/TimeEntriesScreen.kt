@@ -36,6 +36,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,10 +49,12 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.cirin0.worktimetracker.core.ui.QRCodeScannerScreen
+import com.cirin0.worktimetracker.core.utils.DateUtils
 import com.cirin0.worktimetracker.features.timeentries.data.model.TimeEntry
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 @Composable
@@ -194,6 +197,25 @@ private fun StartEntryCard(
         }
     }
 
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        viewModel.onCameraPermissionResult(isGranted)
+        if (isGranted) {
+            viewModel.showQRScanner()
+        }
+    }
+
+    LaunchedEffect(state.qrCodeScanSuccess) {
+        if (state.qrCodeScanSuccess) {
+            if (!viewModel.hasLocationPermission()) {
+                permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+            } else {
+                viewModel.startTimeEntry()
+            }
+        }
+    }
+
     val user = state.user
     val isHybrid = user?.isHybrid() == true
     val isOffice = user?.requiresGPS() == true
@@ -206,6 +228,9 @@ private fun StartEntryCard(
         isHybrid -> state.isInOffice
         else -> true
     }
+
+    // Determine if QR code scanning is needed (only for office mode, not hybrid)
+    val needsQRScan = isOffice
 
     Card(
         modifier = Modifier.fillMaxWidth()
@@ -224,7 +249,7 @@ private fun StartEntryCard(
                 Text(
                     text = when {
                         isRemote -> "Режим: Віддалена робота"
-                        isOffice -> "Режим: Офіс (потрібна геолокація)"
+                        isOffice -> "Режим: Офіс (потрібна геолокація та QR-код)"
                         isHybrid -> "Режим: Гібридний"
                         else -> ""
                     },
@@ -292,10 +317,19 @@ private fun StartEntryCard(
 
             Button(
                 onClick = {
-                    if (needsGPS && !viewModel.hasLocationPermission()) {
-                        permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-                    } else {
-                        viewModel.startTimeEntry()
+                    when {
+                        // For office mode, first scan QR code
+                        needsQRScan -> {
+                            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                        }
+                        // For other modes with GPS requirement
+                        needsGPS && !viewModel.hasLocationPermission() -> {
+                            permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                        }
+                        // Start tracking directly
+                        else -> {
+                            viewModel.startTimeEntry()
+                        }
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -315,6 +349,30 @@ private fun StartEntryCard(
                     Spacer(Modifier.width(8.dp))
                     Text("Почати відстеження")
                 }
+            }
+
+            // Show QR Scanner dialog
+            if (state.showQRScanner) {
+                Dialog(
+                    onDismissRequest = { viewModel.hideQRScanner() },
+                    properties = DialogProperties(usePlatformDefaultWidth = false)
+                ) {
+                    QRCodeScannerScreen(
+                        onQRCodeScanned = { qrCode ->
+                            viewModel.onQRCodeScanned(qrCode)
+                        },
+                        onDismiss = { viewModel.hideQRScanner() }
+                    )
+                }
+            }
+
+            // Show camera permission denied message
+            if (state.cameraPermissionDenied) {
+                Text(
+                    text = "Для сканування QR-коду потрібен доступ до камери. Будь ласка, надайте дозвіл у налаштуваннях.",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
             }
         }
     }
@@ -414,13 +472,7 @@ private fun ActiveEntryCard(
 }
 
 private fun formatTime(timeString: String): String {
-    return try {
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-        val dateTime = LocalDateTime.parse(timeString, formatter)
-        dateTime.format(DateTimeFormatter.ofPattern("HH:mm"))
-    } catch (_: Exception) {
-        timeString
-    }
+    return DateUtils.formatTime(timeString)
 }
 
 @Composable

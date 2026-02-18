@@ -18,6 +18,10 @@ data class TimeEntriesState(
     val currentLatitude: Double? = null,
     val currentLongitude: Double? = null,
     val user: User? = null,
-    val isInOffice: Boolean = false // For hybrid mode
+    val isInOffice: Boolean = false,
+    val showQRScanner: Boolean = false,
+    val qrCodeScanned: String? = null,
+    val cameraPermissionDenied: Boolean = false,
+    val qrCodeScanSuccess: Boolean = false
 )
 

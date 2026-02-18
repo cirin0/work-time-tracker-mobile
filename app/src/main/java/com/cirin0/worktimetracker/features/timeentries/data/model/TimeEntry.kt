@@ -39,7 +39,8 @@ data class TimeEntryRequest(
     val startComment: String? = null,
     val latitude: Double?,
     val longitude: Double?,
-//     val qr_code: String?
+    @SerializedName("qr_code")
+    val qrCode: String?
 )
 
 data class StopTimeEntryRequest(
