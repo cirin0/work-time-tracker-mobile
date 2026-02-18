@@ -1,5 +1,8 @@
 package com.cirin0.worktimetracker.features.timeentries.presentation
 
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,10 +16,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -27,14 +33,20 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.cirin0.worktimetracker.features.timeentries.data.model.TimeEntry
@@ -173,6 +185,28 @@ private fun StartEntryCard(
     state: TimeEntriesState,
     viewModel: TimeEntriesViewModel
 ) {
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        viewModel.onPermissionResult(isGranted)
+        if (isGranted) {
+            viewModel.startTimeEntry()
+        }
+    }
+
+    val user = state.user
+    val isHybrid = user?.isHybrid() == true
+    val isOffice = user?.requiresGPS() == true
+    val isRemote = user?.isRemote() == true
+
+    // Determine if GPS is needed
+    val needsGPS = when {
+        isRemote -> false
+        isOffice -> true
+        isHybrid -> state.isInOffice
+        else -> true
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -185,22 +219,102 @@ private fun StartEntryCard(
                 style = MaterialTheme.typography.headlineSmall
             )
 
+            // Show work mode info
+            user?.let {
+                Text(
+                    text = when {
+                        isRemote -> "Режим: Віддалена робота"
+                        isOffice -> "Режим: Офіс (потрібна геолокація)"
+                        isHybrid -> "Режим: Гібридний"
+                        else -> ""
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            // Switch for hybrid mode
+            if (isHybrid) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            if (!state.isLoading && !state.isLoadingLocation) {
+                                viewModel.toggleIsInOffice(!state.isInOffice)
+                            }
+                        }
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Я працюю з офісу",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Switch(
+                        checked = state.isInOffice,
+                        onCheckedChange = { viewModel.toggleIsInOffice(it) },
+                        enabled = !state.isLoading && !state.isLoadingLocation
+                    )
+                }
+                if (state.isInOffice) {
+                    Text(
+                        text = "Для роботи з офісу потрібна геолокація",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            if (state.error != null) {
+                Text(
+                    text = state.error,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            if (state.locationPermissionDenied && needsGPS) {
+                Text(
+                    text = "Для відстеження часу потрібен доступ до локації. Будь ласка, надайте дозвіл у налаштуваннях.",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+
             OutlinedTextField(
                 value = state.startComment,
                 onValueChange = viewModel::updateStartComment,
                 label = { Text("Коментар до початку (необов'язково)") },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !state.isLoading
+                enabled = !state.isLoading && !state.isLoadingLocation
             )
 
             Button(
-                onClick = { viewModel.startTimeEntry() },
+                onClick = {
+                    if (needsGPS && !viewModel.hasLocationPermission()) {
+                        permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                    } else {
+                        viewModel.startTimeEntry()
+                    }
+                },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !state.isLoading
+                enabled = !state.isLoading && !state.isLoadingLocation
             ) {
-                Icon(Icons.Default.PlayArrow, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("Почати відстеження")
+                if (state.isLoadingLocation) {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .width(16.dp)
+                            .height(16.dp),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text("Отримання локації...")
+                } else {
+                    Icon(Icons.Default.PlayArrow, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Почати відстеження")
+                }
             }
         }
     }
@@ -212,6 +326,8 @@ private fun ActiveEntryCard(
     state: TimeEntriesState,
     viewModel: TimeEntriesViewModel
 ) {
+    var isPinVisible by remember { mutableStateOf(false) }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -241,6 +357,14 @@ private fun ActiveEntryCard(
 
             HorizontalDivider()
 
+            if (state.error != null) {
+                Text(
+                    text = state.error,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
             OutlinedTextField(
                 value = state.stopComment,
                 onValueChange = viewModel::updateStopComment,
@@ -249,12 +373,34 @@ private fun ActiveEntryCard(
                 enabled = !state.isLoading
             )
 
+            OutlinedTextField(
+                value = state.pinCode,
+                onValueChange = viewModel::updatePinCode,
+                label = { Text("PIN-код (4 цифри)") },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !state.isLoading,
+                visualTransformation = if (isPinVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                trailingIcon = {
+                    IconButton(onClick = { isPinVisible = !isPinVisible }) {
+                        Icon(
+                            imageVector = if (isPinVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                            contentDescription = if (isPinVisible) "Сховати PIN" else "Показати PIN"
+                        )
+                    }
+                },
+                isError = state.pinCode.isNotEmpty() && state.pinCode.length != 4,
+                supportingText = if (state.pinCode.isNotEmpty() && state.pinCode.length != 4) {
+                    { Text("PIN-код має містити 4 цифри") }
+                } else null
+            )
+
             Button(
                 onClick = {
                     viewModel.stopTimeEntry()
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !state.isLoading,
+                enabled = !state.isLoading && state.pinCode.length == 4,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.error
                 )
@@ -272,7 +418,7 @@ private fun formatTime(timeString: String): String {
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
         val dateTime = LocalDateTime.parse(timeString, formatter)
         dateTime.format(DateTimeFormatter.ofPattern("HH:mm"))
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         timeString
     }
 }

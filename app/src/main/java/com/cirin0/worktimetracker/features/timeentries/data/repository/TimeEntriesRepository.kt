@@ -13,9 +13,19 @@ import jakarta.inject.Singleton
 class TimeEntriesRepository @Inject constructor(
     private val api: TimeEntriesApi
 ) {
-    suspend fun startTimeEntry(startComment: String?): ApiResponse<TimeEntry> {
+    suspend fun startTimeEntry(
+        startComment: String?,
+        latitude: Double?,
+        longitude: Double?
+    ): ApiResponse<TimeEntry> {
         return apiCall {
-            val response = api.startTimeEntry(TimeEntryRequest(startComment))
+            val response = api.startTimeEntry(
+                TimeEntryRequest(
+                    startComment = startComment,
+                    latitude = latitude,
+                    longitude = longitude
+                )
+            )
             response.data ?: throw Exception("Failed to start time entry")
         }
     }
@@ -27,9 +37,9 @@ class TimeEntriesRepository @Inject constructor(
         }
     }
 
-    suspend fun stopTimeEntry(stopComment: String?): ApiResponse<TimeEntry> {
+    suspend fun stopTimeEntry(stopComment: String?, pinCode: String): ApiResponse<TimeEntry> {
         return apiCall {
-            val response = api.stopTimeEntry(StopTimeEntryRequest(stopComment))
+            val response = api.stopTimeEntry(StopTimeEntryRequest(stopComment, pinCode))
             response.data ?: throw Exception("Failed to stop time entry")
         }
     }
