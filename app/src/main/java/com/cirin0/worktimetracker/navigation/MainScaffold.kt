@@ -8,10 +8,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Quiz
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -38,8 +39,14 @@ import androidx.navigation.navArgument
 import com.cirin0.worktimetracker.features.company.presentation.CompanyScreen
 import com.cirin0.worktimetracker.features.home.ConnectivityViewModel
 import com.cirin0.worktimetracker.features.home.MainScreen
+import com.cirin0.worktimetracker.features.message.presentation.ChatListScreen
+import com.cirin0.worktimetracker.features.message.presentation.ChatScreen
 import com.cirin0.worktimetracker.features.profile.presentation.ProfileScreen
 import com.cirin0.worktimetracker.features.test.TestScreen
+import com.cirin0.worktimetracker.features.timeentries.presentation.TimeEntriesScreen
+import com.cirin0.worktimetracker.features.timeentries.presentation.TimeEntryDetailScreen
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
 
 @Composable
 fun MainScaffold(
@@ -56,9 +63,14 @@ fun MainScaffold(
             label = "Головна"
         ),
         BottomNavItem(
-            route = Screen.Test.route,
-            icon = Icons.Default.Quiz,
-            label = "Тест"
+            route = Screen.TimeEntries.route,
+            icon = Icons.Default.AccessTime,
+            label = "Час"
+        ),
+        BottomNavItem(
+            route = Screen.ChatList.route,
+            icon = Icons.AutoMirrored.Filled.Chat,
+            label = "Чат"
         ),
         BottomNavItem(
             route = Screen.Profile.route,
@@ -69,36 +81,41 @@ fun MainScaffold(
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentDestination = navBackStackEntry?.destination
+            val navBackStackEntry by navController.currentBackStackEntryAsState()
+            val currentDestination = navBackStackEntry?.destination
 
-                bottomNavItems.forEach { item ->
-                    val isSelected =
-                        currentDestination?.hierarchy?.any { it.route == item.route } == true
-                    NavigationBarItem(
-                        icon = {
-                            Icon(
-                                imageVector = item.icon,
-                                contentDescription = item.label
-                            )
-                        },
-                        label = {
-                            if (isSelected) {
-                                Text(item.label)
-                            }
-                        },
-                        selected = isSelected,
-                        onClick = {
-                            navController.navigate(item.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
+            // Hide bottom bar on ChatScreen
+            val shouldShowBottomBar = currentDestination?.route?.startsWith("chat/") != true
+
+            if (shouldShowBottomBar) {
+                NavigationBar {
+                    bottomNavItems.forEach { item ->
+                        val isSelected =
+                            currentDestination?.hierarchy?.any { it.route == item.route } == true
+                        NavigationBarItem(
+                            icon = {
+                                Icon(
+                                    imageVector = item.icon,
+                                    contentDescription = item.label
+                                )
+                            },
+                            label = {
+                                if (isSelected) {
+                                    Text(item.label)
                                 }
-                                launchSingleTop = true
-                                restoreState = true
+                            },
+                            selected = isSelected,
+                            onClick = {
+                                navController.navigate(item.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
                             }
-                        }
-                    )
+                        )
+                    }
                 }
             }
         }
@@ -143,8 +160,66 @@ fun MainScaffold(
                 composable(Screen.Main.route) {
                     MainScreen()
                 }
+                composable(Screen.TimeEntries.route) {
+                    TimeEntriesScreen(
+                        onNavigateToDetail = { entryId ->
+                            navController.navigate(Screen.TimeEntryDetail.createRoute(entryId))
+                        }
+                    )
+                }
+                composable(
+                    route = Screen.TimeEntryDetail.route,
+                    arguments = listOf(navArgument("entryId") { type = NavType.IntType })
+                ) { backStackEntry ->
+                    val entryId = backStackEntry.arguments?.getInt("entryId") ?: 0
+                    TimeEntryDetailScreen(
+                        timeEntryId = entryId,
+                        onNavigateBack = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
                 composable(Screen.Test.route) {
                     TestScreen()
+                }
+                composable(Screen.ChatList.route) {
+                    ChatListScreen(
+                        onNavigateToChat = { receiverId, receiverName, receiverAvatar ->
+                            navController.navigate(
+                                Screen.Chat.createRoute(
+                                    receiverId,
+                                    receiverName,
+                                    receiverAvatar
+                                )
+                            )
+                        }
+                    )
+                }
+                composable(
+                    route = Screen.Chat.route,
+                    arguments = listOf(
+                        navArgument("receiverId") { type = NavType.IntType },
+                        navArgument("receiverName") { type = NavType.StringType },
+                        navArgument("receiverAvatar") {
+                            type = NavType.StringType
+                            nullable = true
+                            defaultValue = null
+                        }
+                    )
+                ) { backStackEntry ->
+                    val receiverId = backStackEntry.arguments?.getInt("receiverId") ?: 0
+                    val receiverName = backStackEntry.arguments?.getString("receiverName") ?: ""
+                    val receiverAvatar = backStackEntry.arguments?.getString("receiverAvatar")
+                        ?.takeIf { it != "null" }
+                        ?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.toString()) }
+                    ChatScreen(
+                        receiverId = receiverId,
+                        receiverName = receiverName,
+                        receiverAvatar = receiverAvatar,
+                        onNavigateBack = {
+                            navController.popBackStack()
+                        }
+                    )
                 }
                 composable(Screen.Profile.route) {
                     ProfileScreen(

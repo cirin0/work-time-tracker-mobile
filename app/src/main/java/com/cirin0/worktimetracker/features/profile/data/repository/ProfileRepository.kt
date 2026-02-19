@@ -8,6 +8,9 @@ import com.cirin0.worktimetracker.core.network.apiCall
 import com.cirin0.worktimetracker.core.utils.ConnectivityObserver
 import com.cirin0.worktimetracker.core.utils.Constants
 import com.cirin0.worktimetracker.features.profile.data.api.ProfileApi
+import com.cirin0.worktimetracker.features.profile.data.model.MessageResponse
+import com.cirin0.worktimetracker.features.profile.data.model.SetupPinCodeRequest
+import com.cirin0.worktimetracker.features.profile.data.model.UpdatePinCodeRequest
 import com.cirin0.worktimetracker.features.profile.data.model.UpdateProfileRequest
 import com.cirin0.worktimetracker.features.profile.data.model.User
 import jakarta.inject.Inject
@@ -101,5 +104,30 @@ class ProfileRepository @Inject constructor(
 
     suspend fun clearCache() {
         userDao.clearCache()
+    }
+
+    suspend fun setupPinCode(pinCode: String): ApiResponse<MessageResponse> {
+        if (!connectivityObserver.isConnected()) {
+            return ApiResponse.Error("Немає підключення до інтернету. Неможливо встановити PIN-код.")
+        }
+
+        return apiCall {
+            profileApi.setupPinCode(SetupPinCodeRequest(pinCode))
+        }
+    }
+
+    suspend fun updatePinCode(currentPin: String, newPin: String): ApiResponse<MessageResponse> {
+        if (!connectivityObserver.isConnected()) {
+            return ApiResponse.Error("Немає підключення до інтернету. Неможливо оновити PIN-код.")
+        }
+
+        return apiCall {
+            profileApi.updatePinCode(
+                UpdatePinCodeRequest(
+                    currentPin,
+                    newPin
+                )
+            )
+        }
     }
 }

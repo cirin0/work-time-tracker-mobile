@@ -16,5 +16,13 @@ data class ProfileState(
     val emailError: String? = null,
     val isOffline: Boolean = false,
     val isCachedData: Boolean = false,
-    val showServerUnavailableWarning: Boolean = false
+    val showServerUnavailableWarning: Boolean = false,
+    val isPinCodeDialogOpen: Boolean = false,
+    val isUpdatePinCodeDialogOpen: Boolean = false,
+    val pinCode: String = "",
+    val currentPinCode: String = "",
+    val newPinCode: String = "",
+    val pinCodeError: String? = null,
+    val currentPinCodeError: String? = null,
+    val newPinCodeError: String? = null
 )

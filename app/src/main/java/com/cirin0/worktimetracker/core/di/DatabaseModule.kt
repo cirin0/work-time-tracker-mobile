@@ -24,7 +24,9 @@ object DatabaseModule {
             context,
             AppDatabase::class.java,
             "work_time_tracker_db"
-        ).build()
+        )
+            .fallbackToDestructiveMigration(false)
+            .build()
     }
 
     @Provides

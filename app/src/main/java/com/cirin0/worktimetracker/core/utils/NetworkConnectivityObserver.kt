@@ -24,7 +24,7 @@ interface ConnectivityObserver {
 
 @Singleton
 class NetworkConnectivityObserver @Inject constructor(
-    @ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context
 ) : ConnectivityObserver {
 
     private val connectivityManager =

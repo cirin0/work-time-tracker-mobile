@@ -28,7 +28,7 @@ class CompanyRepository @Inject constructor(
                     if (path.startsWith("http")) path
                     else "$imageBaseUrl$path"
                 },
-                employees = company.employees.map { employee ->
+                employees = company.employees?.mapValues { (_, employee) ->
                     employee.copy(
                         avatar = employee.avatar?.let { path ->
                             if (path.startsWith("http")) path

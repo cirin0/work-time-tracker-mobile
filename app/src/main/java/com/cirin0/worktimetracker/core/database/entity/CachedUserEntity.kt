@@ -15,10 +15,14 @@ data class CachedUserEntity(
     val email: String,
     val role: String,
     val avatar: String?,
+    val workMode: String,
+    val hasPinCode: Boolean,
     val companyId: Int?,
     val companyName: String?,
     val managerId: Int?,
     val managerName: String?,
+    val managerEmail: String?,
+    val managerAvatar: String?,
     val workScheduleId: Int?,
     val workScheduleName: String?,
     val createdAt: String,
@@ -33,11 +37,18 @@ fun CachedUserEntity.toUser(): User {
         email = email,
         role = role,
         avatar = avatar,
+        workMode = workMode,
+        hasPinCode = hasPinCode,
         company = if (companyId != null && companyName != null) {
             Company(id = companyId, name = companyName)
         } else null,
-        manager = if (managerId != null && managerName != null) {
-            Manager(id = managerId, name = managerName)
+        manager = if (managerId != null && managerName != null && managerEmail != null && avatar != null) {
+            Manager(
+                id = managerId,
+                name = managerName,
+                email = managerEmail,
+                avatar = managerAvatar
+            )
         } else null,
         workSchedule = if (workScheduleId != null && workScheduleName != null) {
             WorkSchedule(id = workScheduleId, name = workScheduleName)
@@ -54,10 +65,14 @@ fun User.toCachedEntity(): CachedUserEntity {
         email = email,
         role = role,
         avatar = avatar,
+        workMode = workMode,
+        hasPinCode = hasPinCode,
         companyId = company?.id,
         companyName = company?.name,
         managerId = manager?.id,
         managerName = manager?.name,
+        managerEmail = manager?.email,
+        managerAvatar = manager?.avatar,
         workScheduleId = workSchedule?.id,
         workScheduleName = workSchedule?.name,
         createdAt = createdAt,
