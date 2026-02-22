@@ -295,14 +295,18 @@ class TimeEntriesViewModel @Inject constructor(
                 is ApiResponse.Success -> {
                     _state.value = _state.value.copy(
                         timeEntries = result.data,
-                        isLoadingList = false
+                        isLoadingList = false,
+                        showServerUnavailableWarning = false
                     )
                 }
 
                 is ApiResponse.Error -> {
+                    val cachedEntries = repository.getCachedTimeEntries()
                     _state.value = _state.value.copy(
+                        timeEntries = cachedEntries,
                         isLoadingList = false,
-                        listError = result.message
+                        listError = if (cachedEntries.isEmpty()) result.message else null,
+                        showServerUnavailableWarning = cachedEntries.isNotEmpty()
                     )
                 }
 

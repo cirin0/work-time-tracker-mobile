@@ -1,5 +1,8 @@
 package com.cirin0.worktimetracker.features.timeentries.data.repository
 
+import com.cirin0.worktimetracker.core.database.dao.TimeEntryDao
+import com.cirin0.worktimetracker.core.database.entity.toCachedEntity
+import com.cirin0.worktimetracker.core.database.entity.toTimeEntry
 import com.cirin0.worktimetracker.core.network.ApiResponse
 import com.cirin0.worktimetracker.core.network.apiCall
 import com.cirin0.worktimetracker.features.timeentries.data.api.TimeEntriesApi
@@ -11,7 +14,8 @@ import jakarta.inject.Singleton
 
 @Singleton
 class TimeEntriesRepository @Inject constructor(
-    private val api: TimeEntriesApi
+    private val api: TimeEntriesApi,
+    private val timeEntryDao: TimeEntryDao
 ) {
     suspend fun startTimeEntry(
         startComment: String?,
@@ -28,35 +32,77 @@ class TimeEntriesRepository @Inject constructor(
                     qrCode = qrCode
                 )
             )
-            response.data ?: throw Exception("Failed to start time entry")
+            val entry = response.data ?: throw Exception("Failed to start time entry")
+            timeEntryDao.cacheTimeEntry(entry.toCachedEntity())
+            entry
         }
     }
 
     suspend fun getActiveTimeEntry(): ApiResponse<TimeEntry?> {
-        return apiCall {
-            val response = api.getActiveTimeEntry()
-            response.data
+        return try {
+            apiCall {
+                val response = api.getActiveTimeEntry()
+                response.data?.let { entry ->
+                    timeEntryDao.cacheTimeEntry(entry.toCachedEntity())
+                    entry
+                }
+            }
+        } catch (e: Exception) {
+            val cachedEntry = timeEntryDao.getActiveTimeEntry()
+            if (cachedEntry != null) {
+                ApiResponse.Success(cachedEntry.toTimeEntry())
+            } else {
+                ApiResponse.Error(e.message ?: "Unknown error")
+            }
         }
     }
 
     suspend fun stopTimeEntry(stopComment: String?, pinCode: String): ApiResponse<TimeEntry> {
         return apiCall {
             val response = api.stopTimeEntry(StopTimeEntryRequest(stopComment, pinCode))
-            response.data ?: throw Exception("Failed to stop time entry")
+            val entry = response.data ?: throw Exception("Failed to stop time entry")
+            timeEntryDao.cacheTimeEntry(entry.toCachedEntity())
+            entry
         }
     }
 
     suspend fun getTimeEntries(): ApiResponse<List<TimeEntry>> {
-        return apiCall {
-            val response = api.getTimeEntries()
-            response.data
+        return try {
+            apiCall {
+                val response = api.getTimeEntries()
+                val entries = response.data
+                timeEntryDao.cacheTimeEntries(entries.map { it.toCachedEntity() })
+                entries
+            }
+        } catch (e: Exception) {
+            val cachedEntries = timeEntryDao.getAllCachedTimeEntries()
+            if (cachedEntries.isNotEmpty()) {
+                ApiResponse.Success(cachedEntries.map { it.toTimeEntry() })
+            } else {
+                ApiResponse.Error(e.message ?: "Unknown error")
+            }
         }
     }
 
     suspend fun getTimeEntryById(id: Int): ApiResponse<TimeEntry> {
-        return apiCall {
-            val response = api.getTimeEntryById(id)
-            response.data ?: throw Exception("Time entry not found")
+        return try {
+            apiCall {
+                val response = api.getTimeEntryById(id)
+                val entry = response.data ?: throw Exception("Time entry not found")
+                timeEntryDao.cacheTimeEntry(entry.toCachedEntity())
+                entry
+            }
+        } catch (e: Exception) {
+            val cachedEntry = timeEntryDao.getCachedTimeEntryById(id)
+            if (cachedEntry != null) {
+                ApiResponse.Success(cachedEntry.toTimeEntry())
+            } else {
+                ApiResponse.Error(e.message ?: "Unknown error")
+            }
         }
+    }
+
+    suspend fun getCachedTimeEntries(): List<TimeEntry> {
+        return timeEntryDao.getAllCachedTimeEntries().map { it.toTimeEntry() }
     }
 }
