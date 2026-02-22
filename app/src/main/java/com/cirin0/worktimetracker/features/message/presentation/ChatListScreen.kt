@@ -53,13 +53,14 @@ fun ChatListScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = "Повідомлення",
                 style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold
             )
             IconButton(onClick = { viewModel.loadUsers() }) {
@@ -69,6 +70,8 @@ fun ChatListScreen(
                 )
             }
         }
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         when {
             state.isLoading -> {

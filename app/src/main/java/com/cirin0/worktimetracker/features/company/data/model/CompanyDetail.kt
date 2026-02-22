@@ -14,9 +14,9 @@ data class CompanyDetail(
     val longitude: String?,
     @SerializedName("radius_meters")
     val radiusMeters: Int?,
-    val manager: CompanyManager,
-    val employees: Map<String, CompanyEmployee>?,
-    @SerializedName("users_count") val usersCount: Int,
+    val manager: BaseUser,
+    val employees: List<BaseUser>?,
+    @SerializedName("employee_count") val usersCount: Int,
     @SerializedName("created_at") val createdAt: String,
     @SerializedName("updated_at") val updatedAt: String
 ) {
@@ -24,16 +24,10 @@ data class CompanyDetail(
 
     fun getLongitudeAsDouble(): Double? = longitude?.toDoubleOrNull()
 
-    fun getEmployeesList(): List<CompanyEmployee> = employees?.values?.toList() ?: emptyList()
+    fun getEmployeesList(): List<BaseUser> = employees ?: emptyList()
 }
 
-data class CompanyManager(
-    val id: Int,
-    val name: String,
-    val email: String
-)
-
-data class CompanyEmployee(
+data class BaseUser(
     val id: Int,
     val name: String,
     val email: String,
