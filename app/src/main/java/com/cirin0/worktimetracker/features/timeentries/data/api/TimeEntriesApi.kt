@@ -5,6 +5,7 @@ import com.cirin0.worktimetracker.features.timeentries.data.model.StopTimeEntryR
 import com.cirin0.worktimetracker.features.timeentries.data.model.TimeEntriesListResponse
 import com.cirin0.worktimetracker.features.timeentries.data.model.TimeEntryRequest
 import com.cirin0.worktimetracker.features.timeentries.data.model.TimeEntryResponse
+import com.cirin0.worktimetracker.features.timesheet.data.model.TimeSummaryResponse
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.PATCH
@@ -26,4 +27,7 @@ interface TimeEntriesApi {
 
     @GET("${Constants.ApiRoutes.TIME_ENTRIES}/{id}")
     suspend fun getTimeEntryById(@Path("id") id: Int): TimeEntryResponse
+
+    @GET("${Constants.ApiRoutes.TIME_ENTRIES}/summary/me")
+    suspend fun getTimeSummary(): TimeSummaryResponse
 }

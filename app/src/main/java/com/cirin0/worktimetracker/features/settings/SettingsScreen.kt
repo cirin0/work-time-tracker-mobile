@@ -1,4 +1,4 @@
-package com.cirin0.worktimetracker.features.test
+package com.cirin0.worktimetracker.features.settings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,12 +23,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.cirin0.worktimetracker.features.home.ThemeViewModel
 
 
 @Composable
-fun TestScreen(
+fun SettingsScreen(
     themeViewModel: ThemeViewModel = hiltViewModel(),
+    onNavigateBack: () -> Boolean,
 ) {
 
     val useDarkTheme by themeViewModel.userThemePreference.collectAsState()

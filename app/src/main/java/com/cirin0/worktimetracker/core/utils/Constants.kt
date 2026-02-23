@@ -11,6 +11,7 @@ object Constants {
         const val REFRESH = "auth/refresh"
         const val LOGOUT = "auth/logout"
         const val ME = "me"
+        const val ME_WORK_SCHEDULE = "me/work-schedule"
         const val UPDATE_PROFILE = "me"
         const val UPDATE_AVATAR = "me/avatar"
         const val SETUP_PIN_CODE = "me/pin-code"
@@ -18,6 +19,7 @@ object Constants {
         const val USERS = "users"
         const val COMPANIES = "companies"
         const val TIME_ENTRIES = "time-entries"
+        const val LEAVE_REQUESTS = "leave-requests"
         const val MESSAGES = "messages"
         const val MESSAGES_BY_RECEIVER = "messages/{receiverId}"
     }

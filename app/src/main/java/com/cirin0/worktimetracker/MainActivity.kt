@@ -17,7 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.rememberNavController
 import com.cirin0.worktimetracker.features.auth.data.repository.AuthRepository
-import com.cirin0.worktimetracker.features.home.ThemeViewModel
+import com.cirin0.worktimetracker.features.settings.ThemeViewModel
 import com.cirin0.worktimetracker.navigation.NavGraph
 import com.cirin0.worktimetracker.navigation.Screen
 import com.cirin0.worktimetracker.ui.theme.WorkTimeTrackerTheme

@@ -16,11 +16,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Edit
@@ -70,7 +72,10 @@ import java.io.FileOutputStream
 fun ProfileScreen(
     viewModel: ProfileViewModel = hiltViewModel(),
     onLogoutSuccess: () -> Unit = {},
-    onNavigateToCompany: (Int) -> Unit = {}
+    onNavigateToCompany: (Int) -> Unit = {},
+    onNavigateToChat: () -> Unit = {},
+    onNavigateToRequests: () -> Unit = {},
+    onNavigateToSettings: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
     val logoutState by viewModel.logoutState.collectAsState()
@@ -129,6 +134,12 @@ fun ProfileScreen(
                 )
 
                 Row {
+                    IconButton(onClick = onNavigateToChat) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Chat,
+                            contentDescription = "Чат"
+                        )
+                    }
                     if (state.user != null) {
                         IconButton(onClick = { viewModel.openEditDialog() }) {
                             Icon(
@@ -352,7 +363,63 @@ fun ProfileScreen(
                         )
                     }
 
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onNavigateToRequests() },
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column {
+                                    Text(
+                                        text = "Мої заявки",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = "Відпустка, лікарняний, відгул",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+
                     Spacer(modifier = Modifier.height(32.dp))
+
+                    Button(
+                        onClick = onNavigateToSettings,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Налаштування")
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     Button(
                         onClick = { viewModel.logout() },
