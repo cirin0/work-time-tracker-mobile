@@ -2,7 +2,9 @@
 
 ## Project Overview
 
-Android work time tracking app using Kotlin, Jetpack Compose, Hilt DI, Room, Retrofit, and DataStore. Features include authentication with token refresh, profile management, offline caching, and network connectivity monitoring.
+Android work time tracking app using Kotlin, Jetpack Compose, Hilt DI, Room, Retrofit, and
+DataStore. Features include authentication with token refresh, profile management, offline caching,
+and network connectivity monitoring.
 
 ## Architecture & Structure
 
@@ -70,7 +72,8 @@ Base URLs configured in NetworkModule:
 ### Interceptor Chain (order matters)
 
 1. `AuthInterceptor` - Adds Bearer token to requests
-2. `TokenRefreshInterceptor` - Auto-refreshes tokens on 401, uses mutex to prevent concurrent refreshes
+2. `TokenRefreshInterceptor` - Auto-refreshes tokens on 401, uses mutex to prevent concurrent
+   refreshes
 3. `ContentTypeInterceptor` - Ensures proper Content-Type headers
 4. `HttpLoggingInterceptor` - Logs requests/responses in debug
 
@@ -88,7 +91,8 @@ Base URLs configured in NetworkModule:
 Two separate DataStore instances:
 
 - Auth tokens: Injected via Hilt in `core/di/DataStoreModule`
-- User preferences (theme): Created in `UserPreferencesRepository` via `preferencesDataStore` delegate
+- User preferences (theme): Created in `UserPreferencesRepository` via `preferencesDataStore`
+  delegate
 
 ### Room Database
 
@@ -119,6 +123,13 @@ Two separate DataStore instances:
 - Navigation callbacks passed as lambda parameters (e.g., `onNavigateToLogin`)
 - Material3 design system with dynamic color scheme
 - Extended Material Icons used throughout (`androidx.compose.material.icons.extended`)
+- **DO NOT wrap screens in Scaffold** - screens that are part of MainScaffold navigation already
+  have Scaffold provided by the navigation container. Individual screens should use Box, Column, or
+  other layout composables as root.
+- **Detail screens with TopAppBar**: For detail/secondary screens that need a TopAppBar with back
+  button, use `Column` as root with `TopAppBar` as first element (see `CompanyScreen.kt` and
+  `LeaveRequestDetailScreen.kt` as examples). Set `windowInsets = WindowInsets(0, 0, 0, 0)` on
+  TopAppBar to avoid padding issues.
 
 ### Network Status UI
 
