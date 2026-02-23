@@ -13,16 +13,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -32,6 +34,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -64,87 +67,71 @@ fun TimeEntriesScreen(
 ) {
     val state by viewModel.state.collectAsState()
 
-    LazyColumn(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(8.dp)
+            .verticalScroll(rememberScrollState())
+            .padding(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Відстеження часу",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold
-                )
-                Row {
-                    IconButton(onClick = {
-                        viewModel.loadActiveEntry()
-                        viewModel.loadTimeEntries()
-                    }) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "Оновити"
-                        )
-                    }
-                }
-            }
-        }
-
-        item {
-            Spacer(modifier = Modifier.height(24.dp))
-        }
-
-        item {
-            when {
-                state.isLoading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                }
-
-                state.activeEntry != null -> {
-                    ActiveEntryCard(state.activeEntry!!, state, viewModel)
-                }
-
-                else -> {
-                    StartEntryCard(state, viewModel)
-                }
-            }
-        }
-
-        item {
-            Spacer(modifier = Modifier.height(24.dp))
-        }
-
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Історія записів",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Відстеження часу",
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold
+            )
+            IconButton(onClick = {
+                viewModel.loadActiveEntry()
+                viewModel.loadTimeEntries()
+            }) {
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = "Оновити"
                 )
             }
         }
 
-        item {
-            Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(24.dp))
+
+        if (state.showServerUnavailableWarning) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = "Попередження",
+                        tint = MaterialTheme.colorScheme.tertiary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.padding(4.dp))
+                    Text(
+                        text = "Сервер недоступний - показано збережені дані",
+                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
         }
 
-        if (state.isLoadingList) {
-            item {
+        when {
+            state.isLoading -> {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -152,32 +139,80 @@ fun TimeEntriesScreen(
                     CircularProgressIndicator()
                 }
             }
-        } else if (state.listError != null) {
-            item {
-                Text(
-                    text = "Помилка завантаження: ${state.listError}",
-                    color = MaterialTheme.colorScheme.error
-                )
+
+            state.activeEntry != null -> {
+                ActiveEntryCard(state.activeEntry!!, state, viewModel)
             }
-        } else if (state.timeEntries.isEmpty()) {
-            item {
+
+            else -> {
+                StartEntryCard(state, viewModel)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Історія записів",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        when {
+            state.isLoadingList -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+
+            state.listError != null -> {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "Помилка: ${state.listError}",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedButton(onClick = { viewModel.loadTimeEntries() }) {
+                        Text("Спробувати знову")
+                    }
+                }
+            }
+
+            state.timeEntries.isEmpty() -> {
                 Text(
                     text = "Немає записів",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-        } else {
-            items(
-                items = state.timeEntries,
-                key = { entry -> entry.id },
-                contentType = { "timeEntry" }
-            ) { entry ->
-                TimeEntryListItem(
-                    entry = entry,
-                    onClick = { onNavigateToDetail(entry.id) }
-                )
-                Spacer(modifier = Modifier.height(8.dp))
+
+            else -> {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    state.timeEntries.forEach { entry ->
+                        TimeEntryListItem(
+                            entry = entry,
+                            onClick = { onNavigateToDetail(entry.id) }
+                        )
+                    }
+                }
             }
         }
     }
@@ -221,7 +256,6 @@ private fun StartEntryCard(
     val isOffice = user?.requiresGPS() == true
     val isRemote = user?.isRemote() == true
 
-    // Determine if GPS is needed
     val needsGPS = when {
         isRemote -> false
         isOffice -> true
@@ -229,11 +263,13 @@ private fun StartEntryCard(
         else -> true
     }
 
-    // Determine if QR code scanning is needed (only for office mode, not hybrid)
     val needsQRScan = isOffice
 
     Card(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -241,10 +277,10 @@ private fun StartEntryCard(
         ) {
             Text(
                 text = "Почати роботу",
-                style = MaterialTheme.typography.headlineSmall
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
             )
 
-            // Show work mode info
             user?.let {
                 Text(
                     text = when {
@@ -253,41 +289,50 @@ private fun StartEntryCard(
                         isHybrid -> "Режим: Гібридний"
                         else -> ""
                     },
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
-            // Switch for hybrid mode
             if (isHybrid) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            if (!state.isLoading && !state.isLoadingLocation) {
-                                viewModel.toggleIsInOffice(!state.isInOffice)
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                if (!state.isLoading && !state.isLoadingLocation) {
+                                    viewModel.toggleIsInOffice(!state.isInOffice)
+                                }
+                            }
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Text(
+                                text = "Я працюю з офісу",
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Medium
+                            )
+                            if (state.isInOffice) {
+                                Text(
+                                    text = "Для роботи з офісу потрібна геолокація",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                             }
                         }
-                        .padding(vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "Я працюю з офісу",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Switch(
-                        checked = state.isInOffice,
-                        onCheckedChange = { viewModel.toggleIsInOffice(it) },
-                        enabled = !state.isLoading && !state.isLoadingLocation
-                    )
-                }
-                if (state.isInOffice) {
-                    Text(
-                        text = "Для роботи з офісу потрібна геолокація",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                        Switch(
+                            checked = state.isInOffice,
+                            onCheckedChange = { viewModel.toggleIsInOffice(it) },
+                            enabled = !state.isLoading && !state.isLoadingLocation
+                        )
+                    }
                 }
             }
 
@@ -307,6 +352,14 @@ private fun StartEntryCard(
                 )
             }
 
+            if (state.cameraPermissionDenied) {
+                Text(
+                    text = "Для сканування QR-коду потрібен доступ до камери. Будь ласка, надайте дозвіл у налаштуваннях.",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+
             OutlinedTextField(
                 value = state.startComment,
                 onValueChange = viewModel::updateStartComment,
@@ -318,15 +371,14 @@ private fun StartEntryCard(
             Button(
                 onClick = {
                     when {
-                        // For office mode, first scan QR code
                         needsQRScan -> {
                             cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
                         }
-                        // For other modes with GPS requirement
+
                         needsGPS && !viewModel.hasLocationPermission() -> {
                             permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
                         }
-                        // Start tracking directly
+
                         else -> {
                             viewModel.startTimeEntry()
                         }
@@ -337,9 +389,7 @@ private fun StartEntryCard(
             ) {
                 if (state.isLoadingLocation) {
                     CircularProgressIndicator(
-                        modifier = Modifier
-                            .width(16.dp)
-                            .height(16.dp),
+                        modifier = Modifier.size(20.dp),
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                     Spacer(Modifier.width(8.dp))
@@ -351,7 +401,6 @@ private fun StartEntryCard(
                 }
             }
 
-            // Show QR Scanner dialog
             if (state.showQRScanner) {
                 Dialog(
                     onDismissRequest = { viewModel.hideQRScanner() },
@@ -364,15 +413,6 @@ private fun StartEntryCard(
                         onDismiss = { viewModel.hideQRScanner() }
                     )
                 }
-            }
-
-            // Show camera permission denied message
-            if (state.cameraPermissionDenied) {
-                Text(
-                    text = "Для сканування QR-коду потрібен доступ до камери. Будь ласка, надайте дозвіл у налаштуваннях.",
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall
-                )
             }
         }
     }
@@ -399,17 +439,21 @@ private fun ActiveEntryCard(
             Text(
                 text = "Активне відстеження часу",
                 style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                fontWeight = FontWeight.Bold
             )
+
             Text(
                 text = "Початок: ${formatTime(entry.startTime)}",
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium
             )
 
             entry.startComment?.let {
                 Text(
                     text = "Коментар: $it",
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             }
 
@@ -454,18 +498,23 @@ private fun ActiveEntryCard(
             )
 
             Button(
-                onClick = {
-                    viewModel.stopTimeEntry()
-                },
+                onClick = { viewModel.stopTimeEntry() },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !state.isLoading && state.pinCode.length == 4,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.error
                 )
             ) {
-                Icon(Icons.Default.Stop, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("Зупинити відстеження")
+                if (state.isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    Icon(Icons.Default.Stop, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Зупинити відстеження")
+                }
             }
         }
     }

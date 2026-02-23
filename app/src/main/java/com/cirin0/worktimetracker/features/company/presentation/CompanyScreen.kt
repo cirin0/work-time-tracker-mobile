@@ -20,7 +20,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -46,7 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil.compose.AsyncImage
-import com.cirin0.worktimetracker.features.company.data.model.CompanyEmployee
+import com.cirin0.worktimetracker.features.company.data.model.BaseUser
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,7 +64,12 @@ fun CompanyScreen(
         modifier = Modifier.fillMaxSize()
     ) {
         TopAppBar(
-            title = { Text("Компанія") },
+            title = {
+                Text(
+                    "Компанія",
+                    fontWeight = FontWeight.Bold
+                )
+            },
             windowInsets = WindowInsets(0, 0, 0, 0),
             navigationIcon = {
                 IconButton(onClick = onNavigateBack) {
@@ -76,7 +80,7 @@ fun CompanyScreen(
                 }
             },
             colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.inversePrimary
+                containerColor = MaterialTheme.colorScheme.surface
             )
         )
         Box(
@@ -117,9 +121,10 @@ fun CompanyScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .verticalScroll(rememberScrollState())
-                            .padding(16.dp),
+                            .padding(8.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
+                        Spacer(modifier = Modifier.height(16.dp))
                         Box(
                             modifier = Modifier
                                 .size(100.dp)
@@ -231,26 +236,47 @@ fun CompanyScreen(
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onTertiaryContainer
                                 )
-                                Spacer(modifier = Modifier.height(8.dp))
+                                Spacer(modifier = Modifier.height(12.dp))
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Person,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Spacer(modifier = Modifier.padding(4.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .size(48.dp)
+                                            .clip(CircleShape)
+                                            .background(MaterialTheme.colorScheme.primaryContainer),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        if (company.manager.avatar != null) {
+                                            AsyncImage(
+                                                model = company.manager.avatar,
+                                                contentDescription = "Аватар менеджера",
+                                                contentScale = ContentScale.Crop,
+                                                modifier = Modifier.fillMaxSize()
+                                            )
+                                        } else {
+                                            Text(
+                                                text = company.manager.name.firstOrNull()
+                                                    ?.uppercase() ?: "?",
+                                                style = MaterialTheme.typography.titleLarge,
+                                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.padding(8.dp))
+
                                     Column {
                                         Text(
                                             text = company.manager.name,
                                             style = MaterialTheme.typography.bodyLarge,
-                                            fontWeight = FontWeight.Medium
+                                            fontWeight = FontWeight.Medium,
+                                            color = MaterialTheme.colorScheme.onTertiaryContainer
                                         )
                                         Text(
                                             text = company.manager.email,
-                                            style = MaterialTheme.typography.bodySmall,
+                                            style = MaterialTheme.typography.bodyMedium,
                                             color = MaterialTheme.colorScheme.onTertiaryContainer
                                         )
                                     }
@@ -336,7 +362,7 @@ fun CompanyInfoCard(
 }
 
 @Composable
-fun EmployeeItem(employee: CompanyEmployee) {
+fun EmployeeItem(employee: BaseUser) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(

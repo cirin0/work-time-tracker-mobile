@@ -11,16 +11,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -48,11 +50,17 @@ fun TimeEntryDetailScreen(
     LaunchedEffect(timeEntryId) {
         viewModel.loadTimeEntry(timeEntryId)
     }
+
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
         TopAppBar(
-            title = { Text("Деталі запису") },
+            title = {
+                Text(
+                    "Деталі запису",
+                    fontWeight = FontWeight.Bold
+                )
+            },
             windowInsets = WindowInsets(0, 0, 0, 0),
             navigationIcon = {
                 IconButton(onClick = onNavigateBack) {
@@ -63,11 +71,9 @@ fun TimeEntryDetailScreen(
                 }
             },
             colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.inversePrimary
+                containerColor = MaterialTheme.colorScheme.surface
             )
         )
-
-        Spacer(modifier = Modifier.height(24.dp))
 
         Box(
             modifier = Modifier.fillMaxSize()
@@ -83,17 +89,29 @@ fun TimeEntryDetailScreen(
                 }
 
                 state.error != null -> {
-                    Text(
-                        text = "Помилка: ${state.error}",
-                        modifier = Modifier.padding(16.dp),
-                        color = MaterialTheme.colorScheme.error
-                    )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "Помилка: ${state.error}",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        OutlinedButton(onClick = { viewModel.loadTimeEntry(timeEntryId) }) {
+                            Text("Спробувати знову")
+                        }
+                    }
                 }
 
                 state.timeEntry != null -> {
                     TimeEntryDetailContent(
                         timeEntry = state.timeEntry!!,
-                        modifier = Modifier.padding(top = 0.dp, start = 8.dp, end = 8.dp)
+                        modifier = Modifier.padding(8.dp)
                     )
                 }
             }
@@ -101,56 +119,218 @@ fun TimeEntryDetailScreen(
     }
 }
 
+@SuppressLint("DefaultLocale")
 @Composable
 private fun TimeEntryDetailContent(
     timeEntry: TimeEntry,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = "Запис #${timeEntry.id}",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Заголовок
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = if (timeEntry.stopTime == null) {
+                    MaterialTheme.colorScheme.primaryContainer
+                } else {
+                    MaterialTheme.colorScheme.surfaceVariant
+                }
             )
-
-            HorizontalDivider()
-
-            DetailRow("Початок", formatDateTime(timeEntry.startTime))
-
-            if (timeEntry.stopTime != null) {
-                DetailRow("Зупинка", formatDateTime(timeEntry.stopTime))
-                DetailRow("Тривалість", formatDuration(timeEntry.duration ?: 0))
-            } else {
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 Text(
-                    text = "⏱️ Активний запис",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.primary,
+                    text = "Запис #${timeEntry.id}",
+                    style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold
                 )
+
+                if (timeEntry.stopTime == null) {
+                    Text(
+                        text = "⏱️ Активний запис",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
+        }
 
-            HorizontalDivider()
+        // Інформація про користувача
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "Користувач",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
 
-            if (!timeEntry.startComment.isNullOrBlank()) {
-                DetailRow("Коментар до початку", timeEntry.startComment)
+                DetailRow("Ім'я", timeEntry.user.name)
+                DetailRow("Email", timeEntry.user.email)
+                DetailRow("ID користувача", timeEntry.user.id.toString())
             }
+        }
 
-            if (!timeEntry.stopComment.isNullOrBlank()) {
-                DetailRow("Коментар до зупинки", timeEntry.stopComment)
+        // Час роботи
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "Час роботи",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+
+                DetailRow("Початок", formatDateTime(timeEntry.startTime))
+
+                if (timeEntry.stopTime != null) {
+                    DetailRow("Зупинка", formatDateTime(timeEntry.stopTime))
+                    DetailRow("Тривалість", formatDuration(timeEntry.duration ?: 0))
+                } else {
+                    Text(
+                        text = "Запис ще не завершено",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
+        }
 
+        // Коментарі
+        if (!timeEntry.startComment.isNullOrBlank() || !timeEntry.stopComment.isNullOrBlank()) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "Коментарі",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
 
-            DetailRow("Створено", timeEntry.createdAt?.let { formatDateTime(it) } ?: "-")
-            DetailRow("Оновлено", timeEntry.updatedAt?.let { formatDateTime(it) } ?: "-")
+                    if (!timeEntry.startComment.isNullOrBlank()) {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                text = "До початку:",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = timeEntry.startComment,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
+
+                    if (!timeEntry.stopComment.isNullOrBlank()) {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                text = "До зупинки:",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = timeEntry.stopComment,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // Локація
+        if (timeEntry.locationData != null) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "Локація",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    DetailRow("Широта", String.format("%.6f", timeEntry.locationData.lat))
+                    DetailRow("Довгота", String.format("%.6f", timeEntry.locationData.lng))
+                }
+            }
+        }
+
+        // Додаткова інформація
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "Додаткова інформація",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+
+                DetailRow(
+                    "Тип запису", when (timeEntry.entryType) {
+                        "manual" -> "Ручний"
+                        "automatic" -> "Автоматичний"
+                        else -> timeEntry.entryType
+                    }
+                )
+
+                if (timeEntry.createdAt != null) {
+                    DetailRow("Створено", formatDateTime(timeEntry.createdAt))
+                }
+
+                if (timeEntry.updatedAt != null) {
+                    DetailRow("Оновлено", formatDateTime(timeEntry.updatedAt))
+                }
+            }
         }
     }
 }

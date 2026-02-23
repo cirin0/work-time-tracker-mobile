@@ -22,6 +22,7 @@ data class TimeEntriesState(
     val showQRScanner: Boolean = false,
     val qrCodeScanned: String? = null,
     val cameraPermissionDenied: Boolean = false,
-    val qrCodeScanSuccess: Boolean = false
+    val qrCodeScanSuccess: Boolean = false,
+    val showServerUnavailableWarning: Boolean = false
 )
 

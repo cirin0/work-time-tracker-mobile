@@ -203,13 +203,13 @@ fun ChatTopBar(
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        tonalElevation = 2.dp,
+        tonalElevation = 0.dp,
         color = MaterialTheme.colorScheme.surface
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 4.dp, vertical = 8.dp),
+                .padding(horizontal = 8.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onNavigateBack) {
@@ -248,6 +248,7 @@ fun ChatTopBar(
             Text(
                 text = receiverName,
                 style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold
             )
         }
@@ -316,7 +317,7 @@ fun MessageInput(
     isSending: Boolean
 ) {
     Surface(
-        tonalElevation = 3.dp,
+        tonalElevation = 0.dp,
         modifier = Modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.surface
     ) {
