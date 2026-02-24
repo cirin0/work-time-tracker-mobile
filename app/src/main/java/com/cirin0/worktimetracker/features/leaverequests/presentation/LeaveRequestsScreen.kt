@@ -51,16 +51,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.cirin0.worktimetracker.core.utils.DateUtils
 import com.cirin0.worktimetracker.features.leaverequests.data.model.LeaveRequest
 import com.cirin0.worktimetracker.features.leaverequests.data.model.LeaveRequestStatus
 import com.cirin0.worktimetracker.features.leaverequests.data.model.LeaveRequestType
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 @Composable
 fun LeaveRequestsScreen(
-    onNavigateBack: () -> Unit = {},
     onNavigateToDetail: (Int) -> Unit,
     viewModel: LeaveRequestsViewModel = hiltViewModel()
 ) {
@@ -222,12 +219,16 @@ private fun LeaveRequestCard(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "${request.startDate} - ${request.endDate}",
+                    text = "${DateUtils.formatDate(request.startDate)} - ${
+                        DateUtils.formatDate(
+                            request.endDate
+                        )
+                    }",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = request.createdAt,
+                    text = DateUtils.formatDateTime(request.createdAt),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -298,7 +299,6 @@ private fun CreateLeaveRequestDialog(
                     fontWeight = FontWeight.Bold
                 )
 
-                // Type Dropdown
                 Box {
                     OutlinedTextField(
                         value = state.selectedType.displayName,
@@ -307,11 +307,16 @@ private fun CreateLeaveRequestDialog(
                         modifier = Modifier.fillMaxWidth(),
                         readOnly = true,
                         trailingIcon = {
-                            IconButton(onClick = { typeDropdownExpanded = !typeDropdownExpanded }) {
-                                Icon(Icons.Default.ArrowDropDown, contentDescription = null)
-                            }
+                            Icon(Icons.Default.ArrowDropDown, contentDescription = null)
                         },
                         enabled = !state.isCreating
+                    )
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .clickable(enabled = !state.isCreating) {
+                                typeDropdownExpanded = !typeDropdownExpanded
+                            }
                     )
                     DropdownMenu(
                         expanded = typeDropdownExpanded,
@@ -410,25 +415,22 @@ private fun CreateLeaveRequestDialog(
         }
     }
 
-    // Date Pickers
     if (showStartDatePicker) {
         val datePickerState = rememberDatePickerState()
         DatePickerDialog(
-            onDismissRequest = { showStartDatePicker = false },
+            onDismissRequest = { },
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
-                        val dateFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
-                        val date = dateFormat.format(Date(millis))
+                        val date = DateUtils.toIsoDate(millis)
                         viewModel.updateStartDate(date)
                     }
-                    showStartDatePicker = false
                 }) {
                     Text("OK")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showStartDatePicker = false }) {
+                TextButton(onClick = { }) {
                     Text("Скасувати")
                 }
             }
@@ -440,21 +442,19 @@ private fun CreateLeaveRequestDialog(
     if (showEndDatePicker) {
         val datePickerState = rememberDatePickerState()
         DatePickerDialog(
-            onDismissRequest = { showEndDatePicker = false },
+            onDismissRequest = { },
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
-                        val dateFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
-                        val date = dateFormat.format(Date(millis))
+                        val date = DateUtils.toIsoDate(millis)
                         viewModel.updateEndDate(date)
                     }
-                    showEndDatePicker = false
                 }) {
                     Text("OK")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showEndDatePicker = false }) {
+                TextButton(onClick = { }) {
                     Text("Скасувати")
                 }
             }

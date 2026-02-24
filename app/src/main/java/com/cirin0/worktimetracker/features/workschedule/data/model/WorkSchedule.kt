@@ -30,8 +30,8 @@ data class DailySchedule(
             "thursday" -> 4
             "friday" -> 5
             "saturday" -> 6
-            "sunday" -> 0
-            else -> 7
+            "sunday" -> 7
+            else -> 8
         }
     }
 }

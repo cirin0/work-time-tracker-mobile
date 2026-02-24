@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.cirin0.worktimetracker.core.utils.DateUtils
 import com.cirin0.worktimetracker.features.leaverequests.data.model.LeaveRequest
 import com.cirin0.worktimetracker.features.leaverequests.data.model.LeaveRequestStatus
 
@@ -168,7 +169,7 @@ private fun LeaveRequestDetailContent(request: LeaveRequest) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = request.startDate,
+                            text = DateUtils.formatDate(request.startDate),
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.Medium
                         )
@@ -180,7 +181,7 @@ private fun LeaveRequestDetailContent(request: LeaveRequest) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = request.endDate,
+                            text = DateUtils.formatDate(request.endDate),
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.Medium
                         )
@@ -301,7 +302,7 @@ private fun LeaveRequestDetailContent(request: LeaveRequest) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = request.createdAt,
+                        text = DateUtils.formatDateTime(request.createdAt),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
@@ -316,7 +317,7 @@ private fun LeaveRequestDetailContent(request: LeaveRequest) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = request.updatedAt,
+                            text = DateUtils.formatDateTime(request.updatedAt),
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }

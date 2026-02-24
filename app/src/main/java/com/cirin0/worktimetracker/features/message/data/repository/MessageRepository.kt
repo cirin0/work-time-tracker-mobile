@@ -45,10 +45,11 @@ class MessageRepository @Inject constructor(
                 receiverId = receiverId,
                 message = event.message,
                 createdAt = java.text.SimpleDateFormat(
-                    "yyyy-MM-dd'T'HH:mm:ss",
+                    "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
                     java.util.Locale.getDefault()
-                )
-                    .format(java.util.Date())
+                ).apply {
+                    timeZone = java.util.TimeZone.getTimeZone("UTC")
+                }.format(java.util.Date())
             )
         }
     }
