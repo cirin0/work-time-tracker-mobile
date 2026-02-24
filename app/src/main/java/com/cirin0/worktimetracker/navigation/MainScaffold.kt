@@ -44,7 +44,6 @@ import com.cirin0.worktimetracker.features.message.presentation.ChatListScreen
 import com.cirin0.worktimetracker.features.message.presentation.ChatScreen
 import com.cirin0.worktimetracker.features.profile.presentation.ProfileScreen
 import com.cirin0.worktimetracker.features.settings.SettingsScreen
-import com.cirin0.worktimetracker.features.timeentries.presentation.TimeEntriesScreen
 import com.cirin0.worktimetracker.features.timeentries.presentation.TimeEntryDetailScreen
 import com.cirin0.worktimetracker.features.timesheet.presentation.TimesheetScreen
 import com.cirin0.worktimetracker.features.workschedule.presentation.ScheduleScreen
@@ -87,7 +86,6 @@ fun MainScaffold(
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentDestination = navBackStackEntry?.destination
 
-            // Hide bottom bar on ChatScreen
             val shouldShowBottomBar = currentDestination?.route?.startsWith("chat/") != true
 
             if (shouldShowBottomBar) {
@@ -109,12 +107,40 @@ fun MainScaffold(
                             },
                             selected = isSelected,
                             onClick = {
-                                navController.navigate(item.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
+                                if (item.route == Screen.Profile.route) {
+                                    val isOnNestedProfileScreen =
+                                        currentDestination?.route in listOf(
+                                            Screen.LeaveRequests.route,
+                                            Screen.LeaveRequestDetail.route,
+                                            Screen.Company.route,
+                                            Screen.Settings.route,
+                                            Screen.ChatList.route
+                                        ) || currentDestination?.route?.startsWith("chat/") == true
+
+                                    if (isOnNestedProfileScreen) {
+                                        navController.navigate(item.route) {
+                                            popUpTo(Screen.Profile.route) {
+                                                inclusive = false
+                                            }
+                                            launchSingleTop = true
+                                        }
+                                    } else {
+                                        navController.navigate(item.route) {
+                                            popUpTo(navController.graph.findStartDestination().id) {
+                                                saveState = true
+                                            }
+                                            launchSingleTop = true
+                                            restoreState = true
+                                        }
                                     }
-                                    launchSingleTop = true
-                                    restoreState = true
+                                } else {
+                                    navController.navigate(item.route) {
+                                        popUpTo(navController.graph.findStartDestination().id) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
                                 }
                             }
                         )
@@ -172,13 +198,6 @@ fun MainScaffold(
                 }
                 composable(Screen.Timesheet.route) {
                     TimesheetScreen()
-                }
-                composable(Screen.TimeEntries.route) {
-                    TimeEntriesScreen(
-                        onNavigateToDetail = { entryId ->
-                            navController.navigate(Screen.TimeEntryDetail.createRoute(entryId))
-                        }
-                    )
                 }
                 composable(
                     route = Screen.TimeEntryDetail.route,
@@ -257,9 +276,6 @@ fun MainScaffold(
                 }
                 composable(Screen.LeaveRequests.route) {
                     LeaveRequestsScreen(
-                        onNavigateBack = {
-                            navController.popBackStack()
-                        },
                         onNavigateToDetail = { requestId ->
                             navController.navigate(Screen.LeaveRequestDetail.createRoute(requestId))
                         }
