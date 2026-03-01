@@ -2,11 +2,14 @@ package com.cirin0.worktimetracker.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.cirin0.worktimetracker.features.auth.presentation.login.LoginScreen
 import com.cirin0.worktimetracker.features.auth.presentation.register.RegisterScreen
+import com.cirin0.worktimetracker.features.auth.presentation.verifyemail.VerifyEmailScreen
 
 @Composable
 fun NavGraph(
@@ -21,6 +24,13 @@ fun NavGraph(
             LoginScreen(
                 onNavigateToRegister = {
                     navController.navigate(Screen.Register.route) {
+                        popUpTo(Screen.Login.route) {
+                            inclusive = false
+                        }
+                    }
+                },
+                onNavigateToVerification = { email: String ->
+                    navController.navigate(Screen.VerifyEmail.createRoute(email)) {
                         popUpTo(Screen.Login.route) {
                             inclusive = false
                         }
@@ -44,8 +54,37 @@ fun NavGraph(
                         }
                     }
                 },
-                onRegisterSuccess = {
-                    navController.popBackStack()
+                onRegisterSuccess = { _: Int, email: String ->
+                    navController.navigate(Screen.VerifyEmail.createRoute(email)) {
+                        popUpTo(Screen.Register.route) {
+                            inclusive = true
+                        }
+                    }
+                }
+            )
+        }
+        composable(
+            route = Screen.VerifyEmail.route,
+            arguments = listOf(
+                navArgument("email") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val email = backStackEntry.arguments?.getString("email") ?: ""
+            VerifyEmailScreen(
+                email = email,
+                onVerificationSuccess = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.VerifyEmail.route) {
+                            inclusive = true
+                        }
+                    }
+                },
+                onBackToLogin = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.VerifyEmail.route) {
+                            inclusive = true
+                        }
+                    }
                 }
             )
         }

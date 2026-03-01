@@ -10,6 +10,7 @@ data class RegisterState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val successMessage: String? = null,
+    val userId: Int? = null,
     val isRegistered: Boolean = false,
     val hasInteractedWithName: Boolean = false,
     val hasInteractedWithEmail: Boolean = false,

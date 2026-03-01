@@ -19,10 +19,10 @@ class RegisterViewModel @Inject constructor(
     val state = _state.asStateFlow()
 
     fun onNameChange(name: String) {
-        _state.update { 
+        _state.update {
             val newState = it.copy(
-                name = name, 
-                nameError = null, 
+                name = name,
+                nameError = null,
                 error = null,
                 hasInteractedWithName = true
             )
@@ -31,26 +31,36 @@ class RegisterViewModel @Inject constructor(
     }
 
     fun onEmailChange(email: String) {
-        _state.update { 
+        _state.update {
             val newState = it.copy(
-                email = email, 
-                emailError = null, 
+                email = email,
+                emailError = null,
                 error = null,
                 hasInteractedWithEmail = true
             )
-            newState.copy(emailError = validateEmail(newState.email, newState.hasInteractedWithEmail))
+            newState.copy(
+                emailError = validateEmail(
+                    newState.email,
+                    newState.hasInteractedWithEmail
+                )
+            )
         }
     }
 
     fun onPasswordChange(password: String) {
-        _state.update { 
+        _state.update {
             val newState = it.copy(
-                password = password, 
-                passwordError = null, 
+                password = password,
+                passwordError = null,
                 error = null,
                 hasInteractedWithPassword = true
             )
-            newState.copy(passwordError = validatePassword(newState.password, newState.hasInteractedWithPassword))
+            newState.copy(
+                passwordError = validatePassword(
+                    newState.password,
+                    newState.hasInteractedWithPassword
+                )
+            )
         }
     }
 
@@ -70,7 +80,8 @@ class RegisterViewModel @Inject constructor(
                         it.copy(
                             isLoading = false,
                             isRegistered = true,
-                            successMessage = result.data
+                            userId = result.data.user.id,
+                            successMessage = result.data.message
                         )
                     }
                 }
@@ -97,7 +108,7 @@ class RegisterViewModel @Inject constructor(
         val emailError = validateEmail(currentState.email, true)
         val passwordError = validatePassword(currentState.password, true)
 
-        _state.update { 
+        _state.update {
             it.copy(
                 nameError = nameError,
                 emailError = emailError,
@@ -119,7 +130,9 @@ class RegisterViewModel @Inject constructor(
     private fun validateEmail(email: String, hasInteracted: Boolean): String? {
         if (!hasInteracted && email.isBlank()) return null
         if (email.isBlank()) return "Email is required"
-        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) return "Invalid email format"
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email)
+                .matches()
+        ) return "Invalid email format"
         return null
     }
 

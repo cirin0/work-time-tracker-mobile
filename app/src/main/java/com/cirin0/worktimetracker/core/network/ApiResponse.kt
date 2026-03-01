@@ -1,6 +1,7 @@
 package com.cirin0.worktimetracker.core.network
 
 import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
 import retrofit2.HttpException
 import java.io.IOException
 
@@ -16,8 +17,9 @@ sealed class ApiResponse<out T> {
 }
 
 data class ErrorResponse(
-    val message: String,
-    val errors: Map<String, List<String>>? = null
+    @SerializedName("message") val message: String? = null,
+    @SerializedName("error") val error: String? = null,
+    @SerializedName("errors") val errors: Map<String, List<String>>? = null
 )
 
 suspend fun <T> apiCall(call: suspend () -> T): ApiResponse<T> {
@@ -31,7 +33,7 @@ suspend fun <T> apiCall(call: suspend () -> T): ApiResponse<T> {
             null
         }
         ApiResponse.Error(
-            message = errorResponse?.message ?: e.message(),
+            message = errorResponse?.message ?: errorResponse?.error ?: e.message(),
             code = e.code(),
             errors = errorResponse?.errors
         )
