@@ -9,7 +9,7 @@ import com.cirin0.worktimetracker.core.database.entity.CachedUserEntity
 
 @Database(
     entities = [CachedUserEntity::class, CachedTimeEntryEntity::class],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

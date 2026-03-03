@@ -254,8 +254,8 @@ private fun TimeSummaryContent(summary: TimeSummary) {
 
                 StatRowWithIcon(
                     icon = Icons.AutoMirrored.Filled.List,
-                    label = "Кількість записів",
-                    value = "${summary.entriesCount}",
+                    label = "Робочих днів",
+                    value = "${summary.workingDays}",
                     iconBackground = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
                     iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
                     textColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -264,11 +264,101 @@ private fun TimeSummaryContent(summary: TimeSummary) {
                 StatRowWithIcon(
                     icon = Icons.Default.DateRange,
                     label = "Середній робочий час",
-                    value = DateUtils.formatHours(summary.averageWorkTime.toDouble() / 60.0),
+                    value = DateUtils.formatHours(summary.averageWorkTime / 60.0),
                     iconBackground = MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f),
                     iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
                     textColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
+            }
+        }
+
+        // Attendance Statistics Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer
+            ),
+            elevation = CardDefaults.cardElevation(
+                defaultElevation = 4.dp
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "Статистика відвідуваності",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "${summary.attendance.lateCount}",
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        Text(
+                            text = "Спізнень",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
+                        )
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "${summary.attendance.onTimeCount}",
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "Вчасно",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
+                        )
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "${summary.attendance.earlyLeaveCount}",
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.tertiary
+                        )
+                        Text(
+                            text = "Ранній вихід",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
+                        )
+                    }
+                }
+
+                if (summary.attendance.lateCount > 0) {
+                    Text(
+                        text = "Середнє спізнення: ${
+                            String.format(
+                                "%.1f",
+                                summary.attendance.averageLateMinutes
+                            )
+                        } хв",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
+                }
+
+                if (summary.attendance.overtimeCount > 0) {
+                    Text(
+                        text = "Переробок: ${summary.attendance.overtimeCount} (${summary.attendance.totalOvertimeMinutes} хв)",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
+                }
             }
         }
 
@@ -370,7 +460,7 @@ private fun EnhancedPeriodCard(
                         color = contentColor
                     )
                     Text(
-                        text = "${period.entries} записів",
+                        text = "${period.workingDays} робочих днів • Спізнень: ${period.lateCount} • Ранній вихід: ${period.earlyCount}",
                         style = MaterialTheme.typography.bodySmall,
                         color = contentColor.copy(alpha = 0.7f)
                     )

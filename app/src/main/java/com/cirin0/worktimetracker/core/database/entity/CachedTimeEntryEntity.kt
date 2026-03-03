@@ -13,6 +13,7 @@ data class CachedTimeEntryEntity(
     val userId: Int,
     val userName: String,
     val userEmail: String,
+    val date: String,
     val startTime: String,
     val stopTime: String?,
     val duration: Int?,
@@ -21,6 +22,11 @@ data class CachedTimeEntryEntity(
     val locationLng: Double?,
     val startComment: String?,
     val stopComment: String?,
+    val latenessMinutes: Int?,
+    val scheduledStartTime: String?,
+    val earlyLeaveMinutes: Int?,
+    val scheduledEndTime: String?,
+    val overtimeMinutes: Int?,
     val createdAt: String?,
     val updatedAt: String?,
     val cachedAt: Long = System.currentTimeMillis()
@@ -34,6 +40,7 @@ fun CachedTimeEntryEntity.toTimeEntry(): TimeEntry {
             name = userName,
             email = userEmail
         ),
+        date = date,
         startTime = startTime,
         stopTime = stopTime,
         duration = duration,
@@ -43,6 +50,11 @@ fun CachedTimeEntryEntity.toTimeEntry(): TimeEntry {
         } else null,
         startComment = startComment,
         stopComment = stopComment,
+        latenessMinutes = latenessMinutes,
+        scheduledStartTime = scheduledStartTime,
+        earlyLeaveMinutes = earlyLeaveMinutes,
+        scheduledEndTime = scheduledEndTime,
+        overtimeMinutes = overtimeMinutes,
         createdAt = createdAt,
         updatedAt = updatedAt
     )
@@ -54,6 +66,7 @@ fun TimeEntry.toCachedEntity(): CachedTimeEntryEntity {
         userId = user.id,
         userName = user.name,
         userEmail = user.email,
+        date = date,
         startTime = startTime,
         stopTime = stopTime,
         duration = duration,
@@ -62,6 +75,11 @@ fun TimeEntry.toCachedEntity(): CachedTimeEntryEntity {
         locationLng = locationData?.lng,
         startComment = startComment,
         stopComment = stopComment,
+        latenessMinutes = latenessMinutes,
+        scheduledStartTime = scheduledStartTime,
+        earlyLeaveMinutes = earlyLeaveMinutes,
+        scheduledEndTime = scheduledEndTime,
+        overtimeMinutes = overtimeMinutes,
         createdAt = createdAt,
         updatedAt = updatedAt
     )

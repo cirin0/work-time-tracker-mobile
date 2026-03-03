@@ -545,6 +545,7 @@ private fun TimeEntryListItem(
     entry: TimeEntry,
     onClick: () -> Unit
 ) {
+    val dateFormatted = remember(entry.date) { DateUtils.formatDate(entry.date) }
     val startTimeFormatted = remember(entry.startTime) { formatTime(entry.startTime) }
     val stopTimeFormatted = remember(entry.stopTime) {
         entry.stopTime?.let { formatTime(it) }
@@ -580,7 +581,7 @@ private fun TimeEntryListItem(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "#${entry.id}",
+                    text = "📅 $dateFormatted",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
