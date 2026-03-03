@@ -5,6 +5,15 @@ object Constants {
     const val PREFS_NAME = "app_prefs"
     const val NAMED_IMAGE_URL = "image_base_url"
 
+    object Validation {
+        const val MIN_PASSWORD_LENGTH = 8
+        const val MIN_COMMENT_LENGTH = 3
+        const val MAX_COMMENT_LENGTH = 500
+        const val PIN_CODE_LENGTH = 4
+        const val MIN_NAME_LENGTH = 2
+        const val MAX_NAME_LENGTH = 50
+    }
+
     object ApiRoutes {
         const val LOGIN = "auth/login"
         const val REGISTER = "auth/register"

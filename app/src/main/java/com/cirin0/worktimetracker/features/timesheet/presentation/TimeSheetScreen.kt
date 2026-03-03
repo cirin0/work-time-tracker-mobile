@@ -41,6 +41,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.cirin0.worktimetracker.core.utils.DateUtils
 import com.cirin0.worktimetracker.features.timesheet.data.model.PeriodSummary
 import com.cirin0.worktimetracker.features.timesheet.data.model.TimeSummary
 
@@ -245,7 +246,7 @@ private fun TimeSummaryContent(summary: TimeSummary) {
                 StatRowWithIcon(
                     icon = Icons.Default.Schedule,
                     label = "Загальний час",
-                    value = "${summary.totalHours} год ${summary.totalMinutes} хв",
+                    value = DateUtils.formatHours(summary.totalHours + summary.totalMinutes / 60.0),
                     iconBackground = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
                     iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
                     textColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -263,7 +264,7 @@ private fun TimeSummaryContent(summary: TimeSummary) {
                 StatRowWithIcon(
                     icon = Icons.Default.DateRange,
                     label = "Середній робочий час",
-                    value = "${summary.averageWorkTime} хв",
+                    value = DateUtils.formatHours(summary.averageWorkTime.toDouble() / 60.0),
                     iconBackground = MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f),
                     iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
                     textColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -386,7 +387,7 @@ private fun EnhancedPeriodCard(
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     Text(
-                        text = "${period.hours}:${period.minutes.toString().padStart(2, '0')}",
+                        text = DateUtils.formatHours(period.hours + period.minutes / 60.0),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = contentColor

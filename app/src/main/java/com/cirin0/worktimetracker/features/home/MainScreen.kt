@@ -63,7 +63,6 @@ import com.cirin0.worktimetracker.core.utils.DateUtils
 import com.cirin0.worktimetracker.features.timeentries.data.model.TimeEntry
 import com.cirin0.worktimetracker.features.timeentries.presentation.TimeEntriesState
 import com.cirin0.worktimetracker.features.timeentries.presentation.TimeEntriesViewModel
-import java.util.Locale
 
 @Composable
 fun MainScreen(
@@ -551,7 +550,8 @@ private fun TimeEntryListItem(
         entry.stopTime?.let { formatTime(it) }
     }
     val durationFormatted = remember(entry.duration) {
-        formatDuration(entry.duration ?: 0)
+        val hours = (entry.duration ?: 0) / 60.0
+        DateUtils.formatHours(hours)
     }
 
     Card(
@@ -643,12 +643,3 @@ private fun TimeEntryListItem(
     }
 }
 
-private fun formatDuration(minutes: Int): String {
-    val hours = minutes / 60
-    val mins = minutes % 60
-    return if (hours > 0) {
-        String.format(Locale.getDefault(), "%dг : %dхв", hours, mins)
-    } else {
-        String.format(Locale.getDefault(), "%dхв", mins)
-    }
-}

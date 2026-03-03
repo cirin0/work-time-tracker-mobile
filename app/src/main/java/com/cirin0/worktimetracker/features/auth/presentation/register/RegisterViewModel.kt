@@ -3,6 +3,8 @@ package com.cirin0.worktimetracker.features.auth.presentation.register
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cirin0.worktimetracker.core.network.ApiResponse
+import com.cirin0.worktimetracker.core.utils.ValidationResult
+import com.cirin0.worktimetracker.core.utils.ValidationRules
 import com.cirin0.worktimetracker.features.auth.data.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
@@ -122,24 +124,25 @@ class RegisterViewModel @Inject constructor(
 
     private fun validateName(name: String, hasInteracted: Boolean): String? {
         if (!hasInteracted && name.isBlank()) return null
-        if (name.isBlank()) return "Name is required"
-        if (name.length < 3) return "Name must be at least 3 characters"
-        return null
+        return when (val result = ValidationRules.isValidName(name)) {
+            is ValidationResult.Success -> null
+            is ValidationResult.Error -> result.message
+        }
     }
 
     private fun validateEmail(email: String, hasInteracted: Boolean): String? {
         if (!hasInteracted && email.isBlank()) return null
-        if (email.isBlank()) return "Email is required"
-        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email)
-                .matches()
-        ) return "Invalid email format"
-        return null
+        return when (val result = ValidationRules.isValidEmail(email)) {
+            is ValidationResult.Success -> null
+            is ValidationResult.Error -> result.message
+        }
     }
 
     private fun validatePassword(password: String, hasInteracted: Boolean): String? {
         if (!hasInteracted && password.isBlank()) return null
-        if (password.isBlank()) return "Password is required"
-        if (password.length < 6) return "Password must be at least 6 characters"
-        return null
+        return when (val result = ValidationRules.isValidPassword(password)) {
+            is ValidationResult.Success -> null
+            is ValidationResult.Error -> result.message
+        }
     }
 }

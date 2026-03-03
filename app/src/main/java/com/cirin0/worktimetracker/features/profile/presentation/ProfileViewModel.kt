@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cirin0.worktimetracker.core.network.ApiResponse
 import com.cirin0.worktimetracker.core.utils.ConnectivityObserver
+import com.cirin0.worktimetracker.core.utils.ValidationRules
 import com.cirin0.worktimetracker.features.auth.data.repository.AuthRepository
 import com.cirin0.worktimetracker.features.profile.data.repository.ProfileRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -126,18 +127,14 @@ class ProfileViewModel @Inject constructor(
     fun updateProfile() {
         val currentState = _state.value
 
-        val nameError = if (currentState.editName.isBlank()) "Ім'я не може бути порожнім" else null
-        val emailError = if (currentState.editEmail.isBlank()) {
-            "Email не може бути порожнім"
-        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(currentState.editEmail).matches()) {
-            "Невірний формат email"
-        } else null
+        val nameValidation = ValidationRules.isValidName(currentState.editName)
+        val emailValidation = ValidationRules.isValidEmail(currentState.editEmail)
 
-        if (nameError != null || emailError != null) {
+        if (!nameValidation.isValid || !emailValidation.isValid) {
             _state.update {
                 it.copy(
-                    nameError = nameError,
-                    emailError = emailError
+                    nameError = nameValidation.errorMessage,
+                    emailError = emailValidation.errorMessage
                 )
             }
             return

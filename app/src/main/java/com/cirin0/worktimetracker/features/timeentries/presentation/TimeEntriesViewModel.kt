@@ -236,9 +236,6 @@ class TimeEntriesViewModel @Inject constructor(
         _state.value = _state.value.copy(isInOffice = isInOffice)
     }
 
-    fun clearError() {
-        _state.value = _state.value.copy(error = null)
-    }
 
     fun hasLocationPermission(): Boolean {
         return locationManager.hasLocationPermission()

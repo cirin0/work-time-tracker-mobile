@@ -39,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.cirin0.worktimetracker.core.utils.DateUtils
 import com.cirin0.worktimetracker.features.workschedule.data.model.DailySchedule
 import com.cirin0.worktimetracker.features.workschedule.data.model.WorkSchedule
 
@@ -84,7 +85,6 @@ fun ScheduleScreen(
                         .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Header
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -139,7 +139,6 @@ fun ScheduleScreen(
                         .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Header
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -191,7 +190,6 @@ private fun WorkScheduleCard(schedule: WorkSchedule) {
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Main Schedule Info Card
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(24.dp),
@@ -279,7 +277,6 @@ private fun WorkScheduleCard(schedule: WorkSchedule) {
             }
         }
 
-        // Daily Schedules Section
         if (!schedule.dailySchedules.isNullOrEmpty()) {
             Text(
                 text = "Робочі дні тижня",
@@ -289,7 +286,6 @@ private fun WorkScheduleCard(schedule: WorkSchedule) {
                 modifier = Modifier.padding(start = 4.dp)
             )
 
-            // Sort by day order (Monday first)
             schedule.dailySchedules.sortedBy { it.getDayOrder() }.forEach { dailySchedule ->
                 EnhancedDailyScheduleItem(dailySchedule)
             }
@@ -301,7 +297,7 @@ private fun WorkScheduleCard(schedule: WorkSchedule) {
 
 @Composable
 private fun EnhancedDailyScheduleItem(dailySchedule: DailySchedule) {
-    val dayName = getDayName(dailySchedule.dayOfWeek)
+    val dayName = DateUtils.getDayNameUkrainian(dailySchedule.dayOfWeek)
     val isWorkDay = dailySchedule.isWorkingDay
 
     Card(
@@ -325,7 +321,6 @@ private fun EnhancedDailyScheduleItem(dailySchedule: DailySchedule) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Day info with icon
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -369,13 +364,11 @@ private fun EnhancedDailyScheduleItem(dailySchedule: DailySchedule) {
                 )
             }
 
-            // Time and break info
             if (isWorkDay) {
                 Column(
                     horizontalAlignment = Alignment.End,
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    // Working hours
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -394,7 +387,6 @@ private fun EnhancedDailyScheduleItem(dailySchedule: DailySchedule) {
                         )
                     }
 
-                    // Break duration
                     if (dailySchedule.breakDuration > 0) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -432,20 +424,6 @@ private fun EnhancedDailyScheduleItem(dailySchedule: DailySchedule) {
         }
     }
 }
-
-private fun getDayName(dayOfWeek: String): String {
-    return when (dayOfWeek.lowercase()) {
-        "monday" -> "Понеділок"
-        "tuesday" -> "Вівторок"
-        "wednesday" -> "Середа"
-        "thursday" -> "Четвер"
-        "friday" -> "П'ятниця"
-        "saturday" -> "Субота"
-        "sunday" -> "Неділя"
-        else -> dayOfWeek
-    }
-}
-
 
 
 

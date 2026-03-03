@@ -3,8 +3,10 @@ package com.cirin0.worktimetracker.features.message.data.repository
 import com.cirin0.worktimetracker.core.network.ApiResponse
 import com.cirin0.worktimetracker.core.network.apiCall
 import com.cirin0.worktimetracker.core.pusher.PusherService
+import com.cirin0.worktimetracker.core.utils.DateUtils
 import com.cirin0.worktimetracker.features.message.data.api.MessageApi
 import com.cirin0.worktimetracker.features.message.data.model.Message
+import com.cirin0.worktimetracker.features.message.data.model.NewMessageEvent
 import com.cirin0.worktimetracker.features.message.data.model.SendMessageRequest
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.Flow
@@ -32,7 +34,7 @@ class MessageRepository @Inject constructor(
         ) { data ->
             val event = gson.fromJson(
                 data,
-                com.cirin0.worktimetracker.features.message.data.model.NewMessageEvent::class.java
+                NewMessageEvent::class.java
             )
 
             val senderId = event.senderId ?: event.user.id
@@ -44,12 +46,7 @@ class MessageRepository @Inject constructor(
                 senderId = senderId,
                 receiverId = receiverId,
                 message = event.message,
-                createdAt = java.text.SimpleDateFormat(
-                    "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
-                    java.util.Locale.getDefault()
-                ).apply {
-                    timeZone = java.util.TimeZone.getTimeZone("UTC")
-                }.format(java.util.Date())
+                createdAt = DateUtils.getCurrentIsoDateTime()
             )
         }
     }

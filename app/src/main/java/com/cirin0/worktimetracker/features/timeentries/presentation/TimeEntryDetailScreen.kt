@@ -1,6 +1,5 @@
 package com.cirin0.worktimetracker.features.timeentries.presentation
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -120,7 +119,6 @@ fun TimeEntryDetailScreen(
     }
 }
 
-@SuppressLint("DefaultLocale")
 @Composable
 private fun TimeEntryDetailContent(
     timeEntry: TimeEntry,
@@ -134,7 +132,6 @@ private fun TimeEntryDetailContent(
     ) {
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Заголовок
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
@@ -166,7 +163,6 @@ private fun TimeEntryDetailContent(
             }
         }
 
-        // Інформація про користувача
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
@@ -189,7 +185,6 @@ private fun TimeEntryDetailContent(
             }
         }
 
-        // Час роботи
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
@@ -222,7 +217,6 @@ private fun TimeEntryDetailContent(
             }
         }
 
-        // Коментарі
         if (!timeEntry.startComment.isNullOrBlank() || !timeEntry.stopComment.isNullOrBlank()) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -275,7 +269,6 @@ private fun TimeEntryDetailContent(
             }
         }
 
-        // Локація
         if (timeEntry.locationData != null) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -293,8 +286,14 @@ private fun TimeEntryDetailContent(
                         fontWeight = FontWeight.Bold
                     )
 
-                    DetailRow("Широта", String.format("%.6f", timeEntry.locationData.lat))
-                    DetailRow("Довгота", String.format("%.6f", timeEntry.locationData.lng))
+                    DetailRow(
+                        "Широта",
+                        String.format(Locale.US, "%.6f", timeEntry.locationData.lat)
+                    )
+                    DetailRow(
+                        "Довгота",
+                        String.format(Locale.US, "%.6f", timeEntry.locationData.lng)
+                    )
                 }
             }
         }
@@ -360,9 +359,7 @@ private fun formatDateTime(timeString: String): String {
     return DateUtils.formatDateTime(timeString)
 }
 
-@SuppressLint("DefaultLocale")
 private fun formatDuration(minutes: Int): String {
-    val hours = minutes / 60
-    val mins = minutes % 60
-    return String.format(Locale.getDefault(), "%dг : %dхв", hours, mins)
+    val hours = minutes / 60.0
+    return DateUtils.formatHours(hours)
 }
