@@ -78,6 +78,11 @@ data class TimeEntriesListResponse(
     val meta: PaginationMeta?
 )
 
+data class PaginatedTimeEntries(
+    val data: List<TimeEntry>,
+    val meta: PaginationMeta?
+)
+
 data class PaginationLinks(
     @SerializedName("first")
     val first: String?,

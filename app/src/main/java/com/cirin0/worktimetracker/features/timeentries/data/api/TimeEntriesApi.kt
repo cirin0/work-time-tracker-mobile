@@ -11,6 +11,7 @@ import retrofit2.http.GET
 import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface TimeEntriesApi {
     @POST(Constants.ApiRoutes.TIME_ENTRIES)
@@ -23,7 +24,10 @@ interface TimeEntriesApi {
     suspend fun stopTimeEntry(@Body request: StopTimeEntryRequest): TimeEntryResponse
 
     @GET(Constants.ApiRoutes.TIME_ENTRIES)
-    suspend fun getTimeEntries(): TimeEntriesListResponse
+    suspend fun getTimeEntries(
+        @Query("page") page: Int = 1,
+        @Query("per_page") perPage: Int = 15
+    ): TimeEntriesListResponse
 
     @GET("${Constants.ApiRoutes.TIME_ENTRIES}/{id}")
     suspend fun getTimeEntryById(@Path("id") id: Int): TimeEntryResponse

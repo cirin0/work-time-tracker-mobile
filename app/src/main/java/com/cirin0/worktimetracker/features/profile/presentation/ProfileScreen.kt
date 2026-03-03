@@ -189,7 +189,6 @@ fun ProfileScreen(
 
                     Spacer(modifier = Modifier.height(28.dp))
 
-                    // Personal info section
                     ProfileSection(title = "Особисті дані") {
                         ProfileRow(
                             icon = Icons.Default.Security,
@@ -339,10 +338,6 @@ fun ProfileScreen(
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Top Bar
-// ─────────────────────────────────────────────────────────────────────────────
-
 @Composable
 private fun ProfileTopBar(
     showEditButton: Boolean,
@@ -415,10 +410,6 @@ private fun TopBarIconButton(
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Avatar
-// ─────────────────────────────────────────────────────────────────────────────
-
 @Composable
 private fun AvatarSection(
     name: String,
@@ -485,10 +476,6 @@ private fun AvatarSection(
         }
     }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Section + Row
-// ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
 private fun ProfileSection(
@@ -594,10 +581,6 @@ private fun ProfileRow(
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Banners & States
-// ─────────────────────────────────────────────────────────────────────────────
-
 @Composable
 private fun ServerWarningBanner() {
     Surface(
@@ -662,10 +645,6 @@ private fun ErrorContent(error: String, onRetry: () -> Unit) {
         }
     }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Dialogs
-// ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
 private fun SetPinCodeDialog(
@@ -854,10 +833,6 @@ private fun EditProfileDialog(
         }
     )
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Utils
-// ─────────────────────────────────────────────────────────────────────────────
 
 private fun uriToFile(context: Context, uri: Uri): File? {
     return try {

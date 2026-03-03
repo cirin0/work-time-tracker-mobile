@@ -1,5 +1,6 @@
 package com.cirin0.worktimetracker.features.leaverequests.presentation
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,11 +10,16 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CalendarToday
@@ -26,7 +32,6 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -35,6 +40,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -47,6 +53,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -59,6 +66,7 @@ import com.cirin0.worktimetracker.features.leaverequests.data.model.LeaveRequest
 @Composable
 fun LeaveRequestsScreen(
     onNavigateToDetail: (Int) -> Unit,
+    onNavigateBack: () -> Unit = {},
     viewModel: LeaveRequestsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -71,38 +79,30 @@ fun LeaveRequestsScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .verticalScroll(rememberScrollState())
+                .navigationBarsPadding()
+                .padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Мої заявки",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold
-                )
-                IconButton(onClick = { viewModel.loadLeaveRequests() }) {
-                    Icon(
-                        imageVector = Icons.Default.Refresh,
-                        contentDescription = "Оновити"
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
+            TopBarSection(
+                onBack = onNavigateBack,
+                onRefresh = { viewModel.loadLeaveRequests() }
+            )
 
             when {
                 state.isLoading -> {
                     Box(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(300.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         CircularProgressIndicator()
@@ -111,7 +111,9 @@ fun LeaveRequestsScreen(
 
                 state.error != null -> {
                     Column(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(300.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
@@ -129,7 +131,9 @@ fun LeaveRequestsScreen(
 
                 state.requests.isEmpty() -> {
                     Box(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -141,19 +145,11 @@ fun LeaveRequestsScreen(
                 }
 
                 else -> {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState()),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        state.requests.forEach { request ->
-                            LeaveRequestCard(
-                                request = request,
-                                onClick = { onNavigateToDetail(request.id) }
-                            )
-                        }
-                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    LeaveRequestsList(
+                        requests = state.requests,
+                        onRequestClick = onNavigateToDetail
+                    )
                 }
             }
         }
@@ -162,15 +158,22 @@ fun LeaveRequestsScreen(
             onClick = { viewModel.showCreateDialog() },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(16.dp)
+                .navigationBarsPadding()
+                .padding(16.dp),
+            containerColor = MaterialTheme.colorScheme.primary
         ) {
-            Icon(Icons.Default.Add, contentDescription = "Створити заявку")
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = "Створити заявку",
+                tint = MaterialTheme.colorScheme.onPrimary
+            )
         }
 
         SnackbarHost(
             hostState = snackbarHostState,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
+                .navigationBarsPadding()
                 .padding(bottom = 80.dp)
         )
     }
@@ -181,6 +184,84 @@ fun LeaveRequestsScreen(
             viewModel = viewModel,
             onDismiss = { viewModel.hideCreateDialog() }
         )
+    }
+}
+
+@Composable
+private fun TopBarSection(
+    onBack: () -> Unit,
+    onRefresh: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 12.dp, bottom = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            if (onBack != {}) {
+                TopBarIconButton(
+                    icon = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Назад",
+                    onClick = onBack
+                )
+            }
+            Column {
+                Text(
+                    text = "Мої заявки",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
+        }
+        TopBarIconButton(
+            icon = Icons.Default.Refresh,
+            contentDescription = "Оновити",
+            onClick = onRefresh
+        )
+    }
+}
+
+@Composable
+private fun TopBarIconButton(
+    icon: ImageVector,
+    contentDescription: String,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.size(40.dp),
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        tonalElevation = 1.dp
+    ) {
+        IconButton(onClick = onClick) {
+            Icon(
+                imageVector = icon,
+                contentDescription = contentDescription,
+                modifier = Modifier.size(20.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun LeaveRequestsList(
+    requests: List<LeaveRequest>,
+    onRequestClick: (Int) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        requests.forEach { request ->
+            LeaveRequestCard(
+                request = request,
+                onClick = { onRequestClick(request.id) }
+            )
+        }
     }
 }
 
@@ -199,9 +280,9 @@ private fun LeaveRequestCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(
-            containerColor = statusColor
-        )
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = statusColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
             modifier = Modifier
@@ -210,13 +291,12 @@ private fun LeaveRequestCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     text = request.getTypeEnum().displayName,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = "${DateUtils.formatDate(request.startDate)} - ${
@@ -225,12 +305,12 @@ private fun LeaveRequestCard(
                         )
                     }",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
                 Text(
                     text = DateUtils.formatDateTime(request.createdAt),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                 )
             }
             StatusBadge(status = request.getStatusEnum())
@@ -257,14 +337,13 @@ private fun StatusBadge(status: LeaveRequestStatus) {
         )
     }
 
-    Card(
-        colors = CardDefaults.cardColors(
-            containerColor = color
-        )
+    Surface(
+        shape = RoundedCornerShape(10.dp),
+        color = color
     ) {
         Text(
             text = status.displayName,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
             style = MaterialTheme.typography.labelMedium,
             color = textColor,
             fontWeight = FontWeight.Bold
@@ -272,7 +351,6 @@ private fun StatusBadge(status: LeaveRequestStatus) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CreateLeaveRequestDialog(
     state: LeaveRequestsState,
@@ -285,13 +363,14 @@ private fun CreateLeaveRequestDialog(
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(24.dp)
         ) {
             Column(
                 modifier = Modifier
-                    .padding(16.dp)
+                    .padding(20.dp)
                     .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
                     text = "Створити заявку",
@@ -309,7 +388,8 @@ private fun CreateLeaveRequestDialog(
                         trailingIcon = {
                             Icon(Icons.Default.ArrowDropDown, contentDescription = null)
                         },
-                        enabled = !state.isCreating
+                        enabled = !state.isCreating,
+                        shape = RoundedCornerShape(12.dp)
                     )
                     Box(
                         modifier = Modifier
@@ -334,7 +414,6 @@ private fun CreateLeaveRequestDialog(
                     }
                 }
 
-                // Start Date
                 OutlinedTextField(
                     value = state.startDate,
                     onValueChange = {},
@@ -347,10 +426,9 @@ private fun CreateLeaveRequestDialog(
                             Icon(Icons.Default.CalendarToday, contentDescription = "Вибрати дату")
                         }
                     },
-                    placeholder = { Text("23-02-2026") }
+                    shape = RoundedCornerShape(12.dp)
                 )
 
-                // End Date
                 OutlinedTextField(
                     value = state.endDate,
                     onValueChange = {},
@@ -363,10 +441,9 @@ private fun CreateLeaveRequestDialog(
                             Icon(Icons.Default.CalendarToday, contentDescription = "Вибрати дату")
                         }
                     },
-                    placeholder = { Text("25-02-2026") }
+                    shape = RoundedCornerShape(12.dp)
                 )
 
-                // Reason
                 OutlinedTextField(
                     value = state.reason,
                     onValueChange = viewModel::updateReason,
@@ -374,7 +451,8 @@ private fun CreateLeaveRequestDialog(
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !state.isCreating,
                     minLines = 3,
-                    maxLines = 5
+                    maxLines = 5,
+                    shape = RoundedCornerShape(12.dp)
                 )
 
                 if (state.createError != null) {
@@ -403,8 +481,11 @@ private fun CreateLeaveRequestDialog(
                     ) {
                         if (state.isCreating) {
                             CircularProgressIndicator(
-                                modifier = Modifier.padding(4.dp),
-                                color = MaterialTheme.colorScheme.onPrimary
+                                modifier = Modifier
+                                    .size(18.dp)
+                                    .padding(4.dp),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                strokeWidth = 2.dp
                             )
                         } else {
                             Text("Створити")
@@ -463,4 +544,3 @@ private fun CreateLeaveRequestDialog(
         }
     }
 }
-

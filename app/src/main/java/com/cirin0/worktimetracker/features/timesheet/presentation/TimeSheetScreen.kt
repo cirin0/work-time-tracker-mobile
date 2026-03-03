@@ -1,5 +1,6 @@
 package com.cirin0.worktimetracker.features.timesheet.presentation
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,8 +9,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,6 +28,7 @@ import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -51,137 +55,129 @@ fun TimesheetScreen(
 ) {
     val state by viewModel.state.collectAsState()
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        when {
-            state.isLoading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .navigationBarsPadding()
+                .padding(horizontal = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            TopBarSection(
+                onRefresh = { viewModel.loadTimeSummary() }
+            )
 
-            state.error != null -> {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = "Помилка: ${state.error}",
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
+            when {
+                state.isLoading -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(300.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+
+                state.error != null -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(300.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "Помилка: ${state.error}",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        OutlinedButton(onClick = { viewModel.loadTimeSummary() }) {
+                            Text("Спробувати знову")
+                        }
+                    }
+                }
+
+                state.summary == null -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 48.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Text(
+                            text = "Дані відсутні",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                else -> {
                     Spacer(modifier = Modifier.height(16.dp))
-                    OutlinedButton(onClick = { viewModel.loadTimeSummary() }) {
-                        Text("Спробувати знову")
-                    }
-                }
-            }
-
-            state.summary == null -> {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(
-                                text = "Табель",
-                                style = MaterialTheme.typography.headlineLarge,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = "Ваша робоча статистика",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        Surface(
-                            modifier = Modifier.size(48.dp),
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                            tonalElevation = 2.dp
-                        ) {
-                            IconButton(onClick = { viewModel.loadTimeSummary() }) {
-                                Icon(
-                                    imageVector = Icons.Default.Refresh,
-                                    contentDescription = "Оновити",
-                                    tint = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    Text(
-                        text = "Дані відсутні",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            else -> {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(
-                                text = "Табель",
-                                style = MaterialTheme.typography.headlineLarge,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = "Ваша робоча статистика",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        Surface(
-                            modifier = Modifier.size(48.dp),
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                            tonalElevation = 2.dp
-                        ) {
-                            IconButton(onClick = { viewModel.loadTimeSummary() }) {
-                                Icon(
-                                    imageVector = Icons.Default.Refresh,
-                                    contentDescription = "Оновити",
-                                    tint = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
                     TimeSummaryContent(state.summary!!)
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun TopBarSection(onRefresh: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 12.dp, bottom = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column {
+            Text(
+                text = "Табель",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Text(
+                text = "Ваша робоча статистика",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        TopBarIconButton(
+            icon = Icons.Default.Refresh,
+            contentDescription = "Оновити",
+            onClick = onRefresh
+        )
+    }
+}
+
+@Composable
+private fun TopBarIconButton(
+    icon: ImageVector,
+    contentDescription: String,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.size(40.dp),
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        tonalElevation = 1.dp
+    ) {
+        IconButton(onClick = onClick) {
+            Icon(
+                imageVector = icon,
+                contentDescription = contentDescription,
+                modifier = Modifier.size(20.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
@@ -191,234 +187,206 @@ private fun TimeSummaryContent(summary: TimeSummary) {
     Column(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer
-            ),
-            elevation = CardDefaults.cardElevation(
-                defaultElevation = 4.dp
-            )
-        ) {
-            Column(
-                modifier = Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Surface(
-                        modifier = Modifier.size(48.dp),
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primary
-                    ) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Timer,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.size(28.dp)
-                            )
-                        }
-                    }
-                    Column {
-                        Text(
-                            text = "Загальна статистика",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                        Text(
-                            text = "Весь час роботи",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                        )
-                    }
-                }
+        StatsSection(summary)
 
-                Spacer(modifier = Modifier.height(8.dp))
-
-                StatRowWithIcon(
-                    icon = Icons.Default.Schedule,
-                    label = "Загальний час",
-                    value = DateUtils.formatHours(summary.totalHours + summary.totalMinutes / 60.0),
-                    iconBackground = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                    iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
-                    textColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-
-                StatRowWithIcon(
-                    icon = Icons.AutoMirrored.Filled.List,
-                    label = "Робочих днів",
-                    value = "${summary.workingDays}",
-                    iconBackground = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
-                    iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
-                    textColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-
-                StatRowWithIcon(
-                    icon = Icons.Default.DateRange,
-                    label = "Середній робочий час",
-                    value = DateUtils.formatHours(summary.averageWorkTime / 60.0),
-                    iconBackground = MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f),
-                    iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
-                    textColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            }
-        }
-
-        // Attendance Statistics Card
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer
-            ),
-            elevation = CardDefaults.cardElevation(
-                defaultElevation = 4.dp
-            )
-        ) {
-            Column(
-                modifier = Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Text(
-                    text = "Статистика відвідуваності",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onTertiaryContainer
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "${summary.attendance.lateCount}",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                        Text(
-                            text = "Спізнень",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
-                        )
-                    }
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "${summary.attendance.onTimeCount}",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            text = "Вчасно",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
-                        )
-                    }
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "${summary.attendance.earlyLeaveCount}",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.tertiary
-                        )
-                        Text(
-                            text = "Ранній вихід",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
-                        )
-                    }
-                }
-
-                if (summary.attendance.lateCount > 0) {
-                    Text(
-                        text = "Середнє спізнення: ${
-                            String.format(
-                                "%.1f",
-                                summary.attendance.averageLateMinutes
-                            )
-                        } хв",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onTertiaryContainer
-                    )
-                }
-
-                if (summary.attendance.overtimeCount > 0) {
-                    Text(
-                        text = "Переробок: ${summary.attendance.overtimeCount} (${summary.attendance.totalOvertimeMinutes} хв)",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onTertiaryContainer
-                    )
-                }
-            }
-        }
-
-        Text(
-            text = "Періоди",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(top = 8.dp, start = 4.dp)
-        )
-
-        EnhancedPeriodCard(
-            title = "Сьогодні",
-            period = summary.summary.today,
-            icon = Icons.Default.CalendarToday,
-            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-            iconColor = MaterialTheme.colorScheme.secondary,
-            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-        )
-
-        EnhancedPeriodCard(
-            title = "Цього тижня",
-            period = summary.summary.week,
-            icon = Icons.Default.DateRange,
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            iconColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-        )
-
-        EnhancedPeriodCard(
-            title = "Цього місяця",
-            period = summary.summary.month,
-            icon = Icons.Default.CalendarMonth,
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-            iconColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        PeriodSection(summary)
 
         Spacer(modifier = Modifier.height(8.dp))
     }
 }
 
 @Composable
-private fun EnhancedPeriodCard(
+private fun StatsSection(summary: TimeSummary) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "ЗАГАЛЬНА СТАТИСТИКА",
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 4.dp, bottom = 6.dp)
+        )
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                StatRowWithIcon(
+                    icon = Icons.Default.Timer,
+                    label = "Загальний час",
+                    value = DateUtils.formatHours(summary.totalHours + summary.totalMinutes / 60.0)
+                )
+                RowDivider()
+                StatRowWithIcon(
+                    icon = Icons.AutoMirrored.Filled.List,
+                    label = "Робочих днів",
+                    value = "${summary.workingDays}"
+                )
+                RowDivider()
+                StatRowWithIcon(
+                    icon = Icons.Default.Schedule,
+                    label = "Середній робочий час",
+                    value = DateUtils.formatHours(summary.averageWorkTime / 60.0)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = "ВІДВІДУВАНІСТЬ",
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 4.dp, bottom = 6.dp)
+        )
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                AttendanceRow(
+                    label = "Спізнень",
+                    value = "${summary.attendance.lateCount}",
+                    valueColor = MaterialTheme.colorScheme.error
+                )
+                RowDivider()
+                AttendanceRow(
+                    label = "Вчасно",
+                    value = "${summary.attendance.onTimeCount}",
+                    valueColor = MaterialTheme.colorScheme.primary
+                )
+                RowDivider()
+                AttendanceRow(
+                    label = "Ранній вихід",
+                    value = "${summary.attendance.earlyLeaveCount}",
+                    valueColor = MaterialTheme.colorScheme.tertiary
+                )
+            }
+        }
+
+        if (summary.attendance.lateCount > 0 || summary.attendance.overtimeCount > 0) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    if (summary.attendance.lateCount > 0) {
+                        Text(
+                            text = "Середнє спізнення: ${
+                                String.format("%.1f", summary.attendance.averageLateMinutes)
+                            } хв",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                    }
+                    if (summary.attendance.overtimeCount > 0) {
+                        Text(
+                            text = "Переробок: ${summary.attendance.overtimeCount} (${summary.attendance.totalOvertimeMinutes} хв)",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AttendanceRow(
+    label: String,
+    value: String,
+    valueColor: Color
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 13.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = valueColor
+        )
+    }
+}
+
+@Composable
+private fun PeriodSection(summary: TimeSummary) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(
+            text = "ПЕРІОДИ",
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 4.dp, bottom = 6.dp)
+        )
+
+        PeriodCard(
+            title = "Сьогодні",
+            period = summary.summary.today,
+            icon = Icons.Default.CalendarToday,
+            iconColor = MaterialTheme.colorScheme.secondary,
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+        )
+
+        PeriodCard(
+            title = "Цього тижня",
+            period = summary.summary.week,
+            icon = Icons.Default.DateRange,
+            iconColor = MaterialTheme.colorScheme.primary,
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+        )
+
+        PeriodCard(
+            title = "Цього місяця",
+            period = summary.summary.month,
+            icon = Icons.Default.CalendarMonth,
+            iconColor = MaterialTheme.colorScheme.primary,
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+private fun PeriodCard(
     title: String,
     period: PeriodSummary,
     icon: ImageVector,
-    containerColor: Color,
     iconColor: Color,
+    containerColor: Color,
     contentColor: Color
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = containerColor
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp
-        )
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
             modifier = Modifier
@@ -433,8 +401,8 @@ private fun EnhancedPeriodCard(
                 modifier = Modifier.weight(1f)
             ) {
                 Surface(
-                    modifier = Modifier.size(56.dp),
-                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.size(34.dp),
+                    shape = RoundedCornerShape(10.dp),
                     color = iconColor.copy(alpha = 0.2f)
                 ) {
                     Box(
@@ -445,47 +413,36 @@ private fun EnhancedPeriodCard(
                             imageVector = icon,
                             contentDescription = null,
                             tint = iconColor,
-                            modifier = Modifier.size(28.dp)
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
 
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
                         text = title,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
                         color = contentColor
                     )
                     Text(
-                        text = "${period.workingDays} робочих днів • Спізнень: ${period.lateCount} • Ранній вихід: ${period.earlyCount}",
+                        text = "${period.workingDays} днів • ${period.lateCount} сп. • ${period.earlyCount} вх.",
                         style = MaterialTheme.typography.bodySmall,
                         color = contentColor.copy(alpha = 0.7f)
                     )
                 }
             }
 
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = iconColor.copy(alpha = 0.15f)
-            ) {
+            Surface(shape = RoundedCornerShape(10.dp), color = iconColor.copy(alpha = 0.15f)) {
                 Column(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
                         text = DateUtils.formatHours(period.hours + period.minutes / 60.0),
-                        style = MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = contentColor
-                    )
-                    Text(
-                        text = "годин",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = contentColor.copy(alpha = 0.7f)
                     )
                 }
             }
@@ -497,49 +454,50 @@ private fun EnhancedPeriodCard(
 private fun StatRowWithIcon(
     icon: ImageVector,
     label: String,
-    value: String,
-    iconBackground: Color,
-    iconTint: Color,
-    textColor: Color
+    value: String
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 13.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        Surface(
+            modifier = Modifier.size(34.dp),
+            shape = RoundedCornerShape(10.dp),
+            color = MaterialTheme.colorScheme.primaryContainer
         ) {
-            Surface(
-                modifier = Modifier.size(40.dp),
-                shape = RoundedCornerShape(12.dp),
-                color = iconBackground
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = iconTint,
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
+            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(18.dp)
+                )
             }
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodyLarge,
-                color = textColor
-            )
         }
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f)
+        )
         Text(
             text = value,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
-            color = textColor
+            color = MaterialTheme.colorScheme.onSurface
         )
     }
 }
 
+@Composable
+private fun RowDivider() {
+    HorizontalDivider(
+        modifier = Modifier.padding(start = 62.dp),
+        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+        thickness = 0.5.dp
+    )
+}

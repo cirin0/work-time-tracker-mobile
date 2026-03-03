@@ -3,6 +3,9 @@ package com.cirin0.worktimetracker.features.home
 import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,6 +15,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -21,6 +25,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Stop
@@ -35,8 +41,8 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -50,6 +56,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -63,6 +72,8 @@ import com.cirin0.worktimetracker.core.utils.DateUtils
 import com.cirin0.worktimetracker.features.timeentries.data.model.TimeEntry
 import com.cirin0.worktimetracker.features.timeentries.presentation.TimeEntriesState
 import com.cirin0.worktimetracker.features.timeentries.presentation.TimeEntriesViewModel
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun MainScreen(
@@ -71,93 +82,46 @@ fun MainScreen(
 ) {
     val state by viewModel.state.collectAsState()
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        if (state.isLoading || state.isLoadingList) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .navigationBarsPadding()
+                .padding(horizontal = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            TopBarSection(
+                onRefresh = {
+                    viewModel.loadActiveEntry()
+                    viewModel.loadTimeEntries()
+                }
+            )
+
+            if (state.showServerUnavailableWarning) {
+                Spacer(modifier = Modifier.height(12.dp))
+                ServerWarningBanner()
             }
-        } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Row(
+
+            if (state.isLoading || state.isLoadingList) {
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Column {
-                        Text(
-                            text = "Відстеження часу",
-                            style = MaterialTheme.typography.headlineLarge,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "Керування робочим часом",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Surface(
-                        modifier = Modifier.size(48.dp),
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        tonalElevation = 2.dp
-                    ) {
-                        IconButton(onClick = {
-                            viewModel.loadActiveEntry()
-                            viewModel.loadTimeEntries()
-                        }) {
-                            Icon(
-                                imageVector = Icons.Default.Refresh,
-                                contentDescription = "Оновити",
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        }
-                    }
+                    CircularProgressIndicator()
                 }
+            } else {
+                Spacer(modifier = Modifier.height(16.dp))
 
-                Spacer(modifier = Modifier.height(24.dp))
+                WorkProgressSection(state)
 
-                if (state.showServerUnavailableWarning) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 16.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer
-                        )
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Warning,
-                                contentDescription = "Попередження",
-                                tint = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.padding(4.dp))
-                            Text(
-                                text = "Сервер недоступний - показано збережені дані",
-                                color = MaterialTheme.colorScheme.onErrorContainer,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
-                    }
-                }
+                Spacer(modifier = Modifier.height(16.dp))
 
                 if (state.activeEntry != null) {
                     ActiveEntryCard(state.activeEntry!!, state, viewModel)
@@ -167,55 +131,432 @@ fun MainScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                Text(
-                    text = "Історія записів",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(top = 8.dp, start = 4.dp)
+                TimeEntriesSection(
+                    entries = state.timeEntries,
+                    isLoadingMore = state.isLoadingMore,
+                    hasMore = state.hasMore,
+                    onEntryClick = onNavigateToDetail,
+                    onLoadMore = { viewModel.loadMoreTimeEntries() }
                 )
+            }
+        }
+    }
+}
 
-                Spacer(modifier = Modifier.height(16.dp))
+@Composable
+private fun TopBarSection(onRefresh: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 12.dp, bottom = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column {
+            Text(
+                text = "Відстеження часу",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Text(
+                text = "Керування робочим часом",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        TopBarIconButton(
+            icon = Icons.Default.Refresh,
+            contentDescription = "Оновити",
+            onClick = onRefresh
+        )
+    }
+}
 
-                when {
-                    state.listError != null -> {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Text(
-                                text = "Помилка: ${state.listError}",
-                                color = MaterialTheme.colorScheme.error,
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            OutlinedButton(onClick = { viewModel.loadTimeEntries() }) {
-                                Text("Спробувати знову")
-                            }
-                        }
-                    }
+@Composable
+private fun TopBarIconButton(
+    icon: ImageVector,
+    contentDescription: String,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.size(40.dp),
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        tonalElevation = 1.dp
+    ) {
+        IconButton(onClick = onClick) {
+            Icon(
+                imageVector = icon,
+                contentDescription = contentDescription,
+                modifier = Modifier.size(20.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
 
-                    state.timeEntries.isEmpty() -> {
+@Composable
+private fun ServerWarningBanner() {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.tertiaryContainer
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Warning,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.tertiary,
+                modifier = Modifier.size(18.dp)
+            )
+            Text(
+                text = "Сервер недоступний — показано збережені дані",
+                color = MaterialTheme.colorScheme.onTertiaryContainer,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+    }
+}
+
+@Composable
+private fun WorkProgressSection(state: TimeEntriesState) {
+    val activeEntry = state.activeEntry
+    val todayDate = DateUtils.toIsoDate(System.currentTimeMillis())
+    val todayEntries = state.timeEntries.filter { it.date == todayDate }
+
+    val targetHours = 8f
+    var workedMinutes = 0
+
+    if (activeEntry != null) {
+        val startTime = try {
+            if (activeEntry.startTime.contains("T")) {
+                java.time.ZonedDateTime.parse(activeEntry.startTime)
+                    .withZoneSameInstant(java.time.ZoneId.systemDefault())
+                    .toLocalTime()
+            } else {
+                LocalTime.parse(activeEntry.startTime, DateTimeFormatter.ofPattern("HH:mm:ss"))
+            }
+        } catch (e: Exception) {
+            LocalTime.now()
+        }
+        val currentTime = LocalTime.now()
+        workedMinutes = java.time.Duration.between(startTime, currentTime).toMinutes().toInt()
+            .coerceAtLeast(0)
+        // duration is in seconds, convert to minutes
+        workedMinutes += todayEntries.filter { it.id != activeEntry.id }
+            .sumOf { (it.duration ?: 0) / 60 }
+    } else {
+        // duration is in seconds, convert to minutes
+        workedMinutes = todayEntries.sumOf { (it.duration ?: 0) / 60 }
+    }
+
+    val workedHours = workedMinutes / 60f
+    val progress = (workedHours / targetHours).coerceIn(0f, 1f)
+    val remainingMinutes = ((targetHours - workedHours) * 60).toInt().coerceAtLeast(0)
+
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress,
+        animationSpec = tween(durationMillis = 500),
+        label = "progress"
+    )
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "ПРОГРЕС РОБОТИ",
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 4.dp, bottom = 6.dp)
+        )
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
                         Text(
-                            text = "Немає записів",
-                            style = MaterialTheme.typography.bodyMedium,
+                            text = if (activeEntry != null) "Відстеження..." else "Сьогодні",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = if (activeEntry != null)
+                                MaterialTheme.colorScheme.primary
+                            else
+                                MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "${DateUtils.formatHours(workedHours.toDouble())} / ${targetHours.toInt()} год",
+                            style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
 
-                    else -> {
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            state.timeEntries.forEach { entry ->
-                                TimeEntryListItem(
-                                    entry = entry,
-                                    onClick = { onNavigateToDetail(entry.id) }
-                                )
-                            }
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.size(60.dp)
+                    ) {
+                        CircularProgressIndicator(
+                            progress = { animatedProgress },
+                            modifier = Modifier.fillMaxSize(),
+                            color = if (progress >= 1f)
+                                MaterialTheme.colorScheme.tertiary
+                            else
+                                MaterialTheme.colorScheme.primary,
+                            trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                            strokeWidth = 6.dp,
+                            strokeCap = StrokeCap.Round
+                        )
+                        Text(
+                            text = "${(progress * 100).toInt()}%",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                LinearProgressIndicator(
+                    progress = { animatedProgress },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(8.dp)
+                        .clip(RoundedCornerShape(4.dp)),
+                    color = if (progress >= 1f)
+                        MaterialTheme.colorScheme.tertiary
+                    else
+                        MaterialTheme.colorScheme.primary,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                    strokeCap = StrokeCap.Round
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Відпрацьовано: ${DateUtils.formatHours(workedHours.toDouble())}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = if (progress >= 1f) "Мета досягнута!" else "Залишилось: ${
+                            DateUtils.formatHours(
+                                remainingMinutes / 60.0
+                            )
+                        }",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = if (progress >= 1f) FontWeight.Bold else FontWeight.Normal,
+                        color = if (progress >= 1f)
+                            MaterialTheme.colorScheme.tertiary
+                        else
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TimeEntriesSection(
+    entries: List<TimeEntry>,
+    isLoadingMore: Boolean,
+    hasMore: Boolean,
+    onEntryClick: (Int) -> Unit,
+    onLoadMore: () -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "ІСТОРІЯ ЗАПИСІВ",
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 4.dp, bottom = 6.dp)
+        )
+
+        if (entries.isEmpty()) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Немає записів",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                entries.forEach { entry ->
+                    TimeEntryCard(
+                        entry = entry,
+                        onClick = { onEntryClick(entry.id) }
+                    )
+                }
+            }
+        }
+
+        if (hasMore) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = onLoadMore,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isLoadingMore
+            ) {
+                if (isLoadingMore) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    Text("Завантажити ще")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TimeEntryCard(
+    entry: TimeEntry,
+    onClick: () -> Unit
+) {
+    val dateFormatted = DateUtils.formatDate(entry.date)
+    val startTimeFormatted = formatTime(entry.startTime)
+    val stopTimeFormatted = entry.stopTime?.let { formatTime(it) }
+    val durationFormatted = remember(entry.duration) {
+        // duration is in seconds, convert to hours
+        val hours = (entry.duration ?: 0) / 3600.0
+        DateUtils.formatHours(hours)
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (entry.stopTime == null) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceContainerLow
+            }
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                Surface(
+                    modifier = Modifier.size(40.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    color = if (entry.stopTime == null) {
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                    } else {
+                        MaterialTheme.colorScheme.primaryContainer
+                    }
+                ) {
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                        Icon(
+                            imageVector = if (entry.stopTime == null) {
+                                Icons.Default.AccessTime
+                            } else {
+                                Icons.Default.CalendarToday
+                            },
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        text = dateFormatted,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            text = startTimeFormatted,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        if (stopTimeFormatted != null) {
+                            Text(
+                                text = "- $stopTimeFormatted",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     }
+                }
+            }
+
+            Column(horizontalAlignment = Alignment.End) {
+                if (entry.stopTime == null) {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.primary
+                    ) {
+                        Text(
+                            text = "Активний",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                        )
+                    }
+                } else {
+                    Text(
+                        text = durationFormatted,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
                 }
             }
         }
@@ -267,164 +608,173 @@ private fun StartEntryCard(
         else -> true
     }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 4.dp
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "УПРАВЛІННЯ",
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 4.dp, bottom = 6.dp)
         )
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
-            Text(
-                text = "Почати роботу",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            user?.let {
-                Text(
-                    text = when {
-                        isRemote -> "Режим: Віддалена робота"
-                        isOffice -> "Режим: Офіс (потрібна геолокація та QR-код)"
-                        isHybrid -> "Режим: Гібридний"
-                        else -> ""
-                    },
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            if (isHybrid) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    ),
-                    elevation = CardDefaults.cardElevation(
-                        defaultElevation = 2.dp
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                user?.let {
+                    Text(
+                        text = when {
+                            isRemote -> "Режим: Віддалена робота"
+                            isOffice -> "Режим: Офіс (потрібна геолокація та QR-код)"
+                            isHybrid -> "Режим: Гібридний"
+                            else -> ""
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                if (!state.isLoading && !state.isLoadingLocation) {
-                                    viewModel.toggleIsInOffice(!state.isInOffice)
-                                }
+                }
+
+                if (isHybrid) {
+                    HybridToggleCard(state, viewModel)
+                }
+
+                if (state.error != null) {
+                    Text(
+                        text = state.error,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+
+                if (state.locationPermissionDenied && needsGPS) {
+                    Text(
+                        text = "Потрібен доступ до локації",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+
+                if (state.cameraPermissionDenied) {
+                    Text(
+                        text = "Потрібен доступ до камери",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+
+                OutlinedTextField(
+                    value = state.startComment,
+                    onValueChange = viewModel::updateStartComment,
+                    label = { Text("Коментар (необов'язково)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !state.isLoading && !state.isLoadingLocation,
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                Button(
+                    onClick = {
+                        when {
+                            isOffice -> {
+                                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
                             }
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column {
-                            Text(
-                                text = "Я працюю з офісу",
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Medium
-                            )
-                            if (state.isInOffice) {
-                                Text(
-                                    text = "Для роботи з офісу потрібна геолокація",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+
+                            needsGPS && !viewModel.hasLocationPermission() -> {
+                                permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                            }
+
+                            else -> {
+                                viewModel.startTimeEntry()
                             }
                         }
-                        Switch(
-                            checked = state.isInOffice,
-                            onCheckedChange = { viewModel.toggleIsInOffice(it) },
-                            enabled = !state.isLoading && !state.isLoadingLocation
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !state.isLoading && !state.isLoadingLocation,
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    if (state.isLoadingLocation) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text("Локація...")
+                    } else {
+                        Icon(Icons.Default.PlayArrow, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Почати роботу")
+                    }
+                }
+
+                if (state.showQRScanner) {
+                    Dialog(
+                        onDismissRequest = { viewModel.hideQRScanner() },
+                        properties = DialogProperties(usePlatformDefaultWidth = false)
+                    ) {
+                        QRCodeScannerScreen(
+                            onQRCodeScanned = { qrCode ->
+                                viewModel.onQRCodeScanned(qrCode)
+                            },
+                            onDismiss = { viewModel.hideQRScanner() }
                         )
                     }
                 }
             }
+        }
+    }
+}
 
-            if (state.error != null) {
+@Composable
+private fun HybridToggleCard(
+    state: TimeEntriesState,
+    viewModel: TimeEntriesViewModel
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surface
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    if (!state.isLoading && !state.isLoadingLocation) {
+                        viewModel.toggleIsInOffice(!state.isInOffice)
+                    }
+                }
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
                 Text(
-                    text = state.error,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyMedium
+                    text = "Я працюю з офісу",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium
                 )
+                if (state.isInOffice) {
+                    Text(
+                        text = "Потрібна геолокація",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
-
-            if (state.locationPermissionDenied && needsGPS) {
-                Text(
-                    text = "Для відстеження часу потрібен доступ до локації. Будь ласка, надайте дозвіл у налаштуваннях.",
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
-
-            if (state.cameraPermissionDenied) {
-                Text(
-                    text = "Для сканування QR-коду потрібен доступ до камери. Будь ласка, надайте дозвіл у налаштуваннях.",
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
-
-            OutlinedTextField(
-                value = state.startComment,
-                onValueChange = viewModel::updateStartComment,
-                label = { Text("Коментар до початку (необов'язково)") },
-                modifier = Modifier.fillMaxWidth(),
+            Switch(
+                checked = state.isInOffice,
+                onCheckedChange = { viewModel.toggleIsInOffice(it) },
                 enabled = !state.isLoading && !state.isLoadingLocation
             )
-
-            Button(
-                onClick = {
-                    when {
-                        isOffice -> {
-                            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-                        }
-
-                        needsGPS && !viewModel.hasLocationPermission() -> {
-                            permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-                        }
-
-                        else -> {
-                            viewModel.startTimeEntry()
-                        }
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !state.isLoading && !state.isLoadingLocation
-            ) {
-                if (state.isLoadingLocation) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text("Отримання локації...")
-                } else {
-                    Icon(Icons.Default.PlayArrow, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Почати відстеження")
-                }
-            }
-
-            if (state.showQRScanner) {
-                Dialog(
-                    onDismissRequest = { viewModel.hideQRScanner() },
-                    properties = DialogProperties(usePlatformDefaultWidth = false)
-                ) {
-                    QRCodeScannerScreen(
-                        onQRCodeScanned = { qrCode ->
-                            viewModel.onQRCodeScanned(qrCode)
-                        },
-                        onDismiss = { viewModel.hideQRScanner() }
-                    )
-                }
-            }
         }
     }
 }
@@ -437,99 +787,142 @@ private fun ActiveEntryCard(
 ) {
     var isPinVisible by remember { mutableStateOf(false) }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 4.dp
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "УПРАВЛІННЯ",
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 4.dp, bottom = 6.dp)
         )
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
-            Text(
-                text = "Активне відстеження часу",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                fontWeight = FontWeight.Bold
-            )
-
-            Text(
-                text = "Початок: ${formatTime(entry.startTime)}",
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-
-            entry.startComment?.let {
-                Text(
-                    text = "Коментар: $it",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            }
-
-            HorizontalDivider()
-
-            if (state.error != null) {
-                Text(
-                    text = state.error,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-
-            OutlinedTextField(
-                value = state.stopComment,
-                onValueChange = viewModel::updateStopComment,
-                label = { Text("Коментар до зупинки (необов'язково)") },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !state.isLoading
-            )
-
-            OutlinedTextField(
-                value = state.pinCode,
-                onValueChange = viewModel::updatePinCode,
-                label = { Text("PIN-код (4 цифри)") },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !state.isLoading,
-                visualTransformation = if (isPinVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-                trailingIcon = {
-                    IconButton(onClick = { isPinVisible = !isPinVisible }) {
-                        Icon(
-                            imageVector = if (isPinVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                            contentDescription = if (isPinVisible) "Сховати PIN" else "Показати PIN"
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Surface(
+                        modifier = Modifier.size(48.dp),
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primary
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AccessTime,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+                    Column {
+                        Text(
+                            text = "Активне відстеження",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Text(
+                            text = "Початок: ${formatTime(entry.startTime)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                         )
                     }
-                },
-                isError = state.pinCode.isNotEmpty() && state.pinCode.length != 4,
-                supportingText = if (state.pinCode.isNotEmpty() && state.pinCode.length != 4) {
-                    { Text("PIN-код має містити 4 цифри") }
-                } else null
-            )
+                }
 
-            Button(
-                onClick = { viewModel.stopTimeEntry() },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !state.isLoading && state.pinCode.length == 4,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error
-                )
-            ) {
-                if (state.isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        color = MaterialTheme.colorScheme.onPrimary
+                entry.startComment?.let {
+                    Text(
+                        text = "Коментар: $it",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                     )
-                } else {
-                    Icon(Icons.Default.Stop, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Зупинити відстеження")
+                }
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f))
+
+                if (state.error != null) {
+                    Text(
+                        text = state.error,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+
+                OutlinedTextField(
+                    value = state.stopComment,
+                    onValueChange = viewModel::updateStopComment,
+                    label = { Text("Коментар до зупинки") },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !state.isLoading,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                    )
+                )
+
+                OutlinedTextField(
+                    value = state.pinCode,
+                    onValueChange = viewModel::updatePinCode,
+                    label = { Text("PIN-код (4 цифри)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !state.isLoading,
+                    visualTransformation = if (isPinVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                    trailingIcon = {
+                        IconButton(onClick = { isPinVisible = !isPinVisible }) {
+                            Icon(
+                                imageVector = if (isPinVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                contentDescription = if (isPinVisible) "Сховати" else "Показати"
+                            )
+                        }
+                    },
+                    isError = state.pinCode.isNotEmpty() && state.pinCode.length != 4,
+                    supportingText = if (state.pinCode.isNotEmpty() && state.pinCode.length != 4) {
+                        { Text("PIN має бути 4 цифри") }
+                    } else null,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                    )
+                )
+
+                Button(
+                    onClick = { viewModel.stopTimeEntry() },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !state.isLoading && state.pinCode.length == 4,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    if (state.isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    } else {
+                        Icon(Icons.Default.Stop, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Зупинити")
+                    }
                 }
             }
         }
@@ -539,108 +932,3 @@ private fun ActiveEntryCard(
 private fun formatTime(timeString: String): String {
     return DateUtils.formatTime(timeString)
 }
-
-@Composable
-private fun TimeEntryListItem(
-    entry: TimeEntry,
-    onClick: () -> Unit
-) {
-    val dateFormatted = remember(entry.date) { DateUtils.formatDate(entry.date) }
-    val startTimeFormatted = remember(entry.startTime) { formatTime(entry.startTime) }
-    val stopTimeFormatted = remember(entry.stopTime) {
-        entry.stopTime?.let { formatTime(it) }
-    }
-    val durationFormatted = remember(entry.duration) {
-        val hours = (entry.duration ?: 0) / 60.0
-        DateUtils.formatHours(hours)
-    }
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (entry.stopTime == null) {
-                MaterialTheme.colorScheme.primaryContainer
-            } else {
-                MaterialTheme.colorScheme.surfaceVariant
-            }
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "📅 $dateFormatted",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                if (entry.stopTime == null) {
-                    Text(
-                        text = "⏱️ Активний",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold
-                    )
-                } else {
-                    Text(
-                        text = durationFormatted,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Початок:",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = startTimeFormatted,
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
-
-            stopTimeFormatted?.let { stopTime ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "Зупинка:",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = stopTime,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-            }
-
-            if (!entry.startComment.isNullOrBlank()) {
-                Text(
-                    text = "💬 ${entry.startComment}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
-}
-
