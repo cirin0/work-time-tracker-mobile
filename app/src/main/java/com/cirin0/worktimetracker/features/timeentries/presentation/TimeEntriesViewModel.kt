@@ -236,9 +236,6 @@ class TimeEntriesViewModel @Inject constructor(
         _state.value = _state.value.copy(isInOffice = isInOffice)
     }
 
-    fun clearError() {
-        _state.value = _state.value.copy(error = null)
-    }
 
     fun hasLocationPermission(): Boolean {
         return locationManager.hasLocationPermission()
@@ -290,18 +287,55 @@ class TimeEntriesViewModel @Inject constructor(
 
     fun loadTimeEntries() {
         viewModelScope.launch {
-            _state.value = _state.value.copy(isLoadingList = true, listError = null)
-            when (val result = repository.getTimeEntries()) {
+            _state.value =
+                _state.value.copy(isLoadingList = true, listError = null, currentPage = 1)
+            when (val result = repository.getTimeEntries(page = 1)) {
                 is ApiResponse.Success -> {
                     _state.value = _state.value.copy(
-                        timeEntries = result.data,
-                        isLoadingList = false
+                        timeEntries = result.data.data,
+                        isLoadingList = false,
+                        showServerUnavailableWarning = false,
+                        hasMore = (result.data.meta?.currentPage ?: 1) < (result.data.meta?.lastPage
+                            ?: 1)
+                    )
+                }
+
+                is ApiResponse.Error -> {
+                    val cachedEntries = repository.getCachedTimeEntries()
+                    _state.value = _state.value.copy(
+                        timeEntries = cachedEntries,
+                        isLoadingList = false,
+                        listError = if (cachedEntries.isEmpty()) result.message else null,
+                        showServerUnavailableWarning = cachedEntries.isNotEmpty()
+                    )
+                }
+
+                is ApiResponse.Loading -> {}
+            }
+        }
+    }
+
+    fun loadMoreTimeEntries() {
+        if (_state.value.isLoadingMore || !_state.value.hasMore) return
+
+        viewModelScope.launch {
+            val nextPage = _state.value.currentPage + 1
+            _state.value = _state.value.copy(isLoadingMore = true)
+
+            when (val result = repository.getTimeEntries(page = nextPage)) {
+                is ApiResponse.Success -> {
+                    _state.value = _state.value.copy(
+                        timeEntries = _state.value.timeEntries + result.data.data,
+                        isLoadingMore = false,
+                        currentPage = nextPage,
+                        hasMore = (result.data.meta?.currentPage ?: 1) < (result.data.meta?.lastPage
+                            ?: 1)
                     )
                 }
 
                 is ApiResponse.Error -> {
                     _state.value = _state.value.copy(
-                        isLoadingList = false,
+                        isLoadingMore = false,
                         listError = result.message
                     )
                 }

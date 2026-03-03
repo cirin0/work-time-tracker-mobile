@@ -8,10 +8,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.CloudOff
-import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -39,12 +39,14 @@ import androidx.navigation.navArgument
 import com.cirin0.worktimetracker.features.company.presentation.CompanyScreen
 import com.cirin0.worktimetracker.features.home.ConnectivityViewModel
 import com.cirin0.worktimetracker.features.home.MainScreen
+import com.cirin0.worktimetracker.features.leaverequests.presentation.LeaveRequestsScreen
 import com.cirin0.worktimetracker.features.message.presentation.ChatListScreen
 import com.cirin0.worktimetracker.features.message.presentation.ChatScreen
 import com.cirin0.worktimetracker.features.profile.presentation.ProfileScreen
-import com.cirin0.worktimetracker.features.test.TestScreen
-import com.cirin0.worktimetracker.features.timeentries.presentation.TimeEntriesScreen
+import com.cirin0.worktimetracker.features.settings.SettingsScreen
 import com.cirin0.worktimetracker.features.timeentries.presentation.TimeEntryDetailScreen
+import com.cirin0.worktimetracker.features.timesheet.presentation.TimesheetScreen
+import com.cirin0.worktimetracker.features.workschedule.presentation.ScheduleScreen
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
@@ -59,18 +61,18 @@ fun MainScaffold(
     val bottomNavItems = listOf(
         BottomNavItem(
             route = Screen.Main.route,
-            icon = Icons.Default.Home,
-            label = "Головна"
-        ),
-        BottomNavItem(
-            route = Screen.TimeEntries.route,
             icon = Icons.Default.AccessTime,
             label = "Час"
         ),
         BottomNavItem(
-            route = Screen.ChatList.route,
-            icon = Icons.AutoMirrored.Filled.Chat,
-            label = "Чат"
+            route = Screen.Schedule.route,
+            icon = Icons.Default.DateRange,
+            label = "Графік"
+        ),
+        BottomNavItem(
+            route = Screen.Timesheet.route,
+            icon = Icons.Default.Assessment,
+            label = "Табель"
         ),
         BottomNavItem(
             route = Screen.Profile.route,
@@ -84,7 +86,6 @@ fun MainScaffold(
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentDestination = navBackStackEntry?.destination
 
-            // Hide bottom bar on ChatScreen
             val shouldShowBottomBar = currentDestination?.route?.startsWith("chat/") != true
 
             if (shouldShowBottomBar) {
@@ -106,12 +107,40 @@ fun MainScaffold(
                             },
                             selected = isSelected,
                             onClick = {
-                                navController.navigate(item.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
+                                if (item.route == Screen.Profile.route) {
+                                    val isOnNestedProfileScreen =
+                                        currentDestination?.route in listOf(
+                                            Screen.LeaveRequests.route,
+                                            Screen.LeaveRequestDetail.route,
+                                            Screen.Company.route,
+                                            Screen.Settings.route,
+                                            Screen.ChatList.route
+                                        ) || currentDestination?.route?.startsWith("chat/") == true
+
+                                    if (isOnNestedProfileScreen) {
+                                        navController.navigate(item.route) {
+                                            popUpTo(Screen.Profile.route) {
+                                                inclusive = false
+                                            }
+                                            launchSingleTop = true
+                                        }
+                                    } else {
+                                        navController.navigate(item.route) {
+                                            popUpTo(navController.graph.findStartDestination().id) {
+                                                saveState = true
+                                            }
+                                            launchSingleTop = true
+                                            restoreState = true
+                                        }
                                     }
-                                    launchSingleTop = true
-                                    restoreState = true
+                                } else {
+                                    navController.navigate(item.route) {
+                                        popUpTo(navController.graph.findStartDestination().id) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
                                 }
                             }
                         )
@@ -158,14 +187,17 @@ fun MainScaffold(
                 startDestination = Screen.Main.route
             ) {
                 composable(Screen.Main.route) {
-                    MainScreen()
-                }
-                composable(Screen.TimeEntries.route) {
-                    TimeEntriesScreen(
+                    MainScreen(
                         onNavigateToDetail = { entryId ->
                             navController.navigate(Screen.TimeEntryDetail.createRoute(entryId))
                         }
                     )
+                }
+                composable(Screen.Schedule.route) {
+                    ScheduleScreen()
+                }
+                composable(Screen.Timesheet.route) {
+                    TimesheetScreen()
                 }
                 composable(
                     route = Screen.TimeEntryDetail.route,
@@ -179,8 +211,13 @@ fun MainScaffold(
                         }
                     )
                 }
-                composable(Screen.Test.route) {
-                    TestScreen()
+                composable(Screen.Settings.route) {
+                    SettingsScreen(
+                        onNavigateBack = {
+                            navController.popBackStack()
+                        },
+                        onLogoutSuccess = onLogoutSuccess
+                    )
                 }
                 composable(Screen.ChatList.route) {
                     ChatListScreen(
@@ -223,9 +260,37 @@ fun MainScaffold(
                 }
                 composable(Screen.Profile.route) {
                     ProfileScreen(
-                        onLogoutSuccess = onLogoutSuccess,
                         onNavigateToCompany = { companyId ->
                             navController.navigate(Screen.Company.createRoute(companyId))
+                        },
+                        onNavigateToChat = {
+                            navController.navigate(Screen.ChatList.route)
+                        },
+                        onNavigateToRequests = {
+                            navController.navigate(Screen.LeaveRequests.route)
+                        },
+                        onNavigateToSettings = {
+                            navController.navigate(Screen.Settings.route)
+                        },
+                        onNavigateToSchedule = {
+                            navController.navigate(Screen.Schedule.route)
+                        }
+                    )
+                }
+                composable(Screen.LeaveRequests.route) {
+                    LeaveRequestsScreen(
+                        onNavigateToDetail = { requestId ->
+                            navController.navigate(Screen.LeaveRequestDetail.createRoute(requestId))
+                        }
+                    )
+                }
+                composable(
+                    route = Screen.LeaveRequestDetail.route,
+                    arguments = listOf(navArgument("requestId") { type = NavType.IntType })
+                ) {
+                    com.cirin0.worktimetracker.features.leaverequests.presentation.detail.LeaveRequestDetailScreen(
+                        onNavigateBack = {
+                            navController.popBackStack()
                         }
                     )
                 }

@@ -3,6 +3,7 @@ package com.cirin0.worktimetracker.core.di
 import android.content.Context
 import androidx.room.Room
 import com.cirin0.worktimetracker.core.database.AppDatabase
+import com.cirin0.worktimetracker.core.database.dao.TimeEntryDao
 import com.cirin0.worktimetracker.core.database.dao.UserDao
 import com.cirin0.worktimetracker.core.utils.ConnectivityObserver
 import com.cirin0.worktimetracker.core.utils.NetworkConnectivityObserver
@@ -25,7 +26,7 @@ object DatabaseModule {
             AppDatabase::class.java,
             "work_time_tracker_db"
         )
-            .fallbackToDestructiveMigration(false)
+            .fallbackToDestructiveMigration(true)
             .build()
     }
 
@@ -33,6 +34,12 @@ object DatabaseModule {
     @Singleton
     fun provideUserDao(database: AppDatabase): UserDao {
         return database.userDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideTimeEntryDao(database: AppDatabase): TimeEntryDao {
+        return database.timeEntryDao()
     }
 
     @Provides

@@ -1,6 +1,8 @@
 package com.cirin0.worktimetracker.core.network
 
+import com.cirin0.worktimetracker.core.utils.ErrorMapper
 import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
 import retrofit2.HttpException
 import java.io.IOException
 
@@ -16,9 +18,12 @@ sealed class ApiResponse<out T> {
 }
 
 data class ErrorResponse(
-    val message: String,
-    val errors: Map<String, List<String>>? = null
+    @SerializedName("message") val message: String? = null,
+    @SerializedName("error") val error: String? = null,
+    @SerializedName("errors") val errors: Map<String, List<String>>? = null
 )
+
+private val errorMapper = ErrorMapper()
 
 suspend fun <T> apiCall(call: suspend () -> T): ApiResponse<T> {
     return try {
@@ -27,17 +32,22 @@ suspend fun <T> apiCall(call: suspend () -> T): ApiResponse<T> {
         val errorBody = e.response()?.errorBody()?.string()
         val errorResponse = try {
             Gson().fromJson(errorBody, ErrorResponse::class.java)
-        } catch (inner: Exception) {
+        } catch (_: Exception) {
             null
         }
+
+        val userMessage = errorResponse?.message
+            ?: errorResponse?.error
+            ?: errorMapper.mapHttpError(e.code(), e.message())
+
         ApiResponse.Error(
-            message = errorResponse?.message ?: e.message(),
+            message = userMessage,
             code = e.code(),
             errors = errorResponse?.errors
         )
     } catch (e: IOException) {
-        ApiResponse.Error("Network error: ${e.message}")
+        ApiResponse.Error(errorMapper.mapNetworkError(e))
     } catch (e: Exception) {
-        ApiResponse.Error(e.message ?: "Unknown error occurred")
+        ApiResponse.Error(e.message ?: "Невідома помилка")
     }
 }

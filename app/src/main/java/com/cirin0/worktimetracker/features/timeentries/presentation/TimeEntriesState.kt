@@ -13,6 +13,9 @@ data class TimeEntriesState(
     val timeEntries: List<TimeEntry> = emptyList(),
     val isLoadingList: Boolean = false,
     val listError: String? = null,
+    val isLoadingMore: Boolean = false,
+    val hasMore: Boolean = false,
+    val currentPage: Int = 1,
     val isLoadingLocation: Boolean = false,
     val locationPermissionDenied: Boolean = false,
     val currentLatitude: Double? = null,
@@ -22,6 +25,7 @@ data class TimeEntriesState(
     val showQRScanner: Boolean = false,
     val qrCodeScanned: String? = null,
     val cameraPermissionDenied: Boolean = false,
-    val qrCodeScanSuccess: Boolean = false
+    val qrCodeScanSuccess: Boolean = false,
+    val showServerUnavailableWarning: Boolean = false
 )
 

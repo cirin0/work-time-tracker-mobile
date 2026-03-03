@@ -22,7 +22,8 @@ import java.util.concurrent.TimeUnit
 object NetworkModule {
 
     private const val LOCAL_DOMAIN = "http://192.168.0.52:8000"
-    private const val REMOTE_DOMAIN = "https://work-time-tracker-api-cpdeb7e7b9axazd0.swedencentral-01.azurewebsites.net"
+    private const val REMOTE_DOMAIN =
+        "https://work-time-tracker-api-cpdeb7e7b9axazd0.swedencentral-01.azurewebsites.net"
 
     @Provides
     @Singleton

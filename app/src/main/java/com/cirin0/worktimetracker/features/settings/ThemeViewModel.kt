@@ -1,5 +1,4 @@
-
-package com.cirin0.worktimetracker.features.home
+package com.cirin0.worktimetracker.features.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
