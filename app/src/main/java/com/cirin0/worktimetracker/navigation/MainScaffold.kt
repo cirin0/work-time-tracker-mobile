@@ -215,7 +215,8 @@ fun MainScaffold(
                     SettingsScreen(
                         onNavigateBack = {
                             navController.popBackStack()
-                        }
+                        },
+                        onLogoutSuccess = onLogoutSuccess
                     )
                 }
                 composable(Screen.ChatList.route) {
@@ -259,7 +260,6 @@ fun MainScaffold(
                 }
                 composable(Screen.Profile.route) {
                     ProfileScreen(
-                        onLogoutSuccess = onLogoutSuccess,
                         onNavigateToCompany = { companyId ->
                             navController.navigate(Screen.Company.createRoute(companyId))
                         },
@@ -271,6 +271,9 @@ fun MainScaffold(
                         },
                         onNavigateToSettings = {
                             navController.navigate(Screen.Settings.route)
+                        },
+                        onNavigateToSchedule = {
+                            navController.navigate(Screen.Schedule.route)
                         }
                     )
                 }

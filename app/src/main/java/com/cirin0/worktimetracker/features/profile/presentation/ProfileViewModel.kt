@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.cirin0.worktimetracker.core.network.ApiResponse
 import com.cirin0.worktimetracker.core.utils.ConnectivityObserver
 import com.cirin0.worktimetracker.core.utils.ValidationRules
-import com.cirin0.worktimetracker.features.auth.data.repository.AuthRepository
 import com.cirin0.worktimetracker.features.profile.data.repository.ProfileRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
@@ -18,14 +17,10 @@ import java.io.File
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val profileRepository: ProfileRepository,
-    private val authRepository: AuthRepository,
     private val connectivityObserver: ConnectivityObserver
 ) : ViewModel() {
     private val _state = MutableStateFlow(ProfileState())
     val state = _state.asStateFlow()
-
-    private val _logoutState = MutableStateFlow(LogoutState())
-    val logoutState = _logoutState.asStateFlow()
 
     init {
         loadUserProfile()
@@ -430,40 +425,4 @@ class ProfileViewModel @Inject constructor(
             else -> error.message
         }
     }
-
-    fun logout() {
-        viewModelScope.launch {
-            _logoutState.update { it.copy(isLoading = true, error = null) }
-            when (val response = authRepository.logout()) {
-                is ApiResponse.Success -> {
-                    _logoutState.update {
-                        it.copy(
-                            isLoading = false,
-                            isSuccess = true,
-                            error = null
-                        )
-                    }
-                }
-
-                is ApiResponse.Error -> {
-                    _logoutState.update {
-                        it.copy(
-                            isLoading = false,
-                            error = response.message
-                        )
-                    }
-                }
-
-                is ApiResponse.Loading -> {
-                    _logoutState.update { it.copy(isLoading = true) }
-                }
-            }
-        }
-    }
 }
-
-data class LogoutState(
-    val isLoading: Boolean = false,
-    val isSuccess: Boolean = false,
-    val error: String? = null
-)
