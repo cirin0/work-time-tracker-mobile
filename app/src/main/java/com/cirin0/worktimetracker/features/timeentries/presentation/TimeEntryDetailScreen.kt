@@ -1,38 +1,47 @@
 package com.cirin0.worktimetracker.features.timeentries.presentation
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -40,7 +49,6 @@ import com.cirin0.worktimetracker.core.utils.DateUtils
 import com.cirin0.worktimetracker.features.timeentries.data.model.TimeEntry
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimeEntryDetailScreen(
     timeEntryId: Int,
@@ -53,37 +61,29 @@ fun TimeEntryDetailScreen(
         viewModel.loadTimeEntry(timeEntryId)
     }
 
-    Column(
-        modifier = Modifier.fillMaxSize()
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
     ) {
-        TopAppBar(
-            title = {
-                Text(
-                    "Деталі запису",
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            windowInsets = WindowInsets(0, 0, 0, 0),
-            navigationIcon = {
-                IconButton(onClick = onNavigateBack) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Назад"
-                    )
-                }
-            },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            )
-        )
-
-        Box(
-            modifier = Modifier.fillMaxSize()
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .navigationBarsPadding()
+                .padding(horizontal = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            TopBarSection(
+                onBack = onNavigateBack
+            )
+
             when {
                 state.isLoading -> {
                     Box(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(300.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         CircularProgressIndicator()
@@ -93,8 +93,8 @@ fun TimeEntryDetailScreen(
                 state.error != null -> {
                     Column(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
+                            .fillMaxWidth()
+                            .height(300.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
@@ -111,9 +111,151 @@ fun TimeEntryDetailScreen(
                 }
 
                 state.timeEntry != null -> {
-                    TimeEntryDetailContent(
-                        timeEntry = state.timeEntry!!,
-                        modifier = Modifier.padding(8.dp)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    TimeEntryDetailContent(state.timeEntry!!)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TopBarSection(onBack: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 12.dp, bottom = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            TopBarIconButton(
+                icon = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Назад",
+                onClick = onBack
+            )
+            Column {
+                Text(
+                    text = "Деталі запису",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TopBarIconButton(
+    icon: ImageVector,
+    contentDescription: String,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.size(40.dp),
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        tonalElevation = 1.dp
+    ) {
+        IconButton(onClick = onClick) {
+            Icon(
+                imageVector = icon,
+                contentDescription = contentDescription,
+                modifier = Modifier.size(20.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun TimeEntryDetailContent(timeEntry: TimeEntry) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        HeaderCard(timeEntry)
+
+        TimeWorkSection(timeEntry)
+
+        if (timeEntry.scheduledStartTime != null || timeEntry.scheduledEndTime != null ||
+            (timeEntry.latenessMinutes ?: 0) > 0 || (timeEntry.earlyLeaveMinutes ?: 0) > 0 ||
+            (timeEntry.overtimeMinutes ?: 0) > 0
+        ) {
+            ScheduleSection(timeEntry)
+        }
+
+        if (!timeEntry.startComment.isNullOrBlank() || !timeEntry.stopComment.isNullOrBlank()) {
+            CommentsSection(timeEntry)
+        }
+
+        if (timeEntry.locationData != null) {
+            LocationSection(timeEntry)
+        }
+
+        AdditionalSection(timeEntry)
+
+        Spacer(modifier = Modifier.height(8.dp))
+    }
+}
+
+@Composable
+private fun HeaderCard(timeEntry: TimeEntry) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (timeEntry.stopTime == null) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.secondaryContainer
+            }
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = "Запис #${timeEntry.id}",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = if (timeEntry.stopTime == null) {
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.onSecondaryContainer
+                    }
+                )
+                Text(
+                    text = DateUtils.formatDate(timeEntry.date),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (timeEntry.stopTime == null) {
+                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                    } else {
+                        MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                    }
+                )
+            }
+
+            if (timeEntry.stopTime == null) {
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = MaterialTheme.colorScheme.primary
+                ) {
+                    Text(
+                        text = "Активний",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
                     )
                 }
             }
@@ -122,105 +264,48 @@ fun TimeEntryDetailScreen(
 }
 
 @Composable
-private fun TimeEntryDetailContent(
-    timeEntry: TimeEntry,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
+private fun TimeWorkSection(timeEntry: TimeEntry) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "ЧАС РОБОТИ",
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 4.dp, bottom = 6.dp)
+        )
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
+            shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
-                containerColor = if (timeEntry.stopTime == null) {
-                    MaterialTheme.colorScheme.primaryContainer
-                } else {
-                    MaterialTheme.colorScheme.secondaryContainer
-                }
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
             ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = "Запис #${timeEntry.id}",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = if (timeEntry.stopTime == null) {
-                            MaterialTheme.colorScheme.onPrimaryContainer
-                        } else {
-                            MaterialTheme.colorScheme.onSecondaryContainer
-                        }
-                    )
-                    Text(
-                        text = "📅 ${DateUtils.formatDate(timeEntry.date)}",
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium,
-                        color = if (timeEntry.stopTime == null) {
-                            MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                        } else {
-                            MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
-                        }
-                    )
-                }
-
-                if (timeEntry.stopTime == null) {
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.primary
-                    ) {
-                        Text(
-                            text = "⏱️ Активний",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                        )
-                    }
-                }
-            }
-        }
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Text(
-                    text = "⏰ Час роботи",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+            Column(modifier = Modifier.fillMaxWidth()) {
+                DetailRow(
+                    icon = Icons.Default.AccessTime,
+                    label = "Початок",
+                    value = formatDateTime(timeEntry.startTime)
                 )
-                InfoRow(InfoItem("Початок", formatDateTime(timeEntry.startTime)))
                 if (timeEntry.stopTime != null) {
-                    InfoRow(InfoItem("Завершення", formatDateTime(timeEntry.stopTime)))
-                    InfoRow(
-                        InfoItem(
-                            "Тривалість",
-                            formatDuration(timeEntry.duration ?: 0),
-                            highlighted = true
-                        )
+                    RowDivider()
+                    DetailRow(
+                        icon = Icons.Default.Schedule,
+                        label = "Завершення",
+                        value = formatDateTime(timeEntry.stopTime)
+                    )
+                    RowDivider()
+                    DetailRow(
+                        icon = Icons.Default.Edit,
+                        label = "Тривалість",
+                        value = formatDuration(timeEntry.duration ?: 0),
+                        highlighted = true
                     )
                 } else {
                     Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
                         shape = RoundedCornerShape(12.dp),
                         color = MaterialTheme.colorScheme.primaryContainer
                     ) {
@@ -229,270 +314,289 @@ private fun TimeEntryDetailContent(
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
                             fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                            modifier = Modifier.padding(14.dp)
                         )
                     }
-                }
-            }
-        }
-
-        if (timeEntry.scheduledStartTime != null || timeEntry.scheduledEndTime != null ||
-            (timeEntry.latenessMinutes ?: 0) > 0 || (timeEntry.earlyLeaveMinutes ?: 0) > 0 ||
-            (timeEntry.overtimeMinutes ?: 0) > 0
-        ) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        text = "📋 Розклад",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    timeEntry.scheduledStartTime?.let {
-                        InfoRow(InfoItem("Заплановано початок", it))
-                    }
-                    timeEntry.scheduledEndTime?.let {
-                        InfoRow(InfoItem("Заплановано кінець", it))
-                    }
-
-                    timeEntry.latenessMinutes?.let {
-                        if (it > 0) {
-                            Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color = MaterialTheme.colorScheme.errorContainer
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(
-                                        horizontal = 16.dp,
-                                        vertical = 8.dp
-                                    ),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Text(
-                                        text = "⚠️ Спізнення:",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onErrorContainer,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Text(
-                                        text = "$it хв",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onErrorContainer,
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    timeEntry.earlyLeaveMinutes?.let {
-                        if (it > 0) {
-                            Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color = MaterialTheme.colorScheme.errorContainer
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(
-                                        horizontal = 16.dp,
-                                        vertical = 8.dp
-                                    ),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Text(
-                                        text = "⚠️ Ранній вихід:",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onErrorContainer,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Text(
-                                        text = "$it хв",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onErrorContainer,
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    timeEntry.overtimeMinutes?.let {
-                        if (it > 0) {
-                            Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color = MaterialTheme.colorScheme.tertiaryContainer
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(
-                                        horizontal = 16.dp,
-                                        vertical = 8.dp
-                                    ),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Text(
-                                        text = "✨ Переробка:",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onTertiaryContainer,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Text(
-                                        text = "$it хв",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onTertiaryContainer,
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        if (!timeEntry.startComment.isNullOrBlank() || !timeEntry.stopComment.isNullOrBlank()) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        text = "💬 Коментарі",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    timeEntry.startComment?.let {
-                        CommentBox("До початку", it)
-                    }
-
-                    timeEntry.stopComment?.let {
-                        CommentBox("До завершення", it)
-                    }
-                }
-            }
-        }
-
-        if (timeEntry.locationData != null) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        text = "📍 Геолокація",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    InfoRow(
-                        InfoItem(
-                            "Координати",
-                            "${String.format(Locale.US, "%.6f", timeEntry.locationData.lat)}, ${
-                                String.format(Locale.US, "%.6f", timeEntry.locationData.lng)
-                            }"
-                        )
-                    )
-                }
-            }
-        }
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Text(
-                    text = "ℹ️ Додатково",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                InfoRow(
-                    InfoItem(
-                        "Тип запису",
-                        when (timeEntry.entryType) {
-                            "manual" -> "Ручний"
-                            "automatic" -> "Автоматичний"
-                            else -> timeEntry.entryType
-                        }
-                    )
-                )
-                timeEntry.createdAt?.let {
-                    InfoRow(InfoItem("Створено", formatDateTime(it)))
-                }
-                timeEntry.updatedAt?.let {
-                    InfoRow(InfoItem("Оновлено", formatDateTime(it)))
                 }
             }
         }
     }
 }
 
-data class InfoItem(
-    val label: String,
-    val value: String,
-    val highlighted: Boolean = false,
-    val isWarning: Boolean = false,
-    val isSuccess: Boolean = false
-)
+@Composable
+private fun ScheduleSection(timeEntry: TimeEntry) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "РОЗКЛАД",
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 4.dp, bottom = 6.dp)
+        )
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                timeEntry.scheduledStartTime?.let {
+                    DetailRow(
+                        icon = Icons.Default.Schedule,
+                        label = "Заплановано початок",
+                        value = it
+                    )
+                }
+                timeEntry.scheduledEndTime?.let {
+                    if (timeEntry.scheduledStartTime != null) RowDivider()
+                    DetailRow(
+                        icon = Icons.Default.Schedule,
+                        label = "Заплановано кінець",
+                        value = it
+                    )
+                }
+
+                timeEntry.latenessMinutes?.let {
+                    if (it > 0) {
+                        if (timeEntry.scheduledStartTime != null || timeEntry.scheduledEndTime != null) {
+                            RowDivider()
+                        }
+                        WarningRow(
+                            label = "Спізнення",
+                            value = "$it хв"
+                        )
+                    }
+                }
+
+                timeEntry.earlyLeaveMinutes?.let {
+                    if (it > 0) {
+                        RowDivider()
+                        WarningRow(
+                            label = "Ранній вихід",
+                            value = "$it хв"
+                        )
+                    }
+                }
+
+                timeEntry.overtimeMinutes?.let {
+                    if (it > 0) {
+                        RowDivider()
+                        OvertimeRow(
+                            label = "Переробка",
+                            value = "$it хв"
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
 
 @Composable
-private fun InfoRow(item: InfoItem) {
+private fun CommentsSection(timeEntry: TimeEntry) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "КОМЕНТАРІ",
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 4.dp, bottom = 6.dp)
+        )
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                timeEntry.startComment?.let {
+                    CommentBox("До початку", it)
+                }
+                timeEntry.stopComment?.let {
+                    CommentBox("До завершення", it)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LocationSection(timeEntry: TimeEntry) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "ГЕОЛОКАЦІЯ",
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 4.dp, bottom = 6.dp)
+        )
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                DetailRow(
+                    icon = Icons.Default.LocationOn,
+                    label = "Координати",
+                    value = "${String.format(Locale.US, "%.6f", timeEntry.locationData?.lat)}, ${
+                        String.format(Locale.US, "%.6f", timeEntry.locationData?.lng)
+                    }"
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AdditionalSection(timeEntry: TimeEntry) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "ДОДАТКОВО",
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 4.dp, bottom = 6.dp)
+        )
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                DetailRow(
+                    icon = Icons.Default.Info,
+                    label = "Тип запису",
+                    value = when (timeEntry.entryType) {
+                        "manual" -> "Ручний"
+                        "automatic" -> "Автоматичний"
+                        else -> timeEntry.entryType
+                    }
+                )
+                timeEntry.createdAt?.let {
+                    RowDivider()
+                    DetailRow(
+                        icon = Icons.Default.CalendarMonth,
+                        label = "Створено",
+                        value = formatDateTime(it)
+                    )
+                }
+                timeEntry.updatedAt?.let {
+                    if (timeEntry.createdAt != null) RowDivider()
+                    DetailRow(
+                        icon = Icons.Default.Edit,
+                        label = "Оновлено",
+                        value = formatDateTime(it)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DetailRow(
+    icon: ImageVector,
+    label: String,
+    value: String,
+    highlighted: Boolean = false
+) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 13.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Surface(
+            modifier = Modifier.size(34.dp),
+            shape = RoundedCornerShape(10.dp),
+            color = MaterialTheme.colorScheme.primaryContainer
+        ) {
+            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            text = value,
+            style = if (highlighted) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyMedium,
+            fontWeight = if (highlighted) FontWeight.Bold else FontWeight.Normal,
+            color = if (highlighted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
+
+@Composable
+private fun WarningRow(label: String, value: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 13.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = item.label,
+            text = label,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.error
         )
         Text(
-            text = item.value,
-            style = if (item.highlighted) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyMedium,
-            fontWeight = if (item.highlighted) FontWeight.Bold else FontWeight.Normal,
-            color = when {
-                item.isWarning -> MaterialTheme.colorScheme.error
-                item.isSuccess -> MaterialTheme.colorScheme.tertiary
-                item.highlighted -> MaterialTheme.colorScheme.primary
-                else -> MaterialTheme.colorScheme.onSurface
-            }
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.error
+        )
+    }
+}
+
+@Composable
+private fun OvertimeRow(label: String, value: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 13.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.tertiary
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.tertiary
         )
     }
 }
@@ -524,11 +628,21 @@ private fun CommentBox(label: String, comment: String) {
     }
 }
 
+@Composable
+private fun RowDivider() {
+    HorizontalDivider(
+        modifier = Modifier.padding(start = 62.dp),
+        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+        thickness = 0.5.dp
+    )
+}
+
 private fun formatDateTime(timeString: String): String {
     return DateUtils.formatDateTime(timeString)
 }
 
-private fun formatDuration(minutes: Int): String {
-    val hours = minutes / 60.0
+private fun formatDuration(seconds: Int): String {
+    // duration is in seconds, convert to hours
+    val hours = seconds / 3600.0
     return DateUtils.formatHours(hours)
 }

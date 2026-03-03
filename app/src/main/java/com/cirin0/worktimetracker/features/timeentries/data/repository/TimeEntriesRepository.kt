@@ -6,6 +6,7 @@ import com.cirin0.worktimetracker.core.database.entity.toTimeEntry
 import com.cirin0.worktimetracker.core.network.ApiResponse
 import com.cirin0.worktimetracker.core.network.apiCall
 import com.cirin0.worktimetracker.features.timeentries.data.api.TimeEntriesApi
+import com.cirin0.worktimetracker.features.timeentries.data.model.PaginatedTimeEntries
 import com.cirin0.worktimetracker.features.timeentries.data.model.StopTimeEntryRequest
 import com.cirin0.worktimetracker.features.timeentries.data.model.TimeEntry
 import com.cirin0.worktimetracker.features.timeentries.data.model.TimeEntryRequest
@@ -66,18 +67,31 @@ class TimeEntriesRepository @Inject constructor(
         }
     }
 
-    suspend fun getTimeEntries(): ApiResponse<List<TimeEntry>> {
+    suspend fun getTimeEntries(page: Int = 1, perPage: Int = 5): ApiResponse<PaginatedTimeEntries> {
         return try {
             apiCall {
-                val response = api.getTimeEntries()
+                val response = api.getTimeEntries(page, perPage)
                 val entries = response.data
-                timeEntryDao.cacheTimeEntries(entries.map { it.toCachedEntity() })
-                entries
+                if (page == 1) {
+                    timeEntryDao.cacheTimeEntries(entries.map { it.toCachedEntity() })
+                } else {
+                    entries.forEach { timeEntryDao.cacheTimeEntry(it.toCachedEntity()) }
+                }
+                PaginatedTimeEntries(entries, response.meta)
             }
         } catch (e: Exception) {
-            val cachedEntries = timeEntryDao.getAllCachedTimeEntries()
-            if (cachedEntries.isNotEmpty()) {
-                ApiResponse.Success(cachedEntries.map { it.toTimeEntry() })
+            if (page == 1) {
+                val cachedEntries = timeEntryDao.getAllCachedTimeEntries()
+                if (cachedEntries.isNotEmpty()) {
+                    ApiResponse.Success(
+                        PaginatedTimeEntries(
+                            cachedEntries.map { it.toTimeEntry() },
+                            null
+                        )
+                    )
+                } else {
+                    ApiResponse.Error(e.message ?: "Unknown error")
+                }
             } else {
                 ApiResponse.Error(e.message ?: "Unknown error")
             }
