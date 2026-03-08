@@ -14,6 +14,9 @@ import jakarta.inject.Named
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import okhttp3.FormBody
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -28,10 +31,59 @@ class PusherService @Inject constructor(
         if (pusher != null) {
             return
         }
-        val authorizer = HttpChannelAuthorizer("$domain/broadcasting/auth").apply {
-            authToken?.let { token ->
-                setHeaders(mapOf("Authorization" to "Bearer $token"))
+        
+        val authUrl = "$domain/broadcasting/auth"
+        println("🔐 Broadcasting auth URL: $authUrl")
+        
+        val authorizer = object : HttpChannelAuthorizer(authUrl) {
+            private val httpClient = OkHttpClient()
+            
+            override fun authorize(
+                channelName: String?,
+                socketId: String?
+            ): String? {
+                try {
+                    println("📡 Authorizing channel: $channelName, socketId: $socketId")
+                    
+                    val body = FormBody.Builder()
+                        .add("socket_id", socketId ?: "")
+                        .add("channel_name", channelName ?: "")
+                        .build()
+                    
+                    val request = Request.Builder()
+                        .url(authUrl)
+                        .post(body)
+                        .apply {
+                            authToken?.let { token ->
+                                addHeader("Authorization", "Bearer $token")
+                            }
+                        }
+                        .build()
+                    
+                    val response = httpClient.newCall(request).execute()
+                    val responseBody = response.body?.string()
+                    
+                    println("📥 Auth response code: ${response.code}")
+                    println("📥 Auth response body: $responseBody")
+                    
+                    if (!response.isSuccessful) {
+                        println("❌ Auth failed with code ${response.code}")
+                        return null
+                    }
+                    
+                    return responseBody
+                } catch (e: Exception) {
+                    println("❌ Auth exception: ${e.message}")
+                    e.printStackTrace()
+                    return null
+                }
             }
+        }
+        
+        authToken?.let { token ->
+            println("🔑 Auth token set for broadcasting: ${token.take(20)}...")
+        } ?: run {
+            println("⚠️ No auth token provided for broadcasting")
         }
 
         val options = PusherOptions().apply {

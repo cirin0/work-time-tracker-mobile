@@ -911,9 +911,6 @@ private fun ActiveEntryCard(
                     onClick = { viewModel.stopTimeEntry() },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !state.isLoading && state.pinCode.length == 4,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error
-                    ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     if (state.isLoading) {
@@ -922,7 +919,7 @@ private fun ActiveEntryCard(
                             color = MaterialTheme.colorScheme.onPrimary
                         )
                     } else {
-                        Icon(Icons.Default.Stop, contentDescription = null)
+                        Icon(Icons.Default.Stop, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
                         Spacer(Modifier.width(8.dp))
                         Text("Зупинити")
                     }

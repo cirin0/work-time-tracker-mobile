@@ -499,19 +499,20 @@ private fun CreateLeaveRequestDialog(
     if (showStartDatePicker) {
         val datePickerState = rememberDatePickerState()
         DatePickerDialog(
-            onDismissRequest = { },
+            onDismissRequest = { showStartDatePicker = false },
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
                         val date = DateUtils.toIsoDate(millis)
                         viewModel.updateStartDate(date)
+                        showStartDatePicker = false
                     }
                 }) {
                     Text("OK")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { }) {
+                TextButton(onClick = { showStartDatePicker = false }) {
                     Text("Скасувати")
                 }
             }
@@ -523,19 +524,20 @@ private fun CreateLeaveRequestDialog(
     if (showEndDatePicker) {
         val datePickerState = rememberDatePickerState()
         DatePickerDialog(
-            onDismissRequest = { },
+            onDismissRequest = { showEndDatePicker = false },
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
                         val date = DateUtils.toIsoDate(millis)
                         viewModel.updateEndDate(date)
+                        showEndDatePicker = false
                     }
                 }) {
                     Text("OK")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { }) {
+                TextButton(onClick = { showEndDatePicker = false }) {
                     Text("Скасувати")
                 }
             }

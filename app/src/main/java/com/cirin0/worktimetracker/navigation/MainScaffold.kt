@@ -281,6 +281,9 @@ fun MainScaffold(
                     LeaveRequestsScreen(
                         onNavigateToDetail = { requestId ->
                             navController.navigate(Screen.LeaveRequestDetail.createRoute(requestId))
+                        },
+						onNavigateBack = {
+                            navController.navigate(Screen.Profile.route)
                         }
                     )
                 }
