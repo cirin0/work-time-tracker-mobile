@@ -67,6 +67,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.cirin0.worktimetracker.core.fcm.RequestNotificationPermission
 import com.cirin0.worktimetracker.core.ui.QRCodeScannerScreen
 import com.cirin0.worktimetracker.core.utils.DateUtils
 import com.cirin0.worktimetracker.features.timeentries.data.model.TimeEntry
@@ -81,6 +82,8 @@ fun MainScreen(
     viewModel: TimeEntriesViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+
+    RequestNotificationPermission()
 
     Box(
         modifier = Modifier

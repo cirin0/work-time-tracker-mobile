@@ -27,6 +27,7 @@ object Constants {
         const val UPDATE_AVATAR = "me/avatar"
         const val SETUP_PIN_CODE = "me/pin-code"
         const val UPDATE_PIN_CODE = "me/pin-code"
+        const val FCM_TOKEN = "me/fcm-token"
         const val USERS = "users"
         const val COMPANIES = "companies"
         const val TIME_ENTRIES = "time-entries"

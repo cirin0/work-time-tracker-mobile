@@ -1,6 +1,8 @@
 package com.cirin0.worktimetracker.features.auth.data.api
 
 import com.cirin0.worktimetracker.core.utils.Constants
+import com.cirin0.worktimetracker.features.auth.data.model.FcmTokenRequest
+import com.cirin0.worktimetracker.features.auth.data.model.FcmTokenResponse
 import com.cirin0.worktimetracker.features.auth.data.model.LoginRequest
 import com.cirin0.worktimetracker.features.auth.data.model.LoginResponse
 import com.cirin0.worktimetracker.features.auth.data.model.LogoutResponse
@@ -12,6 +14,7 @@ import com.cirin0.worktimetracker.features.auth.data.model.ResendVerificationRes
 import com.cirin0.worktimetracker.features.auth.data.model.VerifyEmailRequest
 import com.cirin0.worktimetracker.features.auth.data.model.VerifyEmailResponse
 import retrofit2.http.Body
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 
 interface AuthApi {
@@ -33,4 +36,7 @@ interface AuthApi {
 
     @POST(Constants.ApiRoutes.LOGOUT)
     suspend fun logout(): LogoutResponse
+
+    @PATCH(Constants.ApiRoutes.FCM_TOKEN)
+    suspend fun sendFcmToken(@Body request: FcmTokenRequest): FcmTokenResponse
 }
