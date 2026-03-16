@@ -46,10 +46,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.cirin0.worktimetracker.R
 import com.cirin0.worktimetracker.core.utils.DateUtils
 import com.cirin0.worktimetracker.features.message.data.model.Message
 import com.cirin0.worktimetracker.features.message.presentation.chat.ChatViewModel
@@ -123,7 +125,7 @@ fun ChatScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Warning,
-                            contentDescription = "Помилка",
+                            contentDescription = stringResource(R.string.general_error),
                             tint = MaterialTheme.colorScheme.error,
                             modifier = Modifier.size(20.dp)
                         )
@@ -158,7 +160,7 @@ fun ChatScreen(
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "Почніть розмову",
+                            text = stringResource(R.string.chat_start_conversation),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -215,7 +217,7 @@ fun ChatTopBar(
             IconButton(onClick = onNavigateBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Назад"
+                    contentDescription = stringResource(R.string.general_back)
                 )
             }
 
@@ -229,7 +231,7 @@ fun ChatTopBar(
                 if (receiverAvatar != null) {
                     AsyncImage(
                         model = receiverAvatar,
-                        contentDescription = "Аватар користувача",
+                        contentDescription = stringResource(R.string.profile_user_avatar),
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()
                     )
@@ -335,7 +337,7 @@ fun MessageInput(
                     .heightIn(min = 56.dp, max = 120.dp),
                 placeholder = {
                     Text(
-                        "Напишіть повідомлення...",
+                        stringResource(R.string.chat_input_placeholder),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 },
@@ -362,7 +364,7 @@ fun MessageInput(
                 } else {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Send,
-                        contentDescription = "Відправити",
+                        contentDescription = stringResource(R.string.chat_send),
                         tint = if (messageText.isNotBlank()) {
                             MaterialTheme.colorScheme.primary
                         } else {

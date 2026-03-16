@@ -1,12 +1,16 @@
 package com.cirin0.worktimetracker.features.profile.presentation
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cirin0.worktimetracker.R
 import com.cirin0.worktimetracker.core.network.ApiResponse
 import com.cirin0.worktimetracker.core.utils.ConnectivityObserver
+import com.cirin0.worktimetracker.core.utils.ValidationResult
 import com.cirin0.worktimetracker.core.utils.ValidationRules
 import com.cirin0.worktimetracker.features.profile.data.repository.ProfileRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,7 +21,8 @@ import java.io.File
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val profileRepository: ProfileRepository,
-    private val connectivityObserver: ConnectivityObserver
+    private val connectivityObserver: ConnectivityObserver,
+    @param:ApplicationContext private val context: Context
 ) : ViewModel() {
     private val _state = MutableStateFlow(ProfileState())
     val state = _state.asStateFlow()
@@ -128,8 +133,8 @@ class ProfileViewModel @Inject constructor(
         if (!nameValidation.isValid || !emailValidation.isValid) {
             _state.update {
                 it.copy(
-                    nameError = nameValidation.errorMessage,
-                    emailError = emailValidation.errorMessage
+                    nameError = (nameValidation as? ValidationResult.Error)?.resolve(context),
+                    emailError = (emailValidation as? ValidationResult.Error)?.resolve(context)
                 )
             }
             return
@@ -242,7 +247,9 @@ class ProfileViewModel @Inject constructor(
     fun setupPinCode() {
         val pinCode = _state.value.pinCode
         if (pinCode.length != 4) {
-            _state.update { it.copy(pinCodeError = "PIN-код має складатися з 4 цифр") }
+            _state.update {
+                it.copy(pinCodeError = context.getString(R.string.home_pin_must_be_four_digits))
+            }
             return
         }
 
@@ -329,8 +336,9 @@ class ProfileViewModel @Inject constructor(
         val currentPin = _state.value.currentPinCode
         val newPin = _state.value.newPinCode
 
-        val currentError = if (currentPin.length != 4) "PIN-код має складатися з 4 цифр" else null
-        val newError = if (newPin.length != 4) "PIN-код має складатися з 4 цифр" else null
+        val pinLengthError = context.getString(R.string.home_pin_must_be_four_digits)
+        val currentError = if (currentPin.length != 4) pinLengthError else null
+        val newError = if (newPin.length != 4) pinLengthError else null
 
         if (currentError != null || newError != null) {
             _state.update {
@@ -384,27 +392,27 @@ class ProfileViewModel @Inject constructor(
                     firstError.contains(
                         "pin code is required",
                         ignoreCase = true
-                    ) -> "Пін-код обов'язковий."
+                    ) -> context.getString(R.string.profile_pin_required)
 
                     firstError.contains(
                         "pin code must be exactly 4 digits",
                         ignoreCase = true
-                    ) -> "Пін-код має складатися рівно з 4 цифр."
+                    ) -> context.getString(R.string.profile_pin_exact_digits)
 
                     firstError.contains(
                         "pin code must contain only digits",
                         ignoreCase = true
-                    ) -> "Пін-код має містити лише цифри."
+                    ) -> context.getString(R.string.profile_pin_digits_only)
 
                     firstError.contains(
                         "must be different from the current one",
                         ignoreCase = true
-                    ) -> "Новий пін-код має відрізнятися від поточного."
+                    ) -> context.getString(R.string.profile_pin_must_differ)
 
                     firstError.contains(
                         "current pin code is incorrect",
                         ignoreCase = true
-                    ) -> "Поточний пін-код невірний."
+                    ) -> context.getString(R.string.profile_pin_current_incorrect)
 
                     else -> firstError
                 }
@@ -415,12 +423,12 @@ class ProfileViewModel @Inject constructor(
             error.message.contains(
                 "current pin code is incorrect",
                 ignoreCase = true
-            ) -> "Поточний пін-код невірний."
+            ) -> context.getString(R.string.profile_pin_current_incorrect)
 
             error.message.contains(
                 "must be different from the current one",
                 ignoreCase = true
-            ) -> "Новий пін-код має відрізнятися від поточного."
+            ) -> context.getString(R.string.profile_pin_must_differ)
 
             else -> error.message
         }

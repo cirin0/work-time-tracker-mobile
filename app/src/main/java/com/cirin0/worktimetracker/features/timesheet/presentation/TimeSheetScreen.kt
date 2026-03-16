@@ -42,9 +42,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.cirin0.worktimetracker.R
+import com.cirin0.worktimetracker.core.localization.AppLocaleManager
 import com.cirin0.worktimetracker.core.utils.DateUtils
 import com.cirin0.worktimetracker.features.timesheet.data.model.PeriodSummary
 import com.cirin0.worktimetracker.features.timesheet.data.model.TimeSummary
@@ -93,13 +96,16 @@ fun TimesheetScreen(
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "Помилка: ${state.error}",
+                            text = stringResource(
+                                R.string.general_error_with_message,
+                                state.error ?: ""
+                            ),
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodyLarge
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         OutlinedButton(onClick = { viewModel.loadTimeSummary() }) {
-                            Text("Спробувати знову")
+                            Text(stringResource(R.string.general_retry))
                         }
                     }
                 }
@@ -113,7 +119,7 @@ fun TimesheetScreen(
                     ) {
                         Spacer(modifier = Modifier.height(24.dp))
                         Text(
-                            text = "Дані відсутні",
+                            text = stringResource(R.string.timesheet_no_data),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -140,20 +146,20 @@ private fun TopBarSection(onRefresh: () -> Unit) {
     ) {
         Column {
             Text(
-                text = "Табель",
+                text = stringResource(R.string.timesheet_title),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
             )
             Text(
-                text = "Ваша робоча статистика",
+                text = stringResource(R.string.timesheet_subtitle),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
         TopBarIconButton(
             icon = Icons.Default.Refresh,
-            contentDescription = "Оновити",
+            contentDescription = stringResource(R.string.general_refresh),
             onClick = onRefresh
         )
     }
@@ -199,7 +205,7 @@ private fun TimeSummaryContent(summary: TimeSummary) {
 private fun StatsSection(summary: TimeSummary) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "ЗАГАЛЬНА СТАТИСТИКА",
+            text = stringResource(R.string.timesheet_general_stats).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -216,19 +222,19 @@ private fun StatsSection(summary: TimeSummary) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 StatRowWithIcon(
                     icon = Icons.Default.Timer,
-                    label = "Загальний час",
+                    label = stringResource(R.string.timesheet_total_time),
                     value = DateUtils.formatHours(summary.totalHours + summary.totalMinutes / 60.0)
                 )
                 RowDivider()
                 StatRowWithIcon(
                     icon = Icons.AutoMirrored.Filled.List,
-                    label = "Робочих днів",
+                    label = stringResource(R.string.timesheet_working_days),
                     value = "${summary.workingDays}"
                 )
                 RowDivider()
                 StatRowWithIcon(
                     icon = Icons.Default.Schedule,
-                    label = "Середній робочий час",
+                    label = stringResource(R.string.timesheet_average_work_time),
                     value = DateUtils.formatHours(summary.averageWorkTime / 60.0)
                 )
             }
@@ -237,7 +243,7 @@ private fun StatsSection(summary: TimeSummary) {
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "ВІДВІДУВАНІСТЬ",
+            text = stringResource(R.string.timesheet_attendance).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -253,19 +259,19 @@ private fun StatsSection(summary: TimeSummary) {
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 AttendanceRow(
-                    label = "Спізнень",
+                    label = stringResource(R.string.timesheet_late_count),
                     value = "${summary.attendance.lateCount}",
                     valueColor = MaterialTheme.colorScheme.error
                 )
                 RowDivider()
                 AttendanceRow(
-                    label = "Вчасно",
+                    label = stringResource(R.string.timesheet_on_time),
                     value = "${summary.attendance.onTimeCount}",
                     valueColor = MaterialTheme.colorScheme.primary
                 )
                 RowDivider()
                 AttendanceRow(
-                    label = "Ранній вихід",
+                    label = stringResource(R.string.timesheet_early_leave),
                     value = "${summary.attendance.earlyLeaveCount}",
                     valueColor = MaterialTheme.colorScheme.tertiary
                 )
@@ -285,16 +291,25 @@ private fun StatsSection(summary: TimeSummary) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     if (summary.attendance.lateCount > 0) {
                         Text(
-                            text = "Середнє спізнення: ${
-                                String.format("%.1f", summary.attendance.averageLateMinutes)
-                            } хв",
+                            text = stringResource(
+                                R.string.timesheet_average_late_format,
+                                String.format(
+                                    AppLocaleManager.getCurrentLocale(),
+                                    "%.1f",
+                                    summary.attendance.averageLateMinutes
+                                )
+                            ),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onTertiaryContainer
                         )
                     }
                     if (summary.attendance.overtimeCount > 0) {
                         Text(
-                            text = "Переробок: ${summary.attendance.overtimeCount} (${summary.attendance.totalOvertimeMinutes} хв)",
+                            text = stringResource(
+                                R.string.timesheet_overtime_format,
+                                summary.attendance.overtimeCount,
+                                summary.attendance.totalOvertimeMinutes
+                            ),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onTertiaryContainer
                         )
@@ -337,7 +352,7 @@ private fun AttendanceRow(
 private fun PeriodSection(summary: TimeSummary) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
-            text = "ПЕРІОДИ",
+            text = stringResource(R.string.timesheet_periods).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -345,7 +360,7 @@ private fun PeriodSection(summary: TimeSummary) {
         )
 
         PeriodCard(
-            title = "Сьогодні",
+            title = stringResource(R.string.timesheet_today),
             period = summary.summary.today,
             icon = Icons.Default.CalendarToday,
             iconColor = MaterialTheme.colorScheme.secondary,
@@ -354,7 +369,7 @@ private fun PeriodSection(summary: TimeSummary) {
         )
 
         PeriodCard(
-            title = "Цього тижня",
+            title = stringResource(R.string.timesheet_this_week),
             period = summary.summary.week,
             icon = Icons.Default.DateRange,
             iconColor = MaterialTheme.colorScheme.primary,
@@ -363,7 +378,7 @@ private fun PeriodSection(summary: TimeSummary) {
         )
 
         PeriodCard(
-            title = "Цього місяця",
+            title = stringResource(R.string.timesheet_this_month),
             period = summary.summary.month,
             icon = Icons.Default.CalendarMonth,
             iconColor = MaterialTheme.colorScheme.primary,
@@ -426,7 +441,12 @@ private fun PeriodCard(
                         color = contentColor
                     )
                     Text(
-                        text = "${period.workingDays} днів • ${period.lateCount} сп. • ${period.earlyCount} вх.",
+                        text = stringResource(
+                            R.string.timesheet_period_summary,
+                            period.workingDays,
+                            period.lateCount,
+                            period.earlyCount
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = contentColor.copy(alpha = 0.7f)
                     )

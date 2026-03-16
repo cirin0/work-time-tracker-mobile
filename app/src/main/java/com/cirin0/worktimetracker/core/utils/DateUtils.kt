@@ -1,25 +1,36 @@
 package com.cirin0.worktimetracker.core.utils
 
+import com.cirin0.worktimetracker.core.localization.AppLocaleManager
+import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
 import java.util.Locale
 
 object DateUtils {
-    private val ukrainianLocale = Locale.Builder().setLanguage("uk").setRegion("UA").build()
-
     private val isoDateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-    private val displayDateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy", ukrainianLocale)
-    private val displayDateTimeFormatter =
-        DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm", ukrainianLocale)
-    private val displayTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
     // Output formatter for getCurrentIsoDateTime(); 'Z' is literal (UTC is enforced via withZone)
     private val isoDateTimeOutputFormatter =
         DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'")
             .withZone(ZoneOffset.UTC)
+
+    private fun currentLocale(): Locale = AppLocaleManager.getCurrentLocale()
+
+    private fun displayDateFormatter(): DateTimeFormatter {
+        return DateTimeFormatter.ofPattern("dd.MM.yyyy", currentLocale())
+    }
+
+    private fun displayDateTimeFormatter(): DateTimeFormatter {
+        return DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm", currentLocale())
+    }
+
+    private fun displayTimeFormatter(): DateTimeFormatter {
+        return DateTimeFormatter.ofPattern("HH:mm", currentLocale())
+    }
 
     /**
      * Parses any ISO-8601 instant string (Z suffix, with or without sub-seconds).
@@ -40,10 +51,10 @@ object DateUtils {
                 parseInstant(dateString)
                     ?.atZone(ZoneId.systemDefault())
                     ?.toLocalDate()
-                    ?.format(displayDateFormatter)
+                    ?.format(displayDateFormatter())
                     ?: dateString
             } else {
-                LocalDate.parse(dateString, isoDateFormatter).format(displayDateFormatter)
+                LocalDate.parse(dateString, isoDateFormatter).format(displayDateFormatter())
             }
         } catch (_: Exception) {
             dateString
@@ -56,7 +67,7 @@ object DateUtils {
         return try {
             parseInstant(dateTimeString)
                 ?.atZone(ZoneId.systemDefault())
-                ?.format(displayDateTimeFormatter)
+                ?.format(displayDateTimeFormatter())
                 ?: dateTimeString
         } catch (_: Exception) {
             dateTimeString
@@ -72,7 +83,7 @@ object DateUtils {
             }
             parseInstant(dateTimeString)
                 ?.atZone(ZoneId.systemDefault())
-                ?.format(displayTimeFormatter)
+                ?.format(displayTimeFormatter())
                 ?: dateTimeString
         } catch (_: Exception) {
             dateTimeString
@@ -89,30 +100,39 @@ object DateUtils {
 
     // Format hours: 8.5 → "8 год 30 хв"
     fun formatHours(hours: Double): String {
-        if (hours < 0) return "0 хв"
+        val isEnglish = currentLocale().language == "en"
+        if (hours < 0) return if (isEnglish) "0 min" else "0 хв"
         val wholeHours = hours.toInt()
         val minutes = ((hours - wholeHours) * 60).toInt()
+
         return when {
-            wholeHours > 0 && minutes > 0 -> "$wholeHours год $minutes хв"
-            wholeHours > 0 -> "$wholeHours год"
-            minutes > 0 -> "$minutes хв"
-            else -> "0 хв"
+            wholeHours > 0 && minutes > 0 -> if (isEnglish) {
+                "$wholeHours hr $minutes min"
+            } else {
+                "$wholeHours год $minutes хв"
+            }
+
+            wholeHours > 0 -> if (isEnglish) "$wholeHours hr" else "$wholeHours год"
+            minutes > 0 -> if (isEnglish) "$minutes min" else "$minutes хв"
+            else -> if (isEnglish) "0 min" else "0 хв"
         }
     }
 
-    // Day of the week: "monday" → "Понеділок"
-    fun getDayNameUkrainian(dayOfWeek: String): String {
-        return when (dayOfWeek.lowercase()) {
-            "monday" -> "Понеділок"
-            "tuesday" -> "Вівторок"
-            "wednesday" -> "Середа"
-            "thursday" -> "Четвер"
-            "friday" -> "П'ятниця"
-            "saturday" -> "Субота"
-            "sunday" -> "Неділя"
-            else -> dayOfWeek.replaceFirstChar { it.uppercase() }
+    fun getDayDisplayName(dayOfWeek: String): String {
+        return try {
+            DayOfWeek.valueOf(dayOfWeek.uppercase(Locale.US))
+                .getDisplayName(TextStyle.FULL, currentLocale())
+                .replaceFirstChar {
+                    if (it.isLowerCase()) it.titlecase(currentLocale()) else it.toString()
+                }
+        } catch (_: Exception) {
+            dayOfWeek.replaceFirstChar {
+                if (it.isLowerCase()) it.titlecase(currentLocale()) else it.toString()
+            }
         }
     }
+
+    fun getDayNameUkrainian(dayOfWeek: String): String = getDayDisplayName(dayOfWeek)
 
     // Day order: "monday" → 1, "sunday" → 7
     fun getDayOrder(dayOfWeek: String): Int {
@@ -128,7 +148,7 @@ object DateUtils {
         }
     }
 
-    // Get current day of week in English lowercase
+    // Get the current day of the week in English lowercase
     fun getCurrentDayOfWeek(): String {
         return LocalDate.now().dayOfWeek.name.lowercase()
     }

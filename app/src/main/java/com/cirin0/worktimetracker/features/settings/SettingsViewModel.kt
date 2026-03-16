@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cirin0.worktimetracker.core.localization.AppLocaleManager
 import com.cirin0.worktimetracker.core.network.ApiResponse
 import com.cirin0.worktimetracker.core.utils.LocationManager
 import com.cirin0.worktimetracker.features.auth.data.repository.AuthRepository
@@ -20,7 +21,8 @@ import javax.inject.Inject
 
 data class SettingsState(
     val hasCameraPermission: Boolean = false,
-    val hasLocationPermission: Boolean = false
+    val hasLocationPermission: Boolean = false,
+    val appLanguage: String = AppLocaleManager.DEFAULT_LANGUAGE
 )
 
 data class LogoutState(
@@ -43,14 +45,23 @@ class SettingsViewModel @Inject constructor(
     val logoutState: StateFlow<LogoutState> = _logoutState.asStateFlow()
 
     init {
+        _state.update { it.copy(appLanguage = AppLocaleManager.getCurrentLanguage()) }
         checkPermissions()
     }
 
     fun checkPermissions() {
-        _state.value = SettingsState(
-            hasCameraPermission = hasCameraPermission(),
-            hasLocationPermission = locationManager.hasLocationPermission()
-        )
+        _state.update {
+            it.copy(
+                hasCameraPermission = hasCameraPermission(),
+                hasLocationPermission = locationManager.hasLocationPermission()
+            )
+        }
+    }
+
+    fun setAppLanguage(language: String) {
+        val normalizedLanguage = AppLocaleManager.normalizeLanguage(language)
+        _state.update { it.copy(appLanguage = normalizedLanguage) }
+        AppLocaleManager.applyAppLanguage(normalizedLanguage)
     }
 
     fun hasCameraPermission(): Boolean {

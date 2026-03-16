@@ -1,5 +1,7 @@
 package com.cirin0.worktimetracker.features.leaverequests.data.repository
 
+import android.content.Context
+import com.cirin0.worktimetracker.R
 import com.cirin0.worktimetracker.core.database.dao.LeaveRequestDao
 import com.cirin0.worktimetracker.core.database.entity.toCachedEntity
 import com.cirin0.worktimetracker.core.database.entity.toLeaveRequest
@@ -9,6 +11,7 @@ import com.cirin0.worktimetracker.core.utils.ConnectivityObserver
 import com.cirin0.worktimetracker.features.leaverequests.data.api.LeaveRequestsApi
 import com.cirin0.worktimetracker.features.leaverequests.data.model.CreateLeaveRequestRequest
 import com.cirin0.worktimetracker.features.leaverequests.data.model.LeaveRequest
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -16,7 +19,8 @@ import javax.inject.Singleton
 class LeaveRequestsRepository @Inject constructor(
     private val api: LeaveRequestsApi,
     private val leaveRequestDao: LeaveRequestDao,
-    private val connectivityObserver: ConnectivityObserver
+    private val connectivityObserver: ConnectivityObserver,
+    @param:ApplicationContext private val context: Context
 ) {
     suspend fun getLeaveRequests(): ApiResponse<List<LeaveRequest>> {
         if (!connectivityObserver.isConnected()) {
@@ -24,7 +28,7 @@ class LeaveRequestsRepository @Inject constructor(
             return if (cached.isNotEmpty()) {
                 ApiResponse.Success(cached, fromCache = true)
             } else {
-                ApiResponse.Error("Немає підключення до інтернету")
+                ApiResponse.Error(context.getString(R.string.general_no_internet))
             }
         }
 
@@ -52,7 +56,7 @@ class LeaveRequestsRepository @Inject constructor(
             return if (cached != null) {
                 ApiResponse.Success(cached.toLeaveRequest(), fromCache = true)
             } else {
-                ApiResponse.Error("Немає підключення до інтернету")
+                ApiResponse.Error(context.getString(R.string.general_no_internet))
             }
         }
 
@@ -76,7 +80,7 @@ class LeaveRequestsRepository @Inject constructor(
 
     suspend fun createLeaveRequest(request: CreateLeaveRequestRequest): ApiResponse<LeaveRequest> {
         if (!connectivityObserver.isConnected()) {
-            return ApiResponse.Error("Немає підключення до інтернету. Неможливо створити запит.")
+            return ApiResponse.Error(context.getString(R.string.general_no_internet))
         }
 
         return apiCall {

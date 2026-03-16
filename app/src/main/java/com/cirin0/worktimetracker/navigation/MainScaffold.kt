@@ -26,6 +26,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -36,6 +37,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
+import com.cirin0.worktimetracker.R
 import com.cirin0.worktimetracker.features.company.presentation.CompanyScreen
 import com.cirin0.worktimetracker.features.home.ConnectivityViewModel
 import com.cirin0.worktimetracker.features.home.MainScreen
@@ -62,22 +64,22 @@ fun MainScaffold(
         BottomNavItem(
             route = Screen.Main.route,
             icon = Icons.Default.AccessTime,
-            label = "Час"
+            label = stringResource(R.string.nav_time)
         ),
         BottomNavItem(
             route = Screen.Schedule.route,
             icon = Icons.Default.DateRange,
-            label = "Графік"
+            label = stringResource(R.string.nav_schedule)
         ),
         BottomNavItem(
             route = Screen.Timesheet.route,
             icon = Icons.Default.Assessment,
-            label = "Табель"
+            label = stringResource(R.string.nav_timesheet)
         ),
         BottomNavItem(
             route = Screen.Profile.route,
             icon = Icons.Default.Person,
-            label = "Профіль"
+            label = stringResource(R.string.nav_profile)
         )
     )
 
@@ -168,13 +170,13 @@ fun MainScaffold(
                     ) {
                         Icon(
                             imageVector = Icons.Default.CloudOff,
-                            contentDescription = "Офлайн",
+                            contentDescription = stringResource(R.string.general_offline),
                             tint = MaterialTheme.colorScheme.error,
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.padding(4.dp))
                         Text(
-                            text = "Немає підключення до інтернету",
+                            text = stringResource(R.string.general_no_internet),
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodyMedium
                         )

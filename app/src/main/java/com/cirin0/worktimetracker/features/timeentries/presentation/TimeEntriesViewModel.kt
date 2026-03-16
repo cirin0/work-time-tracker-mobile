@@ -156,6 +156,7 @@ class TimeEntriesViewModel @Inject constructor(
                 is ApiResponse.Error -> {
                     _state.value = _state.value.copy(
                         isLoading = false,
+                        uiError = null,
                         error = result.message
                     )
                 }
@@ -214,6 +215,7 @@ class TimeEntriesViewModel @Inject constructor(
                                 _state.value = _state.value.copy(
                                     isLoading = false,
                                     qrCodeScanSuccess = false,
+                                    uiError = null,
                                     error = result.message
                                 )
                             }
@@ -228,7 +230,8 @@ class TimeEntriesViewModel @Inject constructor(
                             isLoading = false,
                             locationPermissionDenied = true,
                             qrCodeScanSuccess = false,
-                            error = "Location permission is required to start work"
+                            uiError = null,
+                            error = null
                         )
                     }
 
@@ -237,6 +240,7 @@ class TimeEntriesViewModel @Inject constructor(
                             isLoadingLocation = false,
                             isLoading = false,
                             qrCodeScanSuccess = false,
+                            uiError = null,
                             error = "Failed to get location: ${locationResult.message}"
                         )
                     }
@@ -261,6 +265,7 @@ class TimeEntriesViewModel @Inject constructor(
                         _state.value = _state.value.copy(
                             isLoading = false,
                             qrCodeScanSuccess = false,
+                            uiError = null,
                             error = result.message
                         )
                     }
@@ -275,19 +280,21 @@ class TimeEntriesViewModel @Inject constructor(
         viewModelScope.launch {
             if (_state.value.pinCode.length != 4) {
                 _state.value = _state.value.copy(
-                    error = "PIN-код має містити 4 цифри"
+                    uiError = TimeEntriesUiError.PIN_LENGTH,
+                    error = null
                 )
                 return@launch
             }
 
             if (!_state.value.pinCode.all { it.isDigit() }) {
                 _state.value = _state.value.copy(
-                    error = "PIN-код має містити тільки цифри"
+                    uiError = TimeEntriesUiError.PIN_DIGITS_ONLY,
+                    error = null
                 )
                 return@launch
             }
 
-            _state.value = _state.value.copy(isLoading = true, error = null)
+            _state.value = _state.value.copy(isLoading = true, uiError = null, error = null)
             val comment = _state.value.stopComment.takeIf { it.isNotBlank() }
             val pinCode = _state.value.pinCode
 
@@ -305,6 +312,7 @@ class TimeEntriesViewModel @Inject constructor(
                 is ApiResponse.Error -> {
                     _state.value = _state.value.copy(
                         isLoading = false,
+                        uiError = null,
                         error = result.message
                     )
                 }
@@ -324,7 +332,7 @@ class TimeEntriesViewModel @Inject constructor(
 
     fun updatePinCode(pinCode: String) {
         if (pinCode.all { it.isDigit() } && pinCode.length <= 4) {
-            _state.value = _state.value.copy(pinCode = pinCode, error = null)
+            _state.value = _state.value.copy(pinCode = pinCode, uiError = null, error = null)
         }
     }
 
@@ -343,13 +351,14 @@ class TimeEntriesViewModel @Inject constructor(
         } else {
             _state.value = _state.value.copy(
                 locationPermissionDenied = true,
-                error = "Location permission is required to track work time"
+                uiError = null,
+                error = null
             )
         }
     }
 
     fun showQRScanner() {
-        _state.value = _state.value.copy(showQRScanner = true, error = null)
+        _state.value = _state.value.copy(showQRScanner = true, uiError = null, error = null)
     }
 
     fun hideQRScanner() {
@@ -376,7 +385,8 @@ class TimeEntriesViewModel @Inject constructor(
             _state.value = _state.value.copy(
                 cameraPermissionDenied = true,
                 showQRScanner = false,
-                error = "Для сканування QR-коду потрібен доступ до камери"
+                uiError = null,
+                error = null
             )
         }
     }

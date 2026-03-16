@@ -1,5 +1,7 @@
 package com.cirin0.worktimetracker.features.timesheet.data.repository
 
+import android.content.Context
+import com.cirin0.worktimetracker.R
 import com.cirin0.worktimetracker.core.database.dao.TimesheetDao
 import com.cirin0.worktimetracker.core.database.entity.toCachedEntity
 import com.cirin0.worktimetracker.core.database.entity.toTimeSummary
@@ -8,6 +10,7 @@ import com.cirin0.worktimetracker.core.network.apiCall
 import com.cirin0.worktimetracker.core.utils.ConnectivityObserver
 import com.cirin0.worktimetracker.features.timeentries.data.api.TimeEntriesApi
 import com.cirin0.worktimetracker.features.timesheet.data.model.TimeSummary
+import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -16,7 +19,8 @@ import javax.inject.Singleton
 class TimeSheetRepository @Inject constructor(
     private val api: TimeEntriesApi,
     private val timesheetDao: TimesheetDao,
-    private val connectivityObserver: ConnectivityObserver
+    private val connectivityObserver: ConnectivityObserver,
+    @param:ApplicationContext private val context: Context
 ) {
     companion object {
         private const val CACHE_RETENTION_DAYS = 120L
@@ -32,7 +36,7 @@ class TimeSheetRepository @Inject constructor(
             return if (cached != null) {
                 ApiResponse.Success(cached.toTimeSummary(), fromCache = true)
             } else {
-                ApiResponse.Error("Немає підключення до інтернету та немає кешованих даних")
+                ApiResponse.Error(context.getString(R.string.general_no_internet))
             }
         }
 

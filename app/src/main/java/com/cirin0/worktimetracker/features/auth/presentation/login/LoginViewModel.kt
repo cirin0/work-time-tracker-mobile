@@ -1,5 +1,6 @@
 package com.cirin0.worktimetracker.features.auth.presentation.login
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cirin0.worktimetracker.core.network.ApiResponse
@@ -7,6 +8,7 @@ import com.cirin0.worktimetracker.core.utils.ValidationResult
 import com.cirin0.worktimetracker.core.utils.ValidationRules
 import com.cirin0.worktimetracker.features.auth.data.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,7 +17,8 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    @param:ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(LoginState())
@@ -114,7 +117,7 @@ class LoginViewModel @Inject constructor(
         if (!hasInteracted && email.isBlank()) return null
         return when (val result = ValidationRules.isValidEmail(email)) {
             is ValidationResult.Success -> null
-            is ValidationResult.Error -> result.message
+            is ValidationResult.Error -> result.resolve(context)
         }
     }
 
@@ -122,7 +125,7 @@ class LoginViewModel @Inject constructor(
         if (!hasInteracted && password.isBlank()) return null
         return when (val result = ValidationRules.isValidPassword(password)) {
             is ValidationResult.Success -> null
-            is ValidationResult.Error -> result.message
+            is ValidationResult.Error -> result.resolve(context)
         }
     }
 }
