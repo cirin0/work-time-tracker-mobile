@@ -26,11 +26,22 @@ class ProfileRepository @Inject constructor(
     private val connectivityObserver: ConnectivityObserver,
     @param:Named(Constants.NAMED_IMAGE_URL) private val imageBaseUrl: String
 ) {
+    companion object {
+        private const val CACHE_TTL = 24 * 60 * 60 * 1000L
+    }
+
     suspend fun getCurrentUser(): ApiResponse<User> {
+        val cachedUser = userDao.getCachedUser()
+        val isCacheValid =
+            cachedUser != null && (System.currentTimeMillis() - cachedUser.cachedAt) < CACHE_TTL
+
         if (!connectivityObserver.isConnected()) {
-            val cachedUser = userDao.getCachedUser()
             return if (cachedUser != null) {
-                ApiResponse.Success(cachedUser.toUser(), fromCache = true)
+                if (isCacheValid) {
+                    ApiResponse.Success(cachedUser.toUser(), fromCache = true)
+                } else {
+                    ApiResponse.Error("Кеш застарів. Потрібне підключення до інтернету.")
+                }
             } else {
                 ApiResponse.Error("Немає підключення до інтернету та немає кешованих даних")
             }
@@ -48,14 +59,10 @@ class ProfileRepository @Inject constructor(
             userWithAvatar
         }
 
-        // If network request failed, try to return cached data
         return if (response is ApiResponse.Error) {
-            val cachedUser = userDao.getCachedUser()
-            if (cachedUser != null) {
-                // Return cached data with fromCache flag
+            if (isCacheValid) {
                 ApiResponse.Success(cachedUser.toUser(), fromCache = true)
             } else {
-                // No cached data available, return the error
                 response
             }
         } else {

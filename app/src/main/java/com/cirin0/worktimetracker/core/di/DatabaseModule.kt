@@ -3,8 +3,12 @@ package com.cirin0.worktimetracker.core.di
 import android.content.Context
 import androidx.room.Room
 import com.cirin0.worktimetracker.core.database.AppDatabase
+import com.cirin0.worktimetracker.core.database.dao.CompanyDao
+import com.cirin0.worktimetracker.core.database.dao.LeaveRequestDao
 import com.cirin0.worktimetracker.core.database.dao.TimeEntryDao
+import com.cirin0.worktimetracker.core.database.dao.TimesheetDao
 import com.cirin0.worktimetracker.core.database.dao.UserDao
+import com.cirin0.worktimetracker.core.database.dao.WorkScheduleDao
 import com.cirin0.worktimetracker.core.utils.ConnectivityObserver
 import com.cirin0.worktimetracker.core.utils.NetworkConnectivityObserver
 import dagger.Module
@@ -40,6 +44,30 @@ object DatabaseModule {
     @Singleton
     fun provideTimeEntryDao(database: AppDatabase): TimeEntryDao {
         return database.timeEntryDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideTimesheetDao(database: AppDatabase): TimesheetDao {
+        return database.timesheetDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideCompanyDao(database: AppDatabase): CompanyDao {
+        return database.companyDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideWorkScheduleDao(database: AppDatabase): WorkScheduleDao {
+        return database.workScheduleDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideLeaveRequestDao(database: AppDatabase): LeaveRequestDao {
+        return database.leaveRequestDao()
     }
 
     @Provides

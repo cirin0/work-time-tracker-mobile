@@ -3,34 +3,94 @@ package com.cirin0.worktimetracker.features.timeentries.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cirin0.worktimetracker.core.network.ApiResponse
+import com.cirin0.worktimetracker.core.utils.DateUtils
 import com.cirin0.worktimetracker.core.utils.GpsLocationResult
 import com.cirin0.worktimetracker.core.utils.LocationManager
 import com.cirin0.worktimetracker.features.profile.data.repository.ProfileRepository
 import com.cirin0.worktimetracker.features.timeentries.data.repository.TimeEntriesRepository
+import com.cirin0.worktimetracker.features.workschedule.data.repository.WorkScheduleRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.time.Duration
+import java.time.LocalTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 
 @HiltViewModel
 class TimeEntriesViewModel @Inject constructor(
     private val repository: TimeEntriesRepository,
     private val locationManager: LocationManager,
-    private val profileRepository: ProfileRepository
+    private val profileRepository: ProfileRepository,
+    private val workScheduleRepository: WorkScheduleRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(TimeEntriesState())
     val state: StateFlow<TimeEntriesState> = _state.asStateFlow()
 
+    private val _tickerFlow = flow {
+        while (true) {
+            emit(Unit)
+            delay(60_000)
+        }
+    }
+
+    val workProgressState: StateFlow<WorkProgressUiState> =
+        combine(_state, _tickerFlow) { s, _ -> computeWorkProgressUiState(s) }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, WorkProgressUiState())
+
+    private fun computeWorkProgressUiState(s: TimeEntriesState): WorkProgressUiState {
+        val activeEntry = s.activeEntry
+        val todayDate = DateUtils.toIsoDate(System.currentTimeMillis())
+        val todayEntries = s.timeEntries.filter { it.date == todayDate }
+
+        val workedMinutes = if (activeEntry != null) {
+            val currentTime = LocalTime.now()
+            val startTime = try {
+                if (activeEntry.startTime.contains("T")) {
+                    ZonedDateTime.parse(activeEntry.startTime)
+                        .withZoneSameInstant(ZoneId.systemDefault())
+                        .toLocalTime()
+                } else {
+                    LocalTime.parse(activeEntry.startTime, DateTimeFormatter.ofPattern("HH:mm:ss"))
+                }
+            } catch (_: Exception) {
+                LocalTime.now()
+            }
+            val activeMinutes = Duration.between(startTime, currentTime)
+                .toMinutes().toInt().coerceAtLeast(0)
+            activeMinutes + todayEntries
+                .filter { it.id != activeEntry.id }
+                .sumOf { (it.duration ?: 0) / 60 }
+        } else {
+            todayEntries.sumOf { (it.duration ?: 0) / 60 }
+        }
+
+        return WorkProgressUiState(
+            workedMinutes = workedMinutes,
+            targetHours = s.targetHours,
+            isWorkingDay = s.isWorkingDay,
+            isTracking = activeEntry != null,
+        )
+    }
+
     init {
         loadUserData()
         loadActiveEntry()
         loadTimeEntries()
+        loadWorkSchedule()
     }
 
-    private fun loadUserData() {
+    fun loadUserData() {
         viewModelScope.launch {
             when (val result = profileRepository.getCurrentUser()) {
                 is ApiResponse.Success -> {
@@ -41,6 +101,42 @@ class TimeEntriesViewModel @Inject constructor(
                     // User data failed to load, but we can still show the screen
                 }
 
+                is ApiResponse.Loading -> {}
+            }
+        }
+    }
+
+    fun loadWorkSchedule() {
+        viewModelScope.launch {
+            when (val result = workScheduleRepository.getMyWorkSchedule()) {
+                is ApiResponse.Success -> {
+                    val schedule = result.data
+                    val currentDay = DateUtils.getCurrentDayOfWeek()
+                    val todaySchedule =
+                        schedule?.dailySchedules?.find { it.dayOfWeek.lowercase() == currentDay }
+
+                    val isWorkingDay = todaySchedule?.isWorkingDay ?: true
+                    val targetHours = if (todaySchedule != null && isWorkingDay) {
+                        try {
+                            val start = LocalTime.parse(todaySchedule.startTime)
+                            val end = LocalTime.parse(todaySchedule.endTime)
+                            val durationMinutes = Duration.between(start, end).toMinutes()
+                            (durationMinutes - todaySchedule.breakDuration) / 60f
+                        } catch (_: Exception) {
+                            8f
+                        }
+                    } else {
+                        8f
+                    }
+
+                    _state.value = _state.value.copy(
+                        workSchedule = schedule,
+                        targetHours = targetHours,
+                        isWorkingDay = isWorkingDay
+                    )
+                }
+
+                is ApiResponse.Error -> {}
                 is ApiResponse.Loading -> {}
             }
         }

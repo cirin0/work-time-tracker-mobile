@@ -1,5 +1,6 @@
 package com.cirin0.worktimetracker.navigation
 
+import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -69,7 +70,7 @@ fun NavGraph(
                 navArgument("email") { type = NavType.StringType }
             )
         ) { backStackEntry ->
-            val email = backStackEntry.arguments?.getString("email") ?: ""
+            val email = Uri.decode(backStackEntry.arguments?.getString("email") ?: "")
             VerifyEmailScreen(
                 email = email,
                 onVerificationSuccess = {

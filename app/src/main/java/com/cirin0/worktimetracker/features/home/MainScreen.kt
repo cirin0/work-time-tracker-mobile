@@ -34,7 +34,6 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -44,6 +43,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -73,8 +73,7 @@ import com.cirin0.worktimetracker.core.utils.DateUtils
 import com.cirin0.worktimetracker.features.timeentries.data.model.TimeEntry
 import com.cirin0.worktimetracker.features.timeentries.presentation.TimeEntriesState
 import com.cirin0.worktimetracker.features.timeentries.presentation.TimeEntriesViewModel
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
+import com.cirin0.worktimetracker.features.timeentries.presentation.WorkProgressUiState
 
 @Composable
 fun MainScreen(
@@ -82,6 +81,7 @@ fun MainScreen(
     viewModel: TimeEntriesViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val workProgressState by viewModel.workProgressState.collectAsState()
 
     RequestNotificationPermission()
 
@@ -102,6 +102,8 @@ fun MainScreen(
                 onRefresh = {
                     viewModel.loadActiveEntry()
                     viewModel.loadTimeEntries()
+                    viewModel.loadUserData()
+                    viewModel.loadWorkSchedule()
                 }
             )
 
@@ -122,7 +124,7 @@ fun MainScreen(
             } else {
                 Spacer(modifier = Modifier.height(16.dp))
 
-                WorkProgressSection(state)
+                WorkProgressSection(workProgressState)
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -227,40 +229,50 @@ private fun ServerWarningBanner() {
 }
 
 @Composable
-private fun WorkProgressSection(state: TimeEntriesState) {
-    val activeEntry = state.activeEntry
-    val todayDate = DateUtils.toIsoDate(System.currentTimeMillis())
-    val todayEntries = state.timeEntries.filter { it.date == todayDate }
-
-    val targetHours = 8f
-    var workedMinutes = 0
-
-    if (activeEntry != null) {
-        val startTime = try {
-            if (activeEntry.startTime.contains("T")) {
-                java.time.ZonedDateTime.parse(activeEntry.startTime)
-                    .withZoneSameInstant(java.time.ZoneId.systemDefault())
-                    .toLocalTime()
-            } else {
-                LocalTime.parse(activeEntry.startTime, DateTimeFormatter.ofPattern("HH:mm:ss"))
+private fun DayOffBanner() {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.secondaryContainer
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.CalendarToday,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.secondary
+            )
+            Column {
+                Text(
+                    text = "Сьогодні вихідний",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                Text(
+                    text = "Відпочивайте та відновлюйте сили!",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
+                )
             }
-        } catch (e: Exception) {
-            LocalTime.now()
         }
-        val currentTime = LocalTime.now()
-        workedMinutes = java.time.Duration.between(startTime, currentTime).toMinutes().toInt()
-            .coerceAtLeast(0)
-        // duration is in seconds, convert to minutes
-        workedMinutes += todayEntries.filter { it.id != activeEntry.id }
-            .sumOf { (it.duration ?: 0) / 60 }
-    } else {
-        // duration is in seconds, convert to minutes
-        workedMinutes = todayEntries.sumOf { (it.duration ?: 0) / 60 }
+    }
+}
+
+@Composable
+private fun WorkProgressSection(progressState: WorkProgressUiState) {
+    if (!progressState.isWorkingDay && !progressState.isTracking) {
+        DayOffBanner()
+        return
     }
 
-    val workedHours = workedMinutes / 60f
-    val progress = (workedHours / targetHours).coerceIn(0f, 1f)
-    val remainingMinutes = ((targetHours - workedHours) * 60).toInt().coerceAtLeast(0)
+    val workedHours = progressState.workedHours
+    val progress = progressState.progress
+    val remainingMinutes = progressState.remainingMinutes
+    val targetHours = progressState.targetHours
 
     val animatedProgress by animateFloatAsState(
         targetValue = progress,
@@ -297,10 +309,10 @@ private fun WorkProgressSection(state: TimeEntriesState) {
                 ) {
                     Column {
                         Text(
-                            text = if (activeEntry != null) "Відстеження..." else "Сьогодні",
+                            text = if (progressState.isTracking) "Відстеження..." else "Сьогодні",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = if (activeEntry != null)
+                            color = if (progressState.isTracking)
                                 MaterialTheme.colorScheme.primary
                             else
                                 MaterialTheme.colorScheme.onSurface
@@ -874,7 +886,7 @@ private fun ActiveEntryCard(
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !state.isLoading,
                     shape = RoundedCornerShape(12.dp),
-                    colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                    colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = MaterialTheme.colorScheme.surface,
                         unfocusedContainerColor = MaterialTheme.colorScheme.surface
                     )
@@ -901,7 +913,7 @@ private fun ActiveEntryCard(
                         { Text("PIN має бути 4 цифри") }
                     } else null,
                     shape = RoundedCornerShape(12.dp),
-                    colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                    colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = MaterialTheme.colorScheme.surface,
                         unfocusedContainerColor = MaterialTheme.colorScheme.surface
                     )
@@ -919,7 +931,11 @@ private fun ActiveEntryCard(
                             color = MaterialTheme.colorScheme.onPrimary
                         )
                     } else {
-                        Icon(Icons.Default.Stop, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
+                        Icon(
+                            Icons.Default.Stop,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
                         Spacer(Modifier.width(8.dp))
                         Text("Зупинити")
                     }

@@ -5,7 +5,12 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.cirin0.worktimetracker.core.database.dao.CompanyDao
+import com.cirin0.worktimetracker.core.database.dao.LeaveRequestDao
+import com.cirin0.worktimetracker.core.database.dao.TimeEntryDao
+import com.cirin0.worktimetracker.core.database.dao.TimesheetDao
 import com.cirin0.worktimetracker.core.database.dao.UserDao
+import com.cirin0.worktimetracker.core.database.dao.WorkScheduleDao
 import com.cirin0.worktimetracker.core.network.ApiResponse
 import com.cirin0.worktimetracker.core.network.apiCall
 import com.cirin0.worktimetracker.features.auth.data.api.AuthApi
@@ -32,7 +37,12 @@ import kotlinx.coroutines.tasks.await
 class AuthRepository @Inject constructor(
     private val dataStore: DataStore<Preferences>,
     private val authApi: AuthApi,
-    private val userDao: UserDao
+    private val userDao: UserDao,
+    private val timeEntryDao: TimeEntryDao,
+    private val timesheetDao: TimesheetDao,
+    private val companyDao: CompanyDao,
+    private val workScheduleDao: WorkScheduleDao,
+    private val leaveRequestDao: LeaveRequestDao
 ) {
     companion object {
         private const val TAG = "AuthRepository"
@@ -134,11 +144,20 @@ class AuthRepository @Inject constructor(
         }
     }
 
+    private suspend fun clearAllFeatureCaches() {
+        userDao.clearCache()
+        timeEntryDao.clearCache()
+        timesheetDao.clearCache()
+        companyDao.clearCache()
+        workScheduleDao.clearCache()
+        leaveRequestDao.clearCache()
+    }
+
     suspend fun logout(): ApiResponse<String> {
         return apiCall {
             val response = authApi.logout()
             clearToken()
-            userDao.clearCache()
+            clearAllFeatureCaches()
             response.message
         }
     }

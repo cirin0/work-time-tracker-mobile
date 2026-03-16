@@ -6,8 +6,9 @@ enum class LeaveRequestType(val value: String, val displayName: String) {
     SICK("sick", "Лікарняний"),
     VACATION("vacation", "Відпустка"),
     PERSONAL("personal", "Відгул"),
-    UNPAID("unpaid", "Неоплачувана відпустка");
-
+    UNPAID("unpaid", "Неоплачувана відпустка"),
+    BUSINESS_TRIP("business_trip", "Бизнес-поїздка");
+    
     companion object {
         fun fromValue(value: String): LeaveRequestType? {
             return entries.find { it.value == value }

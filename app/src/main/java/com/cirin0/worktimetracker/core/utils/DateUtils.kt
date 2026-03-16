@@ -1,64 +1,50 @@
 package com.cirin0.worktimetracker.core.utils
 
-import android.annotation.SuppressLint
-import java.text.SimpleDateFormat
-import java.util.Date
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import java.util.Locale
-import java.util.TimeZone
 
-@SuppressLint("ConstantLocale")
 object DateUtils {
     private val ukrainianLocale = Locale.Builder().setLanguage("uk").setRegion("UA").build()
 
-    // ISO formatters (server format)
-    private val isoDateTimeFormat by lazy {
-        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'", Locale.US).apply {
-            timeZone = TimeZone.getTimeZone("UTC")
-        }
-    }
+    private val isoDateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+    private val displayDateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy", ukrainianLocale)
+    private val displayDateTimeFormatter =
+        DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm", ukrainianLocale)
+    private val displayTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
-    private val isoDateFormat by lazy {
-        SimpleDateFormat("yyyy-MM-dd", Locale.US)
-    }
+    // Output formatter for getCurrentIsoDateTime(); 'Z' is literal (UTC is enforced via withZone)
+    private val isoDateTimeOutputFormatter =
+        DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'")
+            .withZone(ZoneOffset.UTC)
 
-    private val displayDateFormat by lazy {
-        SimpleDateFormat("dd.MM.yyyy", ukrainianLocale)
-    }
-
-    private val displayDateTimeFormat by lazy {
-        SimpleDateFormat("dd.MM.yyyy HH:mm", ukrainianLocale)
-    }
-
-    private val displayTimeFormat by lazy {
-        SimpleDateFormat("HH:mm", ukrainianLocale)
-    }
-
-    private fun parseIsoDateTime(dateTimeString: String): Date? {
-        return try {
-            isoDateTimeFormat.parse(dateTimeString)
-        } catch (_: Exception) {
-            try {
-                SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
-                    timeZone = TimeZone.getTimeZone("UTC")
-                }.parse(dateTimeString)
-            } catch (_: Exception) {
-                try {
-                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply {
-                        timeZone = TimeZone.getTimeZone("UTC")
-                    }.parse(dateTimeString)
-                } catch (_: Exception) {
-                    null
-                }
-            }
-        }
+    /**
+     * Parses any ISO-8601 instant string (Z suffix, with or without sub-seconds).
+     * [Instant.parse] uses DateTimeFormatter.ISO_INSTANT which handles
+     * "…Z", "….000Z", "….000000Z" etc. — no fallback chain needed.
+     */
+    private fun parseInstant(dateTimeString: String): Instant? = try {
+        Instant.parse(dateTimeString)
+    } catch (_: Exception) {
+        null
     }
 
     // Format date: "2024-03-02" → "02.03.2024"
     fun formatDate(dateString: String?): String {
         if (dateString.isNullOrBlank()) return "-"
         return try {
-            val date = isoDateFormat.parse(dateString) ?: parseIsoDateTime(dateString)
-            date?.let { displayDateFormat.format(it) } ?: dateString
+            if (dateString.contains('T')) {
+                parseInstant(dateString)
+                    ?.atZone(ZoneId.systemDefault())
+                    ?.toLocalDate()
+                    ?.format(displayDateFormatter)
+                    ?: dateString
+            } else {
+                LocalDate.parse(dateString, isoDateFormatter).format(displayDateFormatter)
+            }
         } catch (_: Exception) {
             dateString
         }
@@ -68,22 +54,26 @@ object DateUtils {
     fun formatDateTime(dateTimeString: String?): String {
         if (dateTimeString.isNullOrBlank()) return "-"
         return try {
-            val date = parseIsoDateTime(dateTimeString)
-            date?.let { displayDateTimeFormat.format(it) } ?: dateTimeString
+            parseInstant(dateTimeString)
+                ?.atZone(ZoneId.systemDefault())
+                ?.format(displayDateTimeFormatter)
+                ?: dateTimeString
         } catch (_: Exception) {
             dateTimeString
         }
     }
 
-    // Format time: "2024-03-02T14:30:00.000000Z" → "14:30" or "09:00" → "09:00"
+    // Format time: "2024-03-02T14:30:00.000000Z" → "14:30" or "09:00:00" → "09:00"
     fun formatTime(dateTimeString: String?): String {
         if (dateTimeString.isNullOrBlank()) return "-"
         return try {
             if (!dateTimeString.contains('T')) {
                 return dateTimeString.substring(0, minOf(5, dateTimeString.length))
             }
-            val date = parseIsoDateTime(dateTimeString)
-            date?.let { displayTimeFormat.format(it) } ?: dateTimeString
+            parseInstant(dateTimeString)
+                ?.atZone(ZoneId.systemDefault())
+                ?.format(displayTimeFormatter)
+                ?: dateTimeString
         } catch (_: Exception) {
             dateTimeString
         }
@@ -91,7 +81,10 @@ object DateUtils {
 
     // Convert millis to ISO date: 1709337600000 → "2024-03-02"
     fun toIsoDate(dateMillis: Long): String {
-        return isoDateFormat.format(Date(dateMillis))
+        return Instant.ofEpochMilli(dateMillis)
+            .atZone(ZoneId.systemDefault())
+            .toLocalDate()
+            .format(isoDateFormatter)
     }
 
     // Format hours: 8.5 → "8 год 30 хв"
@@ -135,10 +128,13 @@ object DateUtils {
         }
     }
 
+    // Get current day of week in English lowercase
+    fun getCurrentDayOfWeek(): String {
+        return LocalDate.now().dayOfWeek.name.lowercase()
+    }
+
     // Get the current date-time in ISO format
     fun getCurrentIsoDateTime(): String {
-        return isoDateTimeFormat.format(Date())
+        return isoDateTimeOutputFormatter.format(Instant.now())
     }
 }
-
-
