@@ -41,9 +41,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.cirin0.worktimetracker.R
 import com.cirin0.worktimetracker.core.utils.DateUtils
 import com.cirin0.worktimetracker.features.workschedule.data.model.DailySchedule
 import com.cirin0.worktimetracker.features.workschedule.data.model.WorkSchedule
@@ -98,7 +100,7 @@ fun ScheduleScreen(
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         OutlinedButton(onClick = { viewModel.loadSchedules() }) {
-                            Text("Спробувати знову")
+                            Text(stringResource(R.string.general_retry))
                         }
                     }
                 }
@@ -112,7 +114,7 @@ fun ScheduleScreen(
                     ) {
                         Spacer(modifier = Modifier.height(24.dp))
                         Text(
-                            text = "Графік роботи не призначено",
+                            text = stringResource(R.string.work_schedule_no_schedule),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -141,20 +143,20 @@ private fun TopBarSection(
     ) {
         Column {
             Text(
-                text = "Графік роботи",
+                text = stringResource(R.string.work_schedule_title),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
             )
             Text(
-                text = "Ваш робочий розклад",
+                text = stringResource(R.string.work_schedule_subtitle),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
         TopBarIconButton(
             icon = Icons.Default.Refresh,
-            contentDescription = "Оновити",
+            contentDescription = stringResource(R.string.general_refresh),
             onClick = onRefresh
         )
     }
@@ -202,7 +204,7 @@ private fun WorkScheduleContent(schedule: WorkSchedule) {
 private fun HeaderCard(schedule: WorkSchedule) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "ГРАФІК",
+            text = stringResource(R.string.work_schedule_section).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -275,7 +277,7 @@ private fun HeaderCard(schedule: WorkSchedule) {
                                 modifier = Modifier.size(14.dp)
                             )
                             Text(
-                                text = "За замовчуванням",
+                                text = stringResource(R.string.work_schedule_default),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.SemiBold
@@ -292,7 +294,7 @@ private fun HeaderCard(schedule: WorkSchedule) {
 private fun DailyScheduleSection(schedule: WorkSchedule) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "РОБОЧІ ДНІ",
+            text = stringResource(R.string.work_schedule_work_days).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -321,7 +323,7 @@ private fun DailyScheduleSection(schedule: WorkSchedule) {
 
 @Composable
 private fun DailyScheduleRow(dailySchedule: DailySchedule) {
-    val dayName = DateUtils.getDayNameUkrainian(dailySchedule.dayOfWeek)
+    val dayName = DateUtils.getDayDisplayName(dailySchedule.dayOfWeek)
     val isWorkDay = dailySchedule.isWorkingDay
 
     Row(
@@ -407,7 +409,10 @@ private fun DailyScheduleRow(dailySchedule: DailySchedule) {
                                 modifier = Modifier.size(12.dp)
                             )
                             Text(
-                                text = "${dailySchedule.breakDuration} хв",
+                                text = stringResource(
+                                    R.string.work_schedule_break_duration_format,
+                                    dailySchedule.breakDuration
+                                ),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -421,7 +426,7 @@ private fun DailyScheduleRow(dailySchedule: DailySchedule) {
                 color = MaterialTheme.colorScheme.errorContainer
             ) {
                 Text(
-                    text = "Вихідний",
+                    text = stringResource(R.string.work_schedule_weekend),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onErrorContainer,
                     fontWeight = FontWeight.SemiBold,

@@ -1,5 +1,7 @@
 package com.cirin0.worktimetracker.features.company.data.repository
 
+import android.content.Context
+import com.cirin0.worktimetracker.R
 import com.cirin0.worktimetracker.core.database.dao.CompanyDao
 import com.cirin0.worktimetracker.core.database.entity.toCachedEntity
 import com.cirin0.worktimetracker.core.database.entity.toCompanyDetail
@@ -9,6 +11,7 @@ import com.cirin0.worktimetracker.core.utils.ConnectivityObserver
 import com.cirin0.worktimetracker.core.utils.Constants
 import com.cirin0.worktimetracker.features.company.data.api.CompanyApi
 import com.cirin0.worktimetracker.features.company.data.model.CompanyDetail
+import dagger.hilt.android.qualifiers.ApplicationContext
 import jakarta.inject.Inject
 import jakarta.inject.Named
 import jakarta.inject.Singleton
@@ -18,7 +21,8 @@ class CompanyRepository @Inject constructor(
     private val companyApi: CompanyApi,
     private val companyDao: CompanyDao,
     private val connectivityObserver: ConnectivityObserver,
-    @param:Named(Constants.NAMED_IMAGE_URL) private val imageBaseUrl: String
+    @param:Named(Constants.NAMED_IMAGE_URL) private val imageBaseUrl: String,
+    @param:ApplicationContext private val context: Context
 ) {
     suspend fun getCompanyById(companyId: Int): ApiResponse<CompanyDetail> {
         if (!connectivityObserver.isConnected()) {
@@ -26,7 +30,7 @@ class CompanyRepository @Inject constructor(
             return if (cachedCompany != null && cachedCompany.companyId == companyId) {
                 ApiResponse.Success(cachedCompany.toCompanyDetail(), fromCache = true)
             } else {
-                ApiResponse.Error("Немає підключення до інтернету")
+                ApiResponse.Error(context.getString(R.string.general_no_internet))
             }
         }
 

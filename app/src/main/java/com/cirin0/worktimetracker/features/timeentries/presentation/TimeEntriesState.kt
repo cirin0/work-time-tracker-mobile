@@ -4,6 +4,11 @@ import com.cirin0.worktimetracker.features.profile.data.model.User
 import com.cirin0.worktimetracker.features.timeentries.data.model.TimeEntry
 import com.cirin0.worktimetracker.features.workschedule.data.model.WorkSchedule
 
+enum class TimeEntriesUiError {
+    PIN_LENGTH,
+    PIN_DIGITS_ONLY
+}
+
 data class TimeEntriesState(
     val activeEntry: TimeEntry? = null,
     val isLoading: Boolean = false,
@@ -11,6 +16,7 @@ data class TimeEntriesState(
     val startComment: String = "",
     val stopComment: String = "",
     val pinCode: String = "",
+    val uiError: TimeEntriesUiError? = null,
     val timeEntries: List<TimeEntry> = emptyList(),
     val isLoadingList: Boolean = false,
     val listError: String? = null,

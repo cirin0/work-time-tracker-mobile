@@ -17,8 +17,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.cirin0.worktimetracker.R
 
 /**
  * Reusable error state component with retry action
@@ -47,7 +49,7 @@ fun ErrorState(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Помилка",
+            text = stringResource(R.string.general_error),
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.error
         )
@@ -64,7 +66,7 @@ fun ErrorState(
         onRetry?.let {
             Spacer(modifier = Modifier.height(24.dp))
             Button(onClick = it) {
-                Text("Спробувати ще раз")
+                Text(stringResource(R.string.general_retry))
             }
         }
     }

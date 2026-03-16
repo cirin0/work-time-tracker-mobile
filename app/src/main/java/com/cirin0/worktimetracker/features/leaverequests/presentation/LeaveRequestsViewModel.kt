@@ -59,6 +59,7 @@ class LeaveRequestsViewModel @Inject constructor(
             startDate = "",
             endDate = "",
             reason = "",
+            createValidationError = null,
             createError = null,
             createSuccess = false
         )
@@ -88,12 +89,19 @@ class LeaveRequestsViewModel @Inject constructor(
         val currentState = _state.value
 
         if (currentState.startDate.isEmpty() || currentState.endDate.isEmpty() || currentState.reason.isEmpty()) {
-            _state.value = _state.value.copy(createError = "Будь ласка, заповніть всі поля")
+            _state.value = _state.value.copy(
+                createValidationError = LeaveRequestCreateValidationError.MISSING_FIELDS,
+                createError = null
+            )
             return
         }
 
         viewModelScope.launch {
-            _state.value = _state.value.copy(isCreating = true, createError = null)
+            _state.value = _state.value.copy(
+                isCreating = true,
+                createValidationError = null,
+                createError = null
+            )
 
             val request = CreateLeaveRequestRequest(
                 type = currentState.selectedType.value,
@@ -115,6 +123,7 @@ class LeaveRequestsViewModel @Inject constructor(
                 is ApiResponse.Error -> {
                     _state.value = _state.value.copy(
                         isCreating = false,
+                        createValidationError = null,
                         createError = response.message
                     )
                 }

@@ -40,12 +40,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.cirin0.worktimetracker.R
 import com.cirin0.worktimetracker.core.utils.DateUtils
 import com.cirin0.worktimetracker.features.leaverequests.data.model.LeaveRequest
 import com.cirin0.worktimetracker.features.leaverequests.data.model.LeaveRequestStatus
+import com.cirin0.worktimetracker.features.leaverequests.presentation.leaveRequestStatusLabel
+import com.cirin0.worktimetracker.features.leaverequests.presentation.leaveRequestTypeLabel
 
 @Composable
 fun LeaveRequestDetailScreen(
@@ -93,13 +97,16 @@ fun LeaveRequestDetailScreen(
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "Помилка: ${state.error}",
+                            text = stringResource(
+                                R.string.general_error_with_message,
+                                state.error ?: ""
+                            ),
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodyLarge
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         OutlinedButton(onClick = { viewModel.loadLeaveRequest() }) {
-                            Text("Спробувати знову")
+                            Text(stringResource(R.string.general_retry))
                         }
                     }
                 }
@@ -131,12 +138,12 @@ private fun TopBarSection(
         ) {
             TopBarIconButton(
                 icon = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Назад",
+                contentDescription = stringResource(R.string.general_back),
                 onClick = onBack
             )
             Column {
                 Text(
-                    text = "Деталі заявки",
+                    text = stringResource(R.string.leave_request_detail_title),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
@@ -145,7 +152,7 @@ private fun TopBarSection(
         }
         TopBarIconButton(
             icon = Icons.Default.Refresh,
-            contentDescription = "Оновити",
+            contentDescription = stringResource(R.string.general_refresh),
             onClick = onRefresh
         )
     }
@@ -213,7 +220,7 @@ private fun HeaderSection(request: LeaveRequest) {
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "ЗАЯВКА",
+            text = stringResource(R.string.leave_request_section_request).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -234,7 +241,7 @@ private fun HeaderSection(request: LeaveRequest) {
             ) {
                 Column {
                     Text(
-                        text = request.getTypeEnum().displayName,
+                        text = leaveRequestTypeLabel(request.getTypeEnum()),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -270,7 +277,7 @@ private fun StatusBadge(status: LeaveRequestStatus) {
         color = color
     ) {
         Text(
-            text = status.displayName,
+            text = leaveRequestStatusLabel(status),
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
             style = MaterialTheme.typography.titleMedium,
             color = textColor,
@@ -283,7 +290,7 @@ private fun StatusBadge(status: LeaveRequestStatus) {
 private fun PeriodSection(request: LeaveRequest) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "ПЕРІОД",
+            text = stringResource(R.string.leave_request_section_period).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -300,13 +307,13 @@ private fun PeriodSection(request: LeaveRequest) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 DetailRow(
                     icon = Icons.Default.CalendarMonth,
-                    label = "Початок",
+                    label = stringResource(R.string.leave_request_start_date),
                     value = DateUtils.formatDate(request.startDate)
                 )
                 RowDivider()
                 DetailRow(
                     icon = Icons.Default.CalendarMonth,
-                    label = "Кінець",
+                    label = stringResource(R.string.leave_request_end_date),
                     value = DateUtils.formatDate(request.endDate)
                 )
             }
@@ -318,7 +325,7 @@ private fun PeriodSection(request: LeaveRequest) {
 private fun ReasonSection(reason: String) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "ПРИЧИНА",
+            text = stringResource(R.string.leave_request_reason).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -346,7 +353,7 @@ private fun ReasonSection(reason: String) {
 private fun ManagerCommentSection(comment: String) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "КОМЕНТАР МЕНЕДЖЕРА",
+            text = stringResource(R.string.leave_request_manager_comment).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -375,7 +382,7 @@ private fun ManagerCommentSection(comment: String) {
 private fun UserSection(request: LeaveRequest) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "СПІВРОБІТНИК",
+            text = stringResource(R.string.leave_request_employee).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -392,13 +399,13 @@ private fun UserSection(request: LeaveRequest) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 DetailRow(
                     icon = Icons.Default.Person,
-                    label = "Ім'я",
+                    label = stringResource(R.string.profile_name),
                     value = request.user!!.name
                 )
                 RowDivider()
                 DetailRow(
                     icon = Icons.Default.Info,
-                    label = "Email",
+                    label = stringResource(R.string.general_email),
                     value = request.user.email
                 )
             }
@@ -410,7 +417,7 @@ private fun UserSection(request: LeaveRequest) {
 private fun ProcessorSection(request: LeaveRequest) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "ОБРОБЛЕНО",
+            text = stringResource(R.string.leave_request_processed).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -427,13 +434,13 @@ private fun ProcessorSection(request: LeaveRequest) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 DetailRow(
                     icon = Icons.Default.Person,
-                    label = "Ім'я",
+                    label = stringResource(R.string.profile_name),
                     value = request.processor!!.name
                 )
                 RowDivider()
                 DetailRow(
                     icon = Icons.Default.Info,
-                    label = "Email",
+                    label = stringResource(R.string.general_email),
                     value = request.processor.email
                 )
             }
@@ -445,7 +452,7 @@ private fun ProcessorSection(request: LeaveRequest) {
 private fun InfoSection(request: LeaveRequest) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "ІНФОРМАЦІЯ",
+            text = stringResource(R.string.leave_request_info).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -462,14 +469,14 @@ private fun InfoSection(request: LeaveRequest) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 DetailRow(
                     icon = Icons.Default.AccessTime,
-                    label = "Створено",
+                    label = stringResource(R.string.time_entry_detail_created),
                     value = DateUtils.formatDateTime(request.createdAt)
                 )
                 if (request.updatedAt != null) {
                     RowDivider()
                     DetailRow(
                         icon = Icons.Default.AccessTime,
-                        label = "Оновлено",
+                        label = stringResource(R.string.time_entry_detail_updated),
                         value = DateUtils.formatDateTime(request.updatedAt)
                     )
                 }
@@ -477,6 +484,7 @@ private fun InfoSection(request: LeaveRequest) {
         }
     }
 }
+
 
 @Composable
 private fun DetailRow(

@@ -1,6 +1,7 @@
 package com.cirin0.worktimetracker.features.settings
 
 import android.Manifest
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
@@ -35,6 +36,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material3.Button
@@ -62,9 +64,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.cirin0.worktimetracker.R
+import com.cirin0.worktimetracker.core.localization.AppLocaleManager
 
 @Composable
 fun SettingsScreen(
@@ -77,8 +82,15 @@ fun SettingsScreen(
     val useDarkTheme by themeViewModel.userThemePreference.collectAsState()
     val settingsState by settingsViewModel.state.collectAsState()
     val logoutState by settingsViewModel.logoutState.collectAsState()
-    var themeDropdownExpanded by remember { mutableStateOf(false) }
-    val themeOptions = mapOf(null to "Системна", false to "Світла", true to "Темна")
+    val themeOptions = linkedMapOf(
+        null to stringResource(R.string.settings_theme_system),
+        false to stringResource(R.string.settings_theme_light),
+        true to stringResource(R.string.settings_theme_dark)
+    )
+    val languageOptions = linkedMapOf(
+        AppLocaleManager.DEFAULT_LANGUAGE to stringResource(R.string.settings_language_ukrainian),
+        AppLocaleManager.ENGLISH_LANGUAGE to stringResource(R.string.settings_language_english)
+    )
 
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -115,7 +127,7 @@ fun SettingsScreen(
                 IconButton(onClick = { onNavigateBack() }) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Назад",
+                        contentDescription = stringResource(R.string.general_back),
                         modifier = Modifier.size(20.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -124,13 +136,13 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.width(12.dp))
             Column {
                 Text(
-                    text = "Налаштування",
+                    text = stringResource(R.string.settings_title),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 Text(
-                    text = "Тема, дозволи та акаунт",
+                    text = stringResource(R.string.settings_subtitle),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -148,106 +160,41 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            SettingsSection(title = "Зовнішній вигляд") {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 13.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Surface(
-                        modifier = Modifier.size(34.dp),
-                        shape = RoundedCornerShape(10.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer
-                    ) {
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Palette,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
+            SettingsSection(title = stringResource(R.string.settings_appearance)) {
+                SelectionPreferenceRow(
+                    icon = Icons.Default.Palette,
+                    label = stringResource(R.string.settings_theme),
+                    selectedValue = useDarkTheme,
+                    selectedText = themeOptions[useDarkTheme]
+                        ?: stringResource(R.string.settings_theme_system),
+                    options = themeOptions,
+                    onOptionSelected = themeViewModel::setTheme
+                )
+                HorizontalDivider(
+                    modifier = Modifier.padding(start = 62.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                    thickness = 0.5.dp
+                )
+                SelectionPreferenceRow(
+                    icon = Icons.Default.Language,
+                    label = stringResource(R.string.settings_language),
+                    selectedValue = settingsState.appLanguage,
+                    selectedText = languageOptions[settingsState.appLanguage]
+                        ?: stringResource(R.string.settings_language_ukrainian),
+                    options = languageOptions,
+                    onOptionSelected = { language ->
+                        settingsViewModel.setAppLanguage(language)
+                        // Ensure resources rebind immediately after language switch.
+                        (context as? Activity)?.recreate()
                     }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Тема",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = themeOptions[useDarkTheme] ?: "Системна",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                    Box {
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = MaterialTheme.colorScheme.secondaryContainer,
-                            modifier = Modifier.clickable { themeDropdownExpanded = true }
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Text(
-                                    text = themeOptions[useDarkTheme] ?: "Системна",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.Medium,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                                )
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(10.dp),
-                                    tint = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.6f)
-                                )
-                            }
-                        }
-                        DropdownMenu(
-                            expanded = themeDropdownExpanded,
-                            onDismissRequest = { themeDropdownExpanded = false }
-                        ) {
-                            themeOptions.forEach { (themeValue, themeName) ->
-                                DropdownMenuItem(
-                                    text = {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                        ) {
-                                            Text(themeName)
-                                            if (useDarkTheme == themeValue) {
-                                                Icon(
-                                                    imageVector = Icons.Default.Check,
-                                                    contentDescription = null,
-                                                    modifier = Modifier.size(16.dp),
-                                                    tint = MaterialTheme.colorScheme.primary
-                                                )
-                                            }
-                                        }
-                                    },
-                                    onClick = {
-                                        themeViewModel.setTheme(themeValue)
-                                        themeDropdownExpanded = false
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
+                )
             }
 
-            SettingsSection(title = "Дозволи") {
+            SettingsSection(title = stringResource(R.string.settings_permissions)) {
                 PermissionRow(
                     icon = Icons.Default.CameraAlt,
-                    title = "Камера",
-                    description = "Для сканування QR-кодів",
+                    title = stringResource(R.string.settings_permission_camera),
+                    description = stringResource(R.string.settings_permission_camera_description),
                     isGranted = settingsState.hasCameraPermission,
                     onRequestPermission = {
                         cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
@@ -267,8 +214,8 @@ fun SettingsScreen(
                 )
                 PermissionRow(
                     icon = Icons.Default.LocationOn,
-                    title = "Геолокація",
-                    description = "Для відстеження робочого місця",
+                    title = stringResource(R.string.settings_permission_location),
+                    description = stringResource(R.string.settings_permission_location_description),
                     isGranted = settingsState.hasLocationPermission,
                     onRequestPermission = {
                         locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -311,7 +258,7 @@ fun SettingsScreen(
                         )
                     } else {
                         Text(
-                            text = "Вийти з акаунту",
+                            text = stringResource(R.string.settings_logout),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -331,6 +278,111 @@ fun SettingsScreen(
             }
 
             Spacer(modifier = Modifier.height(24.dp))
+        }
+    }
+}
+
+@Composable
+private fun <T> SelectionPreferenceRow(
+    icon: ImageVector,
+    label: String,
+    selectedValue: T,
+    selectedText: String,
+    options: Map<T, String>,
+    onOptionSelected: (T) -> Unit
+) {
+    var dropdownExpanded by remember { mutableStateOf(false) }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 13.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Surface(
+            modifier = Modifier.size(34.dp),
+            shape = RoundedCornerShape(10.dp),
+            color = MaterialTheme.colorScheme.primaryContainer
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = selectedText,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium
+            )
+        }
+        Box {
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                modifier = Modifier.clickable { dropdownExpanded = true }
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = selectedText,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                        contentDescription = null,
+                        modifier = Modifier.size(10.dp),
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.6f)
+                    )
+                }
+            }
+            DropdownMenu(
+                expanded = dropdownExpanded,
+                onDismissRequest = { dropdownExpanded = false }
+            ) {
+                options.forEach { (value, text) ->
+                    DropdownMenuItem(
+                        text = {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text(text)
+                                if (selectedValue == value) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp),
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        },
+                        onClick = {
+                            onOptionSelected(value)
+                            dropdownExpanded = false
+                        }
+                    )
+                }
+            }
         }
     }
 }
@@ -436,7 +488,11 @@ private fun PermissionRow(
                             MaterialTheme.colorScheme.error
                     )
                     Text(
-                        text = if (isGranted) "Дозволено" else "Відхилено",
+                        text = if (isGranted) {
+                            stringResource(R.string.settings_permission_granted)
+                        } else {
+                            stringResource(R.string.settings_permission_denied)
+                        },
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.SemiBold,
                         color = if (isGranted)
@@ -469,7 +525,7 @@ private fun PermissionRow(
                     )
                 ) {
                     Text(
-                        text = "Запросити",
+                        text = stringResource(R.string.settings_permission_request),
                         style = MaterialTheme.typography.labelMedium
                     )
                 }
@@ -482,7 +538,7 @@ private fun PermissionRow(
                     )
                 ) {
                     Text(
-                        text = "Системні налаштування",
+                        text = stringResource(R.string.settings_open_system_settings),
                         style = MaterialTheme.typography.labelMedium
                     )
                 }

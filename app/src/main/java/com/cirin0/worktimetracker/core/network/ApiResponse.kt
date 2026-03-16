@@ -1,5 +1,6 @@
 package com.cirin0.worktimetracker.core.network
 
+import com.cirin0.worktimetracker.core.localization.AppLocaleManager
 import com.cirin0.worktimetracker.core.utils.ErrorMapper
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
@@ -25,6 +26,14 @@ data class ErrorResponse(
 
 private val errorMapper = ErrorMapper()
 
+private fun localizedUnknownError(): String {
+    return if (AppLocaleManager.getCurrentLanguage() == AppLocaleManager.DEFAULT_LANGUAGE) {
+        "Невідома помилка"
+    } else {
+        "Unknown error"
+    }
+}
+
 suspend fun <T> apiCall(call: suspend () -> T): ApiResponse<T> {
     return try {
         ApiResponse.Success(call())
@@ -48,6 +57,6 @@ suspend fun <T> apiCall(call: suspend () -> T): ApiResponse<T> {
     } catch (e: IOException) {
         ApiResponse.Error(errorMapper.mapNetworkError(e))
     } catch (e: Exception) {
-        ApiResponse.Error(e.message ?: "Невідома помилка")
+        ApiResponse.Error(e.message ?: localizedUnknownError())
     }
 }

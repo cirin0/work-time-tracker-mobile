@@ -12,16 +12,20 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.cirin0.worktimetracker.R
 
 /**
  * Reusable loading state component
  */
 @Composable
 fun LoadingState(
-    message: String = "Завантаження...",
+    message: String? = null,
     modifier: Modifier = Modifier
 ) {
+    val displayMessage = message ?: stringResource(R.string.loading_default_message)
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -34,7 +38,7 @@ fun LoadingState(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = message,
+            text = displayMessage,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

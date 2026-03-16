@@ -42,9 +42,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.cirin0.worktimetracker.R
 import com.cirin0.worktimetracker.core.utils.DateUtils
 import com.cirin0.worktimetracker.features.timeentries.data.model.TimeEntry
 import java.util.Locale
@@ -99,13 +101,16 @@ fun TimeEntryDetailScreen(
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "Помилка: ${state.error}",
+                            text = stringResource(
+                                R.string.general_error_with_message,
+                                state.error ?: ""
+                            ),
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodyLarge
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         OutlinedButton(onClick = { viewModel.loadTimeEntry(timeEntryId) }) {
-                            Text("Спробувати знову")
+                            Text(stringResource(R.string.general_retry))
                         }
                     }
                 }
@@ -134,12 +139,12 @@ private fun TopBarSection(onBack: () -> Unit) {
         ) {
             TopBarIconButton(
                 icon = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Назад",
+                contentDescription = stringResource(R.string.general_back),
                 onClick = onBack
             )
             Column {
                 Text(
-                    text = "Деталі запису",
+                    text = stringResource(R.string.time_entry_detail_title),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
@@ -225,7 +230,7 @@ private fun HeaderCard(timeEntry: TimeEntry) {
         ) {
             Column {
                 Text(
-                    text = "Запис #${timeEntry.id}",
+                    text = stringResource(R.string.time_entry_detail_entry_number, timeEntry.id),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = if (timeEntry.stopTime == null) {
@@ -251,7 +256,7 @@ private fun HeaderCard(timeEntry: TimeEntry) {
                     color = MaterialTheme.colorScheme.primary
                 ) {
                     Text(
-                        text = "Активний",
+                        text = stringResource(R.string.home_active),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onPrimary,
                         fontWeight = FontWeight.Bold,
@@ -267,7 +272,7 @@ private fun HeaderCard(timeEntry: TimeEntry) {
 private fun TimeWorkSection(timeEntry: TimeEntry) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "ЧАС РОБОТИ",
+            text = stringResource(R.string.time_entry_detail_work_time).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -284,20 +289,20 @@ private fun TimeWorkSection(timeEntry: TimeEntry) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 DetailRow(
                     icon = Icons.Default.AccessTime,
-                    label = "Початок",
+                    label = stringResource(R.string.time_entry_detail_start),
                     value = formatDateTime(timeEntry.startTime)
                 )
                 if (timeEntry.stopTime != null) {
                     RowDivider()
                     DetailRow(
                         icon = Icons.Default.Schedule,
-                        label = "Завершення",
+                        label = stringResource(R.string.time_entry_detail_end),
                         value = formatDateTime(timeEntry.stopTime)
                     )
                     RowDivider()
                     DetailRow(
                         icon = Icons.Default.Edit,
-                        label = "Тривалість",
+                        label = stringResource(R.string.time_entry_detail_duration),
                         value = formatDuration(timeEntry.duration ?: 0),
                         highlighted = true
                     )
@@ -310,7 +315,7 @@ private fun TimeWorkSection(timeEntry: TimeEntry) {
                         color = MaterialTheme.colorScheme.primaryContainer
                     ) {
                         Text(
-                            text = "Запис ще не завершено",
+                            text = stringResource(R.string.time_entry_detail_not_finished),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
                             fontWeight = FontWeight.SemiBold,
@@ -327,7 +332,7 @@ private fun TimeWorkSection(timeEntry: TimeEntry) {
 private fun ScheduleSection(timeEntry: TimeEntry) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "РОЗКЛАД",
+            text = stringResource(R.string.nav_schedule).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -345,7 +350,7 @@ private fun ScheduleSection(timeEntry: TimeEntry) {
                 timeEntry.scheduledStartTime?.let {
                     DetailRow(
                         icon = Icons.Default.Schedule,
-                        label = "Заплановано початок",
+                        label = stringResource(R.string.time_entry_detail_scheduled_start),
                         value = it
                     )
                 }
@@ -353,7 +358,7 @@ private fun ScheduleSection(timeEntry: TimeEntry) {
                     if (timeEntry.scheduledStartTime != null) RowDivider()
                     DetailRow(
                         icon = Icons.Default.Schedule,
-                        label = "Заплановано кінець",
+                        label = stringResource(R.string.time_entry_detail_scheduled_end),
                         value = it
                     )
                 }
@@ -364,8 +369,8 @@ private fun ScheduleSection(timeEntry: TimeEntry) {
                             RowDivider()
                         }
                         WarningRow(
-                            label = "Спізнення",
-                            value = "$it хв"
+                            label = stringResource(R.string.timesheet_late_count),
+                            value = stringResource(R.string.general_minutes_short_format, it)
                         )
                     }
                 }
@@ -374,8 +379,8 @@ private fun ScheduleSection(timeEntry: TimeEntry) {
                     if (it > 0) {
                         RowDivider()
                         WarningRow(
-                            label = "Ранній вихід",
-                            value = "$it хв"
+                            label = stringResource(R.string.timesheet_early_leave),
+                            value = stringResource(R.string.general_minutes_short_format, it)
                         )
                     }
                 }
@@ -384,8 +389,8 @@ private fun ScheduleSection(timeEntry: TimeEntry) {
                     if (it > 0) {
                         RowDivider()
                         OvertimeRow(
-                            label = "Переробка",
-                            value = "$it хв"
+                            label = stringResource(R.string.time_entry_detail_overtime),
+                            value = stringResource(R.string.general_minutes_short_format, it)
                         )
                     }
                 }
@@ -398,7 +403,7 @@ private fun ScheduleSection(timeEntry: TimeEntry) {
 private fun CommentsSection(timeEntry: TimeEntry) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "КОМЕНТАРІ",
+            text = stringResource(R.string.time_entry_detail_comments).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -419,10 +424,10 @@ private fun CommentsSection(timeEntry: TimeEntry) {
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 timeEntry.startComment?.let {
-                    CommentBox("До початку", it)
+                    CommentBox(stringResource(R.string.time_entry_detail_before_start), it)
                 }
                 timeEntry.stopComment?.let {
-                    CommentBox("До завершення", it)
+                    CommentBox(stringResource(R.string.time_entry_detail_before_finish), it)
                 }
             }
         }
@@ -433,7 +438,7 @@ private fun CommentsSection(timeEntry: TimeEntry) {
 private fun LocationSection(timeEntry: TimeEntry) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "ГЕОЛОКАЦІЯ",
+            text = stringResource(R.string.settings_permission_location).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -450,7 +455,7 @@ private fun LocationSection(timeEntry: TimeEntry) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 DetailRow(
                     icon = Icons.Default.LocationOn,
-                    label = "Координати",
+                    label = stringResource(R.string.time_entry_detail_coordinates),
                     value = "${String.format(Locale.US, "%.6f", timeEntry.locationData?.lat)}, ${
                         String.format(Locale.US, "%.6f", timeEntry.locationData?.lng)
                     }"
@@ -464,7 +469,7 @@ private fun LocationSection(timeEntry: TimeEntry) {
 private fun AdditionalSection(timeEntry: TimeEntry) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "ДОДАТКОВО",
+            text = stringResource(R.string.time_entry_detail_additional).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -481,10 +486,10 @@ private fun AdditionalSection(timeEntry: TimeEntry) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 DetailRow(
                     icon = Icons.Default.Info,
-                    label = "Тип запису",
+                    label = stringResource(R.string.time_entry_detail_entry_type),
                     value = when (timeEntry.entryType) {
-                        "manual" -> "Ручний"
-                        "automatic" -> "Автоматичний"
+                        "manual" -> stringResource(R.string.time_entry_detail_entry_type_manual)
+                        "automatic" -> stringResource(R.string.time_entry_detail_entry_type_automatic)
                         else -> timeEntry.entryType
                     }
                 )
@@ -492,7 +497,7 @@ private fun AdditionalSection(timeEntry: TimeEntry) {
                     RowDivider()
                     DetailRow(
                         icon = Icons.Default.CalendarMonth,
-                        label = "Створено",
+                        label = stringResource(R.string.time_entry_detail_created),
                         value = formatDateTime(it)
                     )
                 }
@@ -500,7 +505,7 @@ private fun AdditionalSection(timeEntry: TimeEntry) {
                     if (timeEntry.createdAt != null) RowDivider()
                     DetailRow(
                         icon = Icons.Default.Edit,
-                        label = "Оновлено",
+                        label = stringResource(R.string.time_entry_detail_updated),
                         value = formatDateTime(it)
                     )
                 }

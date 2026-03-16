@@ -65,12 +65,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.cirin0.worktimetracker.R
 import java.io.File
 import java.io.FileOutputStream
 
@@ -86,6 +88,8 @@ fun ProfileScreen(
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
+    val pinUpdatedMessage = stringResource(R.string.profile_pin_updated_success)
+    val profileUpdatedMessage = stringResource(R.string.profile_updated_success)
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -100,9 +104,9 @@ fun ProfileScreen(
     LaunchedEffect(state.updateSuccess) {
         if (state.updateSuccess) {
             val message = if (state.pinCode.isNotEmpty() || state.newPinCode.isNotEmpty()) {
-                "PIN-код успішно оновлено"
+                pinUpdatedMessage
             } else {
-                "Профіль успішно оновлено"
+                profileUpdatedMessage
             }
             snackbarHostState.showSnackbar(message)
             viewModel.clearUpdateSuccess()
@@ -189,11 +193,15 @@ fun ProfileScreen(
 
                     Spacer(modifier = Modifier.height(28.dp))
 
-                    ProfileSection(title = "Особисті дані") {
+                    ProfileSection(title = stringResource(R.string.profile_personal_data)) {
                         ProfileRow(
                             icon = Icons.Default.Security,
-                            label = "PIN-код",
-                            value = if (user.hasPinCode) "Встановлено ✓" else "Не встановлено",
+                            label = stringResource(R.string.profile_pin_code),
+                            value = if (user.hasPinCode) {
+                                stringResource(R.string.profile_pin_set)
+                            } else {
+                                stringResource(R.string.profile_pin_not_set)
+                            },
                             valueColor = if (user.hasPinCode)
                                 MaterialTheme.colorScheme.primary
                             else
@@ -207,17 +215,17 @@ fun ProfileScreen(
                         RowDivider()
                         ProfileRow(
                             icon = Icons.Default.Email,
-                            label = "Email",
+                            label = stringResource(R.string.general_email),
                             value = user.email
                         )
                         RowDivider()
                         ProfileRow(
                             icon = Icons.Default.Schedule,
-                            label = "Режим роботи",
+                            label = stringResource(R.string.profile_work_mode),
                             value = when (user.workMode) {
-                                "office" -> "Офіс"
-                                "remote" -> "Віддалено"
-                                "hybrid" -> "Гібрид"
+                                "office" -> stringResource(R.string.profile_work_mode_office)
+                                "remote" -> stringResource(R.string.profile_work_mode_remote)
+                                "hybrid" -> stringResource(R.string.profile_work_mode_hybrid)
                                 else -> user.workMode
                             }
                         )
@@ -227,12 +235,12 @@ fun ProfileScreen(
                         user.company != null || user.manager != null || user.workSchedule != null
                     if (hasWorkInfo) {
                         Spacer(modifier = Modifier.height(16.dp))
-                        ProfileSection(title = "Робота") {
+                        ProfileSection(title = stringResource(R.string.profile_work)) {
                             var addDivider = false
                             user.company?.let { company ->
                                 ProfileRow(
                                     icon = Icons.Default.Business,
-                                    label = "Компанія",
+                                    label = stringResource(R.string.profile_company),
                                     value = company.name,
                                     showArrow = true,
                                     onClick = { onNavigateToCompany(company.id) }
@@ -243,7 +251,7 @@ fun ProfileScreen(
                                 if (addDivider) RowDivider()
                                 ProfileRow(
                                     icon = Icons.Default.Person,
-                                    label = "Менеджер",
+                                    label = stringResource(R.string.profile_manager),
                                     value = manager.name
                                 )
                                 addDivider = true
@@ -252,7 +260,7 @@ fun ProfileScreen(
                                 if (addDivider) RowDivider()
                                 ProfileRow(
                                     icon = Icons.Default.Schedule,
-                                    label = "Графік роботи",
+                                    label = stringResource(R.string.profile_work_schedule),
                                     value = schedule.name,
                                     showArrow = true,
                                     onClick = onNavigateToSchedule
@@ -262,18 +270,18 @@ fun ProfileScreen(
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
-                    ProfileSection(title = "Дії") {
+                    ProfileSection(title = stringResource(R.string.profile_actions)) {
                         ProfileRow(
                             icon = Icons.Default.Edit,
-                            label = "Мої заявки",
-                            value = "Відпустка, лікарняний, відгул",
+                            label = stringResource(R.string.profile_my_requests),
+                            value = stringResource(R.string.profile_requests_description),
                             showArrow = true,
                             onClick = onNavigateToRequests
                         )
                         RowDivider()
                         ProfileRow(
                             icon = Icons.AutoMirrored.Filled.Chat,
-                            label = "Налаштування",
+                            label = stringResource(R.string.profile_settings),
                             value = "",
                             showArrow = true,
                             onClick = onNavigateToSettings
@@ -354,13 +362,13 @@ private fun ProfileTopBar(
     ) {
         Column {
             Text(
-                text = "Профіль",
+                text = stringResource(R.string.profile_title),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
             )
             Text(
-                text = "Ваші особисті дані",
+                text = stringResource(R.string.profile_subtitle),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -368,19 +376,19 @@ private fun ProfileTopBar(
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TopBarIconButton(
                 icon = Icons.AutoMirrored.Filled.Chat,
-                contentDescription = "Чат",
+                contentDescription = stringResource(R.string.profile_chat),
                 onClick = onChat
             )
             if (showEditButton) {
                 TopBarIconButton(
                     icon = Icons.Default.Edit,
-                    contentDescription = "Редагувати",
+                    contentDescription = stringResource(R.string.profile_edit),
                     onClick = onEdit
                 )
             }
             TopBarIconButton(
                 icon = Icons.Default.Refresh,
-                contentDescription = "Оновити",
+                contentDescription = stringResource(R.string.general_refresh),
                 onClick = onRefresh
             )
         }
@@ -436,7 +444,7 @@ private fun AvatarSection(
             if (avatarUrl != null) {
                 AsyncImage(
                     model = avatarUrl,
-                    contentDescription = "Аватар користувача",
+                    contentDescription = stringResource(R.string.profile_user_avatar),
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()
                 )
@@ -468,7 +476,7 @@ private fun AvatarSection(
             } else {
                 Icon(
                     imageVector = Icons.Default.CameraAlt,
-                    contentDescription = "Змінити аватар",
+                    contentDescription = stringResource(R.string.profile_change_avatar),
                     tint = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier.size(16.dp)
                 )
@@ -602,7 +610,7 @@ private fun ServerWarningBanner() {
                 modifier = Modifier.size(18.dp)
             )
             Text(
-                text = "Сервер недоступний — показано збережені дані",
+                text = stringResource(R.string.general_server_unavailable_cached),
                 color = MaterialTheme.colorScheme.onTertiaryContainer,
                 style = MaterialTheme.typography.bodySmall
             )
@@ -640,7 +648,7 @@ private fun ErrorContent(error: String, onRetry: () -> Unit) {
                 style = MaterialTheme.typography.bodyMedium
             )
             OutlinedButton(onClick = onRetry) {
-                Text("Спробувати знову")
+                Text(stringResource(R.string.general_retry))
             }
         }
     }
@@ -658,18 +666,18 @@ private fun SetPinCodeDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Встановити PIN-код") },
+        title = { Text(stringResource(R.string.profile_set_pin_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    text = "Введіть 4 цифри для вашого PIN-коду. Обов'язково запам'ятайте його.",
+                    text = stringResource(R.string.profile_set_pin_message),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 OutlinedTextField(
                     value = pinCode,
                     onValueChange = onPinChange,
-                    label = { Text("PIN-код") },
+                    label = { Text(stringResource(R.string.profile_pin_code)) },
                     isError = pinCodeError != null,
                     supportingText = pinCodeError?.let { { Text(it) } },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
@@ -694,12 +702,12 @@ private fun SetPinCodeDialog(
                 if (isUpdating) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                 } else {
-                    Text("Встановити")
+                    Text(stringResource(R.string.profile_set_pin_confirm))
                 }
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Скасувати") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.general_cancel)) }
         }
     )
 }
@@ -719,13 +727,13 @@ private fun UpdatePinCodeDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Оновити PIN-код") },
+        title = { Text(stringResource(R.string.profile_update_pin_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = currentPin,
                     onValueChange = onCurrentPinChange,
-                    label = { Text("Поточний PIN-код") },
+                    label = { Text(stringResource(R.string.profile_current_pin)) },
                     isError = currentPinError != null,
                     supportingText = currentPinError?.let { { Text(it) } },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
@@ -736,7 +744,7 @@ private fun UpdatePinCodeDialog(
                 OutlinedTextField(
                     value = newPin,
                     onValueChange = onNewPinChange,
-                    label = { Text("Новий PIN-код") },
+                    label = { Text(stringResource(R.string.profile_new_pin)) },
                     isError = newPinError != null,
                     supportingText = newPinError?.let { { Text(it) } },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
@@ -761,12 +769,12 @@ private fun UpdatePinCodeDialog(
                 if (isUpdating) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                 } else {
-                    Text("Оновити")
+                    Text(stringResource(R.string.general_update))
                 }
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Скасувати") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.general_cancel)) }
         }
     )
 }
@@ -786,13 +794,13 @@ private fun EditProfileDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Редагувати профіль") },
+        title = { Text(stringResource(R.string.profile_edit_profile_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = name,
                     onValueChange = onNameChange,
-                    label = { Text("Ім'я") },
+                    label = { Text(stringResource(R.string.profile_name)) },
                     isError = nameError != null,
                     supportingText = nameError?.let { { Text(it) } },
                     modifier = Modifier.fillMaxWidth(),
@@ -801,7 +809,7 @@ private fun EditProfileDialog(
                 OutlinedTextField(
                     value = email,
                     onValueChange = onEmailChange,
-                    label = { Text("Email") },
+                    label = { Text(stringResource(R.string.general_email)) },
                     isError = emailError != null,
                     supportingText = emailError?.let { { Text(it) } },
                     modifier = Modifier.fillMaxWidth(),
@@ -824,12 +832,14 @@ private fun EditProfileDialog(
                 if (isUpdating) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                 } else {
-                    Text("Зберегти")
+                    Text(stringResource(R.string.general_save))
                 }
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss, enabled = !isUpdating) { Text("Скасувати") }
+            TextButton(onClick = onDismiss, enabled = !isUpdating) {
+                Text(stringResource(R.string.general_cancel))
+            }
         }
     )
 }
