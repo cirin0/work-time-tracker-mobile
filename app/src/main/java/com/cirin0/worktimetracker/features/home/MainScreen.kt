@@ -34,7 +34,6 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -44,6 +43,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -59,6 +59,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -67,13 +68,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.cirin0.worktimetracker.R
+import com.cirin0.worktimetracker.core.fcm.RequestNotificationPermission
 import com.cirin0.worktimetracker.core.ui.QRCodeScannerScreen
 import com.cirin0.worktimetracker.core.utils.DateUtils
 import com.cirin0.worktimetracker.features.timeentries.data.model.TimeEntry
 import com.cirin0.worktimetracker.features.timeentries.presentation.TimeEntriesState
+import com.cirin0.worktimetracker.features.timeentries.presentation.TimeEntriesUiError
 import com.cirin0.worktimetracker.features.timeentries.presentation.TimeEntriesViewModel
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
+import com.cirin0.worktimetracker.features.timeentries.presentation.WorkProgressUiState
 
 @Composable
 fun MainScreen(
@@ -81,6 +84,9 @@ fun MainScreen(
     viewModel: TimeEntriesViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val workProgressState by viewModel.workProgressState.collectAsState()
+
+    RequestNotificationPermission()
 
     Box(
         modifier = Modifier
@@ -99,6 +105,8 @@ fun MainScreen(
                 onRefresh = {
                     viewModel.loadActiveEntry()
                     viewModel.loadTimeEntries()
+                    viewModel.loadUserData()
+                    viewModel.loadWorkSchedule()
                 }
             )
 
@@ -119,7 +127,7 @@ fun MainScreen(
             } else {
                 Spacer(modifier = Modifier.height(16.dp))
 
-                WorkProgressSection(state)
+                WorkProgressSection(workProgressState)
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -154,20 +162,20 @@ private fun TopBarSection(onRefresh: () -> Unit) {
     ) {
         Column {
             Text(
-                text = "Відстеження часу",
+                text = stringResource(R.string.home_title),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
             )
             Text(
-                text = "Керування робочим часом",
+                text = stringResource(R.string.home_subtitle),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
         TopBarIconButton(
             icon = Icons.Default.Refresh,
-            contentDescription = "Оновити",
+            contentDescription = stringResource(R.string.general_refresh),
             onClick = onRefresh
         )
     }
@@ -215,7 +223,7 @@ private fun ServerWarningBanner() {
                 modifier = Modifier.size(18.dp)
             )
             Text(
-                text = "Сервер недоступний — показано збережені дані",
+                text = stringResource(R.string.general_server_unavailable_cached),
                 color = MaterialTheme.colorScheme.onTertiaryContainer,
                 style = MaterialTheme.typography.bodySmall
             )
@@ -224,40 +232,50 @@ private fun ServerWarningBanner() {
 }
 
 @Composable
-private fun WorkProgressSection(state: TimeEntriesState) {
-    val activeEntry = state.activeEntry
-    val todayDate = DateUtils.toIsoDate(System.currentTimeMillis())
-    val todayEntries = state.timeEntries.filter { it.date == todayDate }
-
-    val targetHours = 8f
-    var workedMinutes = 0
-
-    if (activeEntry != null) {
-        val startTime = try {
-            if (activeEntry.startTime.contains("T")) {
-                java.time.ZonedDateTime.parse(activeEntry.startTime)
-                    .withZoneSameInstant(java.time.ZoneId.systemDefault())
-                    .toLocalTime()
-            } else {
-                LocalTime.parse(activeEntry.startTime, DateTimeFormatter.ofPattern("HH:mm:ss"))
+private fun DayOffBanner() {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.secondaryContainer
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.CalendarToday,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.secondary
+            )
+            Column {
+                Text(
+                    text = stringResource(R.string.home_day_off_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                Text(
+                    text = stringResource(R.string.home_day_off_subtitle),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
+                )
             }
-        } catch (e: Exception) {
-            LocalTime.now()
         }
-        val currentTime = LocalTime.now()
-        workedMinutes = java.time.Duration.between(startTime, currentTime).toMinutes().toInt()
-            .coerceAtLeast(0)
-        // duration is in seconds, convert to minutes
-        workedMinutes += todayEntries.filter { it.id != activeEntry.id }
-            .sumOf { (it.duration ?: 0) / 60 }
-    } else {
-        // duration is in seconds, convert to minutes
-        workedMinutes = todayEntries.sumOf { (it.duration ?: 0) / 60 }
+    }
+}
+
+@Composable
+private fun WorkProgressSection(progressState: WorkProgressUiState) {
+    if (!progressState.isWorkingDay && !progressState.isTracking) {
+        DayOffBanner()
+        return
     }
 
-    val workedHours = workedMinutes / 60f
-    val progress = (workedHours / targetHours).coerceIn(0f, 1f)
-    val remainingMinutes = ((targetHours - workedHours) * 60).toInt().coerceAtLeast(0)
+    val workedHours = progressState.workedHours
+    val progress = progressState.progress
+    val remainingMinutes = progressState.remainingMinutes
+    val targetHours = progressState.targetHours
 
     val animatedProgress by animateFloatAsState(
         targetValue = progress,
@@ -267,7 +285,7 @@ private fun WorkProgressSection(state: TimeEntriesState) {
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "ПРОГРЕС РОБОТИ",
+            text = stringResource(R.string.home_work_progress).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -294,16 +312,24 @@ private fun WorkProgressSection(state: TimeEntriesState) {
                 ) {
                     Column {
                         Text(
-                            text = if (activeEntry != null) "Відстеження..." else "Сьогодні",
+                            text = if (progressState.isTracking) {
+                                stringResource(R.string.home_tracking)
+                            } else {
+                                stringResource(R.string.home_today)
+                            },
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = if (activeEntry != null)
+                            color = if (progressState.isTracking)
                                 MaterialTheme.colorScheme.primary
                             else
                                 MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "${DateUtils.formatHours(workedHours.toDouble())} / ${targetHours.toInt()} год",
+                            text = stringResource(
+                                R.string.home_progress_ratio,
+                                DateUtils.formatHours(workedHours.toDouble()),
+                                DateUtils.formatHours(targetHours.toDouble())
+                            ),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -356,16 +382,22 @@ private fun WorkProgressSection(state: TimeEntriesState) {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "Відпрацьовано: ${DateUtils.formatHours(workedHours.toDouble())}",
+                        text = stringResource(
+                            R.string.home_worked,
+                            DateUtils.formatHours(workedHours.toDouble())
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = if (progress >= 1f) "Мета досягнута!" else "Залишилось: ${
-                            DateUtils.formatHours(
-                                remainingMinutes / 60.0
+                        text = if (progress >= 1f) {
+                            stringResource(R.string.home_goal_reached)
+                        } else {
+                            stringResource(
+                                R.string.home_remaining,
+                                DateUtils.formatHours(remainingMinutes / 60.0)
                             )
-                        }",
+                        },
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = if (progress >= 1f) FontWeight.Bold else FontWeight.Normal,
                         color = if (progress >= 1f)
@@ -389,7 +421,7 @@ private fun TimeEntriesSection(
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "ІСТОРІЯ ЗАПИСІВ",
+            text = stringResource(R.string.home_history).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -412,7 +444,7 @@ private fun TimeEntriesSection(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Немає записів",
+                        text = stringResource(R.string.home_no_entries),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -442,7 +474,7 @@ private fun TimeEntriesSection(
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                 } else {
-                    Text("Завантажити ще")
+                    Text(stringResource(R.string.home_load_more))
                 }
             }
         }
@@ -543,7 +575,7 @@ private fun TimeEntryCard(
                         color = MaterialTheme.colorScheme.primary
                     ) {
                         Text(
-                            text = "Активний",
+                            text = stringResource(R.string.home_active),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onPrimary,
                             fontWeight = FontWeight.Bold,
@@ -610,7 +642,7 @@ private fun StartEntryCard(
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "УПРАВЛІННЯ",
+            text = stringResource(R.string.home_controls).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -634,9 +666,9 @@ private fun StartEntryCard(
                 user?.let {
                     Text(
                         text = when {
-                            isRemote -> "Режим: Віддалена робота"
-                            isOffice -> "Режим: Офіс (потрібна геолокація та QR-код)"
-                            isHybrid -> "Режим: Гібридний"
+                            isRemote -> stringResource(R.string.home_mode_remote)
+                            isOffice -> stringResource(R.string.home_mode_office)
+                            isHybrid -> stringResource(R.string.home_mode_hybrid)
                             else -> ""
                         },
                         style = MaterialTheme.typography.bodyMedium,
@@ -648,9 +680,10 @@ private fun StartEntryCard(
                     HybridToggleCard(state, viewModel)
                 }
 
-                if (state.error != null) {
+                val errorText = localizedTimeEntriesError(state)
+                if (errorText != null) {
                     Text(
-                        text = state.error,
+                        text = errorText,
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -658,7 +691,7 @@ private fun StartEntryCard(
 
                 if (state.locationPermissionDenied && needsGPS) {
                     Text(
-                        text = "Потрібен доступ до локації",
+                        text = stringResource(R.string.home_location_access_required),
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -666,7 +699,7 @@ private fun StartEntryCard(
 
                 if (state.cameraPermissionDenied) {
                     Text(
-                        text = "Потрібен доступ до камери",
+                        text = stringResource(R.string.home_camera_access_required),
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -675,7 +708,7 @@ private fun StartEntryCard(
                 OutlinedTextField(
                     value = state.startComment,
                     onValueChange = viewModel::updateStartComment,
-                    label = { Text("Коментар (необов'язково)") },
+                    label = { Text(stringResource(R.string.home_optional_comment)) },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !state.isLoading && !state.isLoadingLocation,
                     shape = RoundedCornerShape(12.dp)
@@ -707,11 +740,11 @@ private fun StartEntryCard(
                             color = MaterialTheme.colorScheme.onPrimary
                         )
                         Spacer(Modifier.width(8.dp))
-                        Text("Локація...")
+                        Text(stringResource(R.string.home_loading_location))
                     } else {
                         Icon(Icons.Default.PlayArrow, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
-                        Text("Почати роботу")
+                        Text(stringResource(R.string.home_start_work))
                     }
                 }
 
@@ -758,13 +791,13 @@ private fun HybridToggleCard(
         ) {
             Column {
                 Text(
-                    text = "Я працюю з офісу",
+                    text = stringResource(R.string.home_work_from_office),
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Medium
                 )
                 if (state.isInOffice) {
                     Text(
-                        text = "Потрібна геолокація",
+                        text = stringResource(R.string.home_location_required),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -789,7 +822,7 @@ private fun ActiveEntryCard(
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "УПРАВЛІННЯ",
+            text = stringResource(R.string.home_controls).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -833,13 +866,16 @@ private fun ActiveEntryCard(
                     }
                     Column {
                         Text(
-                            text = "Активне відстеження",
+                            text = stringResource(R.string.home_active_tracking),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                         Text(
-                            text = "Початок: ${formatTime(entry.startTime)}",
+                            text = stringResource(
+                                R.string.home_started_at,
+                                formatTime(entry.startTime)
+                            ),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                         )
@@ -848,7 +884,7 @@ private fun ActiveEntryCard(
 
                 entry.startComment?.let {
                     Text(
-                        text = "Коментар: $it",
+                        text = stringResource(R.string.home_comment_prefix, it),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                     )
@@ -856,9 +892,10 @@ private fun ActiveEntryCard(
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f))
 
-                if (state.error != null) {
+                val errorText = localizedTimeEntriesError(state)
+                if (errorText != null) {
                     Text(
-                        text = state.error,
+                        text = errorText,
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -867,11 +904,11 @@ private fun ActiveEntryCard(
                 OutlinedTextField(
                     value = state.stopComment,
                     onValueChange = viewModel::updateStopComment,
-                    label = { Text("Коментар до зупинки") },
+                    label = { Text(stringResource(R.string.home_stop_comment)) },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !state.isLoading,
                     shape = RoundedCornerShape(12.dp),
-                    colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                    colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = MaterialTheme.colorScheme.surface,
                         unfocusedContainerColor = MaterialTheme.colorScheme.surface
                     )
@@ -880,7 +917,7 @@ private fun ActiveEntryCard(
                 OutlinedTextField(
                     value = state.pinCode,
                     onValueChange = viewModel::updatePinCode,
-                    label = { Text("PIN-код (4 цифри)") },
+                    label = { Text(stringResource(R.string.home_pin_code_label)) },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !state.isLoading,
                     visualTransformation = if (isPinVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -889,16 +926,20 @@ private fun ActiveEntryCard(
                         IconButton(onClick = { isPinVisible = !isPinVisible }) {
                             Icon(
                                 imageVector = if (isPinVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                contentDescription = if (isPinVisible) "Сховати" else "Показати"
+                                contentDescription = if (isPinVisible) {
+                                    stringResource(R.string.home_hide_pin)
+                                } else {
+                                    stringResource(R.string.home_show_pin)
+                                }
                             )
                         }
                     },
                     isError = state.pinCode.isNotEmpty() && state.pinCode.length != 4,
                     supportingText = if (state.pinCode.isNotEmpty() && state.pinCode.length != 4) {
-                        { Text("PIN має бути 4 цифри") }
+                        { Text(stringResource(R.string.home_pin_must_be_four_digits)) }
                     } else null,
                     shape = RoundedCornerShape(12.dp),
-                    colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                    colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = MaterialTheme.colorScheme.surface,
                         unfocusedContainerColor = MaterialTheme.colorScheme.surface
                     )
@@ -908,9 +949,6 @@ private fun ActiveEntryCard(
                     onClick = { viewModel.stopTimeEntry() },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !state.isLoading && state.pinCode.length == 4,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error
-                    ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     if (state.isLoading) {
@@ -919,9 +957,13 @@ private fun ActiveEntryCard(
                             color = MaterialTheme.colorScheme.onPrimary
                         )
                     } else {
-                        Icon(Icons.Default.Stop, contentDescription = null)
+                        Icon(
+                            Icons.Default.Stop,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
                         Spacer(Modifier.width(8.dp))
-                        Text("Зупинити")
+                        Text(stringResource(R.string.home_stop))
                     }
                 }
             }
@@ -932,3 +974,13 @@ private fun ActiveEntryCard(
 private fun formatTime(timeString: String): String {
     return DateUtils.formatTime(timeString)
 }
+
+@Composable
+private fun localizedTimeEntriesError(state: TimeEntriesState): String? {
+    return when (state.uiError) {
+        TimeEntriesUiError.PIN_LENGTH -> stringResource(R.string.home_pin_must_be_four_digits)
+        TimeEntriesUiError.PIN_DIGITS_ONLY -> stringResource(R.string.general_error)
+        null -> state.error
+    }
+}
+

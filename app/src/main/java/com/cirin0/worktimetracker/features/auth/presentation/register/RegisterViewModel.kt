@@ -1,5 +1,6 @@
 package com.cirin0.worktimetracker.features.auth.presentation.register
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cirin0.worktimetracker.core.network.ApiResponse
@@ -7,6 +8,7 @@ import com.cirin0.worktimetracker.core.utils.ValidationResult
 import com.cirin0.worktimetracker.core.utils.ValidationRules
 import com.cirin0.worktimetracker.features.auth.data.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,7 +17,8 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel
 class RegisterViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    @param:ApplicationContext private val context: Context
 ) : ViewModel() {
     private val _state = MutableStateFlow(RegisterState())
     val state = _state.asStateFlow()
@@ -104,7 +107,6 @@ class RegisterViewModel @Inject constructor(
 
     private fun validateInput(): Boolean {
         val currentState = _state.value
-        var isValid = true
 
         val nameError = validateName(currentState.name, true)
         val emailError = validateEmail(currentState.email, true)
@@ -118,15 +120,14 @@ class RegisterViewModel @Inject constructor(
             )
         }
 
-        isValid = nameError == null && emailError == null && passwordError == null
-        return isValid
+        return nameError == null && emailError == null && passwordError == null
     }
 
     private fun validateName(name: String, hasInteracted: Boolean): String? {
         if (!hasInteracted && name.isBlank()) return null
         return when (val result = ValidationRules.isValidName(name)) {
             is ValidationResult.Success -> null
-            is ValidationResult.Error -> result.message
+            is ValidationResult.Error -> result.resolve(context)
         }
     }
 
@@ -134,7 +135,7 @@ class RegisterViewModel @Inject constructor(
         if (!hasInteracted && email.isBlank()) return null
         return when (val result = ValidationRules.isValidEmail(email)) {
             is ValidationResult.Success -> null
-            is ValidationResult.Error -> result.message
+            is ValidationResult.Error -> result.resolve(context)
         }
     }
 
@@ -142,7 +143,7 @@ class RegisterViewModel @Inject constructor(
         if (!hasInteracted && password.isBlank()) return null
         return when (val result = ValidationRules.isValidPassword(password)) {
             is ValidationResult.Success -> null
-            is ValidationResult.Error -> result.message
+            is ValidationResult.Error -> result.resolve(context)
         }
     }
 }

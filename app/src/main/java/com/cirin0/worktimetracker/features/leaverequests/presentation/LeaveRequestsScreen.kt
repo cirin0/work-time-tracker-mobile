@@ -54,10 +54,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.cirin0.worktimetracker.R
 import com.cirin0.worktimetracker.core.utils.DateUtils
 import com.cirin0.worktimetracker.features.leaverequests.data.model.LeaveRequest
 import com.cirin0.worktimetracker.features.leaverequests.data.model.LeaveRequestStatus
@@ -71,10 +73,11 @@ fun LeaveRequestsScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val leaveRequestCreatedMessage = stringResource(R.string.leave_request_created_success)
 
     LaunchedEffect(state.createSuccess) {
         if (state.createSuccess) {
-            snackbarHostState.showSnackbar("Заявку успішно створено")
+            snackbarHostState.showSnackbar(leaveRequestCreatedMessage)
             viewModel.clearCreateSuccess()
         }
     }
@@ -118,13 +121,16 @@ fun LeaveRequestsScreen(
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "Помилка: ${state.error}",
+                            text = stringResource(
+                                R.string.general_error_with_message,
+                                state.error ?: ""
+                            ),
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodyLarge
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         OutlinedButton(onClick = { viewModel.loadLeaveRequests() }) {
-                            Text("Спробувати знову")
+                            Text(stringResource(R.string.general_retry))
                         }
                     }
                 }
@@ -137,7 +143,7 @@ fun LeaveRequestsScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "Немає заявок",
+                            text = stringResource(R.string.leave_requests_empty),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -164,7 +170,7 @@ fun LeaveRequestsScreen(
         ) {
             Icon(
                 imageVector = Icons.Default.Add,
-                contentDescription = "Створити заявку",
+                contentDescription = stringResource(R.string.leave_request_create),
                 tint = MaterialTheme.colorScheme.onPrimary
             )
         }
@@ -206,13 +212,13 @@ private fun TopBarSection(
             if (onBack != {}) {
                 TopBarIconButton(
                     icon = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Назад",
+                    contentDescription = stringResource(R.string.general_back),
                     onClick = onBack
                 )
             }
             Column {
                 Text(
-                    text = "Мої заявки",
+                    text = stringResource(R.string.leave_requests_title),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
@@ -221,7 +227,7 @@ private fun TopBarSection(
         }
         TopBarIconButton(
             icon = Icons.Default.Refresh,
-            contentDescription = "Оновити",
+            contentDescription = stringResource(R.string.general_refresh),
             onClick = onRefresh
         )
     }
@@ -293,7 +299,7 @@ private fun LeaveRequestCard(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    text = request.getTypeEnum().displayName,
+                    text = leaveRequestTypeLabel(request.getTypeEnum()),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -342,7 +348,7 @@ private fun StatusBadge(status: LeaveRequestStatus) {
         color = color
     ) {
         Text(
-            text = status.displayName,
+            text = leaveRequestStatusLabel(status),
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
             style = MaterialTheme.typography.labelMedium,
             color = textColor,
@@ -373,16 +379,16 @@ private fun CreateLeaveRequestDialog(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
-                    text = "Створити заявку",
+                    text = stringResource(R.string.leave_request_create),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
 
                 Box {
                     OutlinedTextField(
-                        value = state.selectedType.displayName,
+                        value = leaveRequestTypeLabel(state.selectedType),
                         onValueChange = {},
-                        label = { Text("Тип заявки") },
+                        label = { Text(stringResource(R.string.leave_request_type)) },
                         modifier = Modifier.fillMaxWidth(),
                         readOnly = true,
                         trailingIcon = {
@@ -404,7 +410,7 @@ private fun CreateLeaveRequestDialog(
                     ) {
                         LeaveRequestType.entries.forEach { type ->
                             DropdownMenuItem(
-                                text = { Text(type.displayName) },
+                                text = { Text(leaveRequestTypeLabel(type)) },
                                 onClick = {
                                     viewModel.updateSelectedType(type)
                                     typeDropdownExpanded = false
@@ -417,13 +423,16 @@ private fun CreateLeaveRequestDialog(
                 OutlinedTextField(
                     value = state.startDate,
                     onValueChange = {},
-                    label = { Text("Дата початку") },
+                    label = { Text(stringResource(R.string.leave_request_start_date)) },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !state.isCreating,
                     readOnly = true,
                     trailingIcon = {
                         IconButton(onClick = { showStartDatePicker = true }) {
-                            Icon(Icons.Default.CalendarToday, contentDescription = "Вибрати дату")
+                            Icon(
+                                Icons.Default.CalendarToday,
+                                contentDescription = stringResource(R.string.leave_request_pick_date)
+                            )
                         }
                     },
                     shape = RoundedCornerShape(12.dp)
@@ -432,13 +441,16 @@ private fun CreateLeaveRequestDialog(
                 OutlinedTextField(
                     value = state.endDate,
                     onValueChange = {},
-                    label = { Text("Дата кінця") },
+                    label = { Text(stringResource(R.string.leave_request_end_date)) },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !state.isCreating,
                     readOnly = true,
                     trailingIcon = {
                         IconButton(onClick = { showEndDatePicker = true }) {
-                            Icon(Icons.Default.CalendarToday, contentDescription = "Вибрати дату")
+                            Icon(
+                                Icons.Default.CalendarToday,
+                                contentDescription = stringResource(R.string.leave_request_pick_date)
+                            )
                         }
                     },
                     shape = RoundedCornerShape(12.dp)
@@ -447,7 +459,7 @@ private fun CreateLeaveRequestDialog(
                 OutlinedTextField(
                     value = state.reason,
                     onValueChange = viewModel::updateReason,
-                    label = { Text("Причина") },
+                    label = { Text(stringResource(R.string.leave_request_reason)) },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !state.isCreating,
                     minLines = 3,
@@ -455,9 +467,14 @@ private fun CreateLeaveRequestDialog(
                     shape = RoundedCornerShape(12.dp)
                 )
 
-                if (state.createError != null) {
+                val createErrorText = when (state.createValidationError) {
+                    LeaveRequestCreateValidationError.MISSING_FIELDS -> stringResource(R.string.leave_request_fill_all_fields)
+                    null -> state.createError
+                }
+
+                if (createErrorText != null) {
                     Text(
-                        text = state.createError,
+                        text = createErrorText,
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -472,7 +489,7 @@ private fun CreateLeaveRequestDialog(
                         onClick = onDismiss,
                         enabled = !state.isCreating
                     ) {
-                        Text("Скасувати")
+                        Text(stringResource(R.string.general_cancel))
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
@@ -488,7 +505,7 @@ private fun CreateLeaveRequestDialog(
                                 strokeWidth = 2.dp
                             )
                         } else {
-                            Text("Створити")
+                            Text(stringResource(R.string.leave_request_create_short))
                         }
                     }
                 }
@@ -499,20 +516,21 @@ private fun CreateLeaveRequestDialog(
     if (showStartDatePicker) {
         val datePickerState = rememberDatePickerState()
         DatePickerDialog(
-            onDismissRequest = { },
+            onDismissRequest = { showStartDatePicker = false },
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
                         val date = DateUtils.toIsoDate(millis)
                         viewModel.updateStartDate(date)
+                        showStartDatePicker = false
                     }
                 }) {
-                    Text("OK")
+                    Text(stringResource(android.R.string.ok))
                 }
             },
             dismissButton = {
-                TextButton(onClick = { }) {
-                    Text("Скасувати")
+                TextButton(onClick = { showStartDatePicker = false }) {
+                    Text(stringResource(R.string.general_cancel))
                 }
             }
         ) {
@@ -523,20 +541,21 @@ private fun CreateLeaveRequestDialog(
     if (showEndDatePicker) {
         val datePickerState = rememberDatePickerState()
         DatePickerDialog(
-            onDismissRequest = { },
+            onDismissRequest = { showEndDatePicker = false },
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
                         val date = DateUtils.toIsoDate(millis)
                         viewModel.updateEndDate(date)
+                        showEndDatePicker = false
                     }
                 }) {
-                    Text("OK")
+                    Text(stringResource(android.R.string.ok))
                 }
             },
             dismissButton = {
-                TextButton(onClick = { }) {
-                    Text("Скасувати")
+                TextButton(onClick = { showEndDatePicker = false }) {
+                    Text(stringResource(R.string.general_cancel))
                 }
             }
         ) {

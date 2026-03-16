@@ -1,5 +1,7 @@
 package com.cirin0.worktimetracker.features.profile.data.repository
 
+import android.content.Context
+import com.cirin0.worktimetracker.R
 import com.cirin0.worktimetracker.core.database.dao.UserDao
 import com.cirin0.worktimetracker.core.database.entity.toCachedEntity
 import com.cirin0.worktimetracker.core.database.entity.toUser
@@ -13,6 +15,7 @@ import com.cirin0.worktimetracker.features.profile.data.model.SetupPinCodeReques
 import com.cirin0.worktimetracker.features.profile.data.model.UpdatePinCodeRequest
 import com.cirin0.worktimetracker.features.profile.data.model.UpdateProfileRequest
 import com.cirin0.worktimetracker.features.profile.data.model.User
+import dagger.hilt.android.qualifiers.ApplicationContext
 import jakarta.inject.Inject
 import jakarta.inject.Named
 import okhttp3.MediaType.Companion.toMediaType
@@ -24,15 +27,27 @@ class ProfileRepository @Inject constructor(
     private val profileApi: ProfileApi,
     private val userDao: UserDao,
     private val connectivityObserver: ConnectivityObserver,
-    @param:Named(Constants.NAMED_IMAGE_URL) private val imageBaseUrl: String
+    @param:Named(Constants.NAMED_IMAGE_URL) private val imageBaseUrl: String,
+    @param:ApplicationContext private val context: Context
 ) {
+    companion object {
+        private const val CACHE_TTL = 24 * 60 * 60 * 1000L
+    }
+
     suspend fun getCurrentUser(): ApiResponse<User> {
+        val cachedUser = userDao.getCachedUser()
+        val isCacheValid =
+            cachedUser != null && (System.currentTimeMillis() - cachedUser.cachedAt) < CACHE_TTL
+
         if (!connectivityObserver.isConnected()) {
-            val cachedUser = userDao.getCachedUser()
             return if (cachedUser != null) {
-                ApiResponse.Success(cachedUser.toUser(), fromCache = true)
+                if (isCacheValid) {
+                    ApiResponse.Success(cachedUser.toUser(), fromCache = true)
+                } else {
+                    ApiResponse.Error(context.getString(R.string.profile_cache_expired_need_internet))
+                }
             } else {
-                ApiResponse.Error("Немає підключення до інтернету та немає кешованих даних")
+                ApiResponse.Error(context.getString(R.string.profile_offline_no_cache))
             }
         }
 
@@ -48,14 +63,10 @@ class ProfileRepository @Inject constructor(
             userWithAvatar
         }
 
-        // If network request failed, try to return cached data
         return if (response is ApiResponse.Error) {
-            val cachedUser = userDao.getCachedUser()
-            if (cachedUser != null) {
-                // Return cached data with fromCache flag
+            if (isCacheValid) {
                 ApiResponse.Success(cachedUser.toUser(), fromCache = true)
             } else {
-                // No cached data available, return the error
                 response
             }
         } else {
@@ -65,7 +76,7 @@ class ProfileRepository @Inject constructor(
 
     suspend fun updateProfile(name: String, email: String): ApiResponse<User> {
         if (!connectivityObserver.isConnected()) {
-            return ApiResponse.Error("Немає підключення до інтернету. Неможливо оновити профіль.")
+            return ApiResponse.Error(context.getString(R.string.profile_offline_update_error))
         }
 
         return apiCall {
@@ -84,7 +95,7 @@ class ProfileRepository @Inject constructor(
 
     suspend fun updateAvatar(imageFile: File): ApiResponse<User> {
         if (!connectivityObserver.isConnected()) {
-            return ApiResponse.Error("Немає підключення до інтернету. Неможливо оновити аватар.")
+            return ApiResponse.Error(context.getString(R.string.profile_offline_avatar_error))
         }
 
         return apiCall {
@@ -108,7 +119,7 @@ class ProfileRepository @Inject constructor(
 
     suspend fun setupPinCode(pinCode: String): ApiResponse<MessageResponse> {
         if (!connectivityObserver.isConnected()) {
-            return ApiResponse.Error("Немає підключення до інтернету. Неможливо встановити PIN-код.")
+            return ApiResponse.Error(context.getString(R.string.profile_offline_pin_setup_error))
         }
 
         return apiCall {
@@ -118,7 +129,7 @@ class ProfileRepository @Inject constructor(
 
     suspend fun updatePinCode(currentPin: String, newPin: String): ApiResponse<MessageResponse> {
         if (!connectivityObserver.isConnected()) {
-            return ApiResponse.Error("Немає підключення до інтернету. Неможливо оновити PIN-код.")
+            return ApiResponse.Error(context.getString(R.string.profile_offline_pin_update_error))
         }
 
         return apiCall {

@@ -2,12 +2,13 @@ package com.cirin0.worktimetracker.features.leaverequests.data.model
 
 import com.google.gson.annotations.SerializedName
 
-enum class LeaveRequestType(val value: String, val displayName: String) {
-    SICK("sick", "Лікарняний"),
-    VACATION("vacation", "Відпустка"),
-    PERSONAL("personal", "Відгул"),
-    UNPAID("unpaid", "Неоплачувана відпустка");
-
+enum class LeaveRequestType(val value: String) {
+    SICK("sick"),
+    VACATION("vacation"),
+    PERSONAL("personal"),
+    UNPAID("unpaid"),
+    BUSINESS_TRIP("business_trip");
+    
     companion object {
         fun fromValue(value: String): LeaveRequestType? {
             return entries.find { it.value == value }
@@ -15,10 +16,10 @@ enum class LeaveRequestType(val value: String, val displayName: String) {
     }
 }
 
-enum class LeaveRequestStatus(val value: String, val displayName: String) {
-    PENDING("pending", "Очікує"),
-    APPROVED("approved", "Схвалено"),
-    REJECTED("rejected", "Відхилено");
+enum class LeaveRequestStatus(val value: String) {
+    PENDING("pending"),
+    APPROVED("approved"),
+    REJECTED("rejected");
 
     companion object {
         fun fromValue(value: String): LeaveRequestStatus? {

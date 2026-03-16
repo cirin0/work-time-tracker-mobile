@@ -1,14 +1,17 @@
 package com.cirin0.worktimetracker.core.utils
 
+import android.content.Context
 import android.util.Patterns
+import androidx.annotation.StringRes
+import com.cirin0.worktimetracker.R
 
 object ValidationRules {
 
     fun isValidEmail(email: String): ValidationResult {
         return when {
-            email.isBlank() -> ValidationResult.Error("Email не може бути порожнім")
+            email.isBlank() -> ValidationResult.Error(R.string.validation_email_required)
             !Patterns.EMAIL_ADDRESS.matcher(email).matches() ->
-                ValidationResult.Error("Невалідний формат email")
+                ValidationResult.Error(R.string.validation_email_invalid)
 
             else -> ValidationResult.Success
         }
@@ -16,7 +19,7 @@ object ValidationRules {
 
     fun isValidPassword(password: String): ValidationResult {
         return when {
-            password.isBlank() -> ValidationResult.Error("Пароль не може бути порожнім")
+            password.isBlank() -> ValidationResult.Error(R.string.validation_password_required)
 //            password.length < 8 -> ValidationResult.Error("Мінімум 8 символів")
 //            !password.any { it.isDigit() } -> ValidationResult.Error("Потрібна хоча б одна цифра")
 //            !password.any { it.isUpperCase() } -> ValidationResult.Error("Потрібна велика літера")
@@ -26,10 +29,10 @@ object ValidationRules {
 
     fun isValidName(name: String): ValidationResult {
         return when {
-            name.isBlank() -> ValidationResult.Error("Ім'я не може бути порожнім")
-            name.length < 2 -> ValidationResult.Error("Ім'я занадто коротке")
+            name.isBlank() -> ValidationResult.Error(R.string.validation_name_required)
+            name.length < 2 -> ValidationResult.Error(R.string.validation_name_too_short)
             !name.all { it.isLetter() || it.isWhitespace() } ->
-                ValidationResult.Error("Ім'я може містити лише літери")
+                ValidationResult.Error(R.string.validation_name_letters_only)
 
             else -> ValidationResult.Success
         }
@@ -37,9 +40,9 @@ object ValidationRules {
 
     fun isValidPhone(phone: String): ValidationResult {
         return when {
-            phone.isBlank() -> ValidationResult.Error("Телефон не може бути порожнім")
+            phone.isBlank() -> ValidationResult.Error(R.string.validation_phone_required)
             !phone.matches(Regex("^\\+?[0-9]{10,13}$")) ->
-                ValidationResult.Error("Невалідний формат телефону")
+                ValidationResult.Error(R.string.validation_phone_invalid)
 
             else -> ValidationResult.Success
         }
@@ -47,11 +50,14 @@ object ValidationRules {
 
     fun isValidPinCode(pin: String): ValidationResult {
         return when {
-            pin.isBlank() -> ValidationResult.Error("PIN-код не може бути порожнім")
+            pin.isBlank() -> ValidationResult.Error(R.string.validation_pin_required)
             pin.length != Constants.Validation.PIN_CODE_LENGTH ->
-                ValidationResult.Error("PIN-код має містити ${Constants.Validation.PIN_CODE_LENGTH} цифри")
+                ValidationResult.Error(
+                    R.string.validation_pin_exact_digits,
+                    listOf(Constants.Validation.PIN_CODE_LENGTH)
+                )
 
-            !pin.all { it.isDigit() } -> ValidationResult.Error("PIN-код має містити тільки цифри")
+            !pin.all { it.isDigit() } -> ValidationResult.Error(R.string.validation_pin_digits_only)
             else -> ValidationResult.Success
         }
     }
@@ -63,12 +69,12 @@ object ValidationRules {
         required: Boolean = true
     ): ValidationResult {
         return when {
-            comment.isBlank() && required -> ValidationResult.Error("Коментар не може бути порожнім")
+            comment.isBlank() && required -> ValidationResult.Error(R.string.validation_comment_required)
             comment.isNotBlank() && comment.length < minLength ->
-                ValidationResult.Error("Коментар занадто короткий (мін. $minLength символів)")
+                ValidationResult.Error(R.string.validation_comment_too_short, listOf(minLength))
 
             comment.length > maxLength ->
-                ValidationResult.Error("Коментар занадто довгий (макс. $maxLength символів)")
+                ValidationResult.Error(R.string.validation_comment_too_long, listOf(maxLength))
 
             else -> ValidationResult.Success
         }
@@ -76,18 +82,26 @@ object ValidationRules {
 
     fun isValidTextLength(
         text: String,
-        fieldName: String = "Поле",
+        fieldName: String = "Field",
         minLength: Int = Constants.Validation.MIN_NAME_LENGTH,
         maxLength: Int = Constants.Validation.MAX_NAME_LENGTH,
         required: Boolean = true
     ): ValidationResult {
         return when {
-            text.isBlank() && required -> ValidationResult.Error("$fieldName не може бути порожнім")
+            text.isBlank() && required ->
+                ValidationResult.Error(R.string.validation_field_required, listOf(fieldName))
+
             text.isNotBlank() && text.length < minLength ->
-                ValidationResult.Error("$fieldName занадто короткий (мін. $minLength символів)")
+                ValidationResult.Error(
+                    R.string.validation_field_too_short,
+                    listOf(fieldName, minLength)
+                )
 
             text.length > maxLength ->
-                ValidationResult.Error("$fieldName занадто довгий (макс. $maxLength символів)")
+                ValidationResult.Error(
+                    R.string.validation_field_too_long,
+                    listOf(fieldName, maxLength)
+                )
 
             else -> ValidationResult.Success
         }
@@ -95,10 +109,18 @@ object ValidationRules {
 
     fun isValidNumber(number: String, min: Int = 0, max: Int = Int.MAX_VALUE): ValidationResult {
         return when {
-            number.isBlank() -> ValidationResult.Error("Число не може бути порожнім")
-            number.toIntOrNull() == null -> ValidationResult.Error("Введіть коректне число")
-            number.toInt() < min -> ValidationResult.Error("Мінімальне значення: $min")
-            number.toInt() > max -> ValidationResult.Error("Максимальне значення: $max")
+            number.isBlank() -> ValidationResult.Error(R.string.validation_number_required)
+            number.toIntOrNull() == null -> ValidationResult.Error(R.string.validation_number_invalid)
+            number.toInt() < min -> ValidationResult.Error(
+                R.string.validation_number_min,
+                listOf(min)
+            )
+
+            number.toInt() > max -> ValidationResult.Error(
+                R.string.validation_number_max,
+                listOf(max)
+            )
+
             else -> ValidationResult.Success
         }
     }
@@ -106,9 +128,19 @@ object ValidationRules {
 
 sealed class ValidationResult {
     data object Success : ValidationResult()
-    data class Error(val message: String) : ValidationResult()
+    data class Error(
+        @param:StringRes val messageResId: Int,
+        val formatArgs: List<Any> = emptyList()
+    ) : ValidationResult() {
+        fun resolve(context: Context): String {
+            return if (formatArgs.isEmpty()) {
+                context.getString(messageResId)
+            } else {
+                context.getString(messageResId, *formatArgs.toTypedArray())
+            }
+        }
+    }
 
     val isValid: Boolean get() = this is Success
-    val errorMessage: String? get() = (this as? Error)?.message
 }
 

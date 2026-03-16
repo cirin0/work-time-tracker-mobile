@@ -43,10 +43,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.cirin0.worktimetracker.R
 import com.cirin0.worktimetracker.features.company.data.model.BaseUser
 import com.cirin0.worktimetracker.features.company.data.model.CompanyDetail
 
@@ -101,13 +103,16 @@ fun CompanyScreen(
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "Помилка: ${state.error}",
+                            text = stringResource(
+                                R.string.general_error_with_message,
+                                state.error ?: ""
+                            ),
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodyLarge
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         OutlinedButton(onClick = { viewModel.loadCompany(companyId) }) {
-                            Text("Спробувати знову")
+                            Text(stringResource(R.string.general_retry))
                         }
                     }
                 }
@@ -161,12 +166,12 @@ private fun TopBarSection(
         ) {
             TopBarIconButton(
                 icon = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Назад",
+                contentDescription = stringResource(R.string.general_back),
                 onClick = onBack
             )
             Column {
                 Text(
-                    text = "Компанія",
+                    text = stringResource(R.string.company_screen_title),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
@@ -176,7 +181,7 @@ private fun TopBarSection(
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TopBarIconButton(
                 icon = Icons.Default.Refresh,
-                contentDescription = "Оновити",
+                contentDescription = stringResource(R.string.general_refresh),
                 onClick = onRefresh
             )
         }
@@ -222,14 +227,14 @@ private fun CompanyHeader(company: CompanyDetail) {
             if (company.logo != null) {
                 AsyncImage(
                     model = company.logo,
-                    contentDescription = "Логотип компанії",
+                    contentDescription = stringResource(R.string.company_screen_logo_cd),
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()
                 )
             } else {
                 Icon(
                     imageVector = Icons.Default.Business,
-                    contentDescription = "Компанія",
+                    contentDescription = stringResource(R.string.company_screen_title),
                     tint = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.size(40.dp)
                 )
@@ -248,7 +253,7 @@ private fun CompanyHeader(company: CompanyDetail) {
         Spacer(modifier = Modifier.height(4.dp))
 
         Text(
-            text = "Працівників: ${company.usersCount}",
+            text = stringResource(R.string.company_screen_employees_count, company.usersCount),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -259,7 +264,7 @@ private fun CompanyHeader(company: CompanyDetail) {
 private fun CompanyInfoSection(company: CompanyDetail) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "КОНТАКТИ",
+            text = stringResource(R.string.company_screen_contacts),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -276,20 +281,20 @@ private fun CompanyInfoSection(company: CompanyDetail) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 DetailRow(
                     icon = Icons.Default.Email,
-                    label = "Email",
-                    value = company.email ?: "Немає даних"
+                    label = stringResource(R.string.general_email),
+                    value = company.email ?: stringResource(R.string.company_screen_no_data)
                 )
                 RowDivider()
                 DetailRow(
                     icon = Icons.Default.Phone,
-                    label = "Телефон",
-                    value = company.phone ?: "Немає даних"
+                    label = stringResource(R.string.company_screen_phone),
+                    value = company.phone ?: stringResource(R.string.company_screen_no_data)
                 )
                 RowDivider()
                 DetailRow(
                     icon = Icons.Default.LocationOn,
-                    label = "Адреса",
-                    value = company.address ?: "Немає даних"
+                    label = stringResource(R.string.company_screen_address),
+                    value = company.address ?: stringResource(R.string.company_screen_no_data)
                 )
             }
         }
@@ -300,7 +305,7 @@ private fun CompanyInfoSection(company: CompanyDetail) {
 private fun DescriptionSection(company: CompanyDetail) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "ПРО КОМПАНІЮ",
+            text = stringResource(R.string.company_screen_about),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -333,7 +338,7 @@ private fun DescriptionSection(company: CompanyDetail) {
 private fun ManagerSection(company: CompanyDetail) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "МЕНЕДЖЕР",
+            text = stringResource(R.string.company_screen_manager),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -363,7 +368,7 @@ private fun ManagerSection(company: CompanyDetail) {
                     if (company.manager.avatar != null) {
                         AsyncImage(
                             model = company.manager.avatar,
-                            contentDescription = "Аватар менеджера",
+                            contentDescription = stringResource(R.string.company_screen_manager_avatar_cd),
                             contentScale = ContentScale.Crop,
                             modifier = Modifier.fillMaxSize()
                         )
@@ -402,7 +407,7 @@ private fun ManagerSection(company: CompanyDetail) {
 private fun EmployeesSection(company: CompanyDetail) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "ПРАЦІВНИКИ",
+            text = stringResource(R.string.company_screen_employees),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -490,7 +495,7 @@ private fun EmployeeRow(employee: BaseUser) {
             if (employee.avatar != null) {
                 AsyncImage(
                     model = employee.avatar,
-                    contentDescription = "Аватар працівника",
+                    contentDescription = stringResource(R.string.company_screen_employee_avatar_cd),
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()
                 )

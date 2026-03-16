@@ -29,10 +29,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.cirin0.worktimetracker.R
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
@@ -52,10 +54,13 @@ fun QRCodeScannerScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Скануйте QR-код") },
+                title = { Text(stringResource(R.string.qr_code_scanner_title)) },
                 navigationIcon = {
                     IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = "Закрити")
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = stringResource(R.string.qr_code_scanner_close)
+                        )
                     }
                 }
             )
@@ -131,7 +136,7 @@ fun QRCodeScannerScreen(
 
             // Instructions
             Text(
-                text = "Наведіть камеру на QR-код",
+                text = stringResource(R.string.qr_code_scanner_instruction),
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(bottom = 32.dp),

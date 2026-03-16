@@ -33,10 +33,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.cirin0.worktimetracker.R
 import com.cirin0.worktimetracker.features.message.data.model.User
 import com.cirin0.worktimetracker.features.message.presentation.chatlist.ChatListViewModel
 
@@ -58,7 +60,7 @@ fun ChatListScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Повідомлення",
+                text = stringResource(R.string.chat_list_title),
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold
@@ -66,7 +68,7 @@ fun ChatListScreen(
             IconButton(onClick = { viewModel.loadUsers() }) {
                 Icon(
                     imageVector = Icons.Default.Refresh,
-                    contentDescription = "Оновити"
+                    contentDescription = stringResource(R.string.general_refresh)
                 )
             }
         }
@@ -92,13 +94,16 @@ fun ChatListScreen(
                     verticalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = "Помилка: ${state.error}",
+                        text = stringResource(
+                            R.string.general_error_with_message,
+                            state.error ?: ""
+                        ),
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodyLarge
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     OutlinedButton(onClick = { viewModel.loadUsers() }) {
-                        Text("Спробувати знову")
+                        Text(stringResource(R.string.general_retry))
                     }
                 }
             }
@@ -112,7 +117,7 @@ fun ChatListScreen(
                     verticalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = "Немає користувачів",
+                        text = stringResource(R.string.chat_list_no_users),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -166,7 +171,7 @@ fun UserListItem(
                 if (user.avatar != null) {
                     AsyncImage(
                         model = user.avatar,
-                        contentDescription = "Аватар користувача",
+                        contentDescription = stringResource(R.string.profile_user_avatar),
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize(),
                     )

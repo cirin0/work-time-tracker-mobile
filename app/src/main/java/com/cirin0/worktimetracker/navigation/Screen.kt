@@ -1,5 +1,6 @@
 package com.cirin0.worktimetracker.navigation
 
+import android.net.Uri
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
@@ -9,7 +10,7 @@ sealed class Screen(val route: String) {
     object Register : Screen("register")
 
     object VerifyEmail : Screen("verify_email/{email}") {
-        fun createRoute(email: String) = "verify_email/$email"
+        fun createRoute(email: String) = "verify_email/${Uri.encode(email)}"
     }
 
     object Main : Screen("main")

@@ -15,7 +15,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.cirin0.worktimetracker.R
 
 /**
  * Badge to show offline mode indicator
@@ -23,8 +25,10 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun OfflineBadge(
     modifier: Modifier = Modifier,
-    text: String = "Офлайн-режим"
+    text: String? = null
 ) {
+    val displayText = text ?: stringResource(R.string.offline_mode_badge)
+
     Card(
         modifier = modifier,
         colors = CardDefaults.cardColors(
@@ -37,13 +41,13 @@ fun OfflineBadge(
         ) {
             Icon(
                 imageVector = Icons.Default.CloudOff,
-                contentDescription = "Офлайн",
+                contentDescription = stringResource(R.string.general_offline),
                 modifier = Modifier.size(16.dp),
                 tint = MaterialTheme.colorScheme.onTertiaryContainer
             )
             Spacer(modifier = Modifier.width(4.dp))
             Text(
-                text = text,
+                text = displayText,
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onTertiaryContainer
             )

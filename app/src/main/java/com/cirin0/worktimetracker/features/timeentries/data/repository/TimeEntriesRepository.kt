@@ -1,5 +1,7 @@
 package com.cirin0.worktimetracker.features.timeentries.data.repository
 
+import android.content.Context
+import com.cirin0.worktimetracker.R
 import com.cirin0.worktimetracker.core.database.dao.TimeEntryDao
 import com.cirin0.worktimetracker.core.database.entity.toCachedEntity
 import com.cirin0.worktimetracker.core.database.entity.toTimeEntry
@@ -10,13 +12,15 @@ import com.cirin0.worktimetracker.features.timeentries.data.model.PaginatedTimeE
 import com.cirin0.worktimetracker.features.timeentries.data.model.StopTimeEntryRequest
 import com.cirin0.worktimetracker.features.timeentries.data.model.TimeEntry
 import com.cirin0.worktimetracker.features.timeentries.data.model.TimeEntryRequest
+import dagger.hilt.android.qualifiers.ApplicationContext
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 
 @Singleton
 class TimeEntriesRepository @Inject constructor(
     private val api: TimeEntriesApi,
-    private val timeEntryDao: TimeEntryDao
+    private val timeEntryDao: TimeEntryDao,
+    @param:ApplicationContext private val context: Context
 ) {
     suspend fun startTimeEntry(
         startComment: String?,
@@ -33,7 +37,8 @@ class TimeEntriesRepository @Inject constructor(
                     qrCode = qrCode
                 )
             )
-            val entry = response.data ?: throw Exception("Failed to start time entry")
+            val entry = response.data
+                ?: throw Exception(context.getString(R.string.time_entries_error_start_failed))
             timeEntryDao.cacheTimeEntry(entry.toCachedEntity())
             entry
         }
@@ -53,7 +58,7 @@ class TimeEntriesRepository @Inject constructor(
             if (cachedEntry != null) {
                 ApiResponse.Success(cachedEntry.toTimeEntry())
             } else {
-                ApiResponse.Error(e.message ?: "Unknown error")
+                ApiResponse.Error(e.message ?: context.getString(R.string.general_unknown_error))
             }
         }
     }
@@ -61,7 +66,8 @@ class TimeEntriesRepository @Inject constructor(
     suspend fun stopTimeEntry(stopComment: String?, pinCode: String): ApiResponse<TimeEntry> {
         return apiCall {
             val response = api.stopTimeEntry(StopTimeEntryRequest(stopComment, pinCode))
-            val entry = response.data ?: throw Exception("Failed to stop time entry")
+            val entry = response.data
+                ?: throw Exception(context.getString(R.string.time_entries_error_stop_failed))
             timeEntryDao.cacheTimeEntry(entry.toCachedEntity())
             entry
         }
@@ -90,10 +96,12 @@ class TimeEntriesRepository @Inject constructor(
                         )
                     )
                 } else {
-                    ApiResponse.Error(e.message ?: "Unknown error")
+                    ApiResponse.Error(
+                        e.message ?: context.getString(R.string.general_unknown_error)
+                    )
                 }
             } else {
-                ApiResponse.Error(e.message ?: "Unknown error")
+                ApiResponse.Error(e.message ?: context.getString(R.string.general_unknown_error))
             }
         }
     }
@@ -102,7 +110,8 @@ class TimeEntriesRepository @Inject constructor(
         return try {
             apiCall {
                 val response = api.getTimeEntryById(id)
-                val entry = response.data ?: throw Exception("Time entry not found")
+                val entry = response.data
+                    ?: throw Exception(context.getString(R.string.time_entries_error_not_found))
                 timeEntryDao.cacheTimeEntry(entry.toCachedEntity())
                 entry
             }
@@ -111,7 +120,7 @@ class TimeEntriesRepository @Inject constructor(
             if (cachedEntry != null) {
                 ApiResponse.Success(cachedEntry.toTimeEntry())
             } else {
-                ApiResponse.Error(e.message ?: "Unknown error")
+                ApiResponse.Error(e.message ?: context.getString(R.string.general_unknown_error))
             }
         }
     }
