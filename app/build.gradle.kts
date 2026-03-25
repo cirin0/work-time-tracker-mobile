@@ -13,6 +13,17 @@ val resolvedVersionCode =
 val resolvedVersionName =
     (project.findProperty("ciVersionName") as String?) ?: defaultVersionName
 
+fun resolveSigningValue(propertyName: String): String? {
+    return (project.findProperty(propertyName) as String?)
+        ?.takeIf { it.isNotBlank() }
+        ?: System.getenv(propertyName)?.takeIf { it.isNotBlank() }
+}
+
+val releaseStoreFile = resolveSigningValue("RELEASE_STORE_FILE")
+val releaseStorePassword = resolveSigningValue("RELEASE_STORE_PASSWORD")
+val releaseKeyAlias = resolveSigningValue("RELEASE_KEY_ALIAS")
+val releaseKeyPassword = resolveSigningValue("RELEASE_KEY_PASSWORD")
+
 android {
     namespace = "com.cirin0.worktimetracker"
     compileSdk {
@@ -29,9 +40,26 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (
+            releaseStoreFile != null &&
+            releaseStorePassword != null &&
+            releaseKeyAlias != null &&
+            releaseKeyPassword != null
+        ) {
+            create("release") {
+                storeFile = file(releaseStoreFile)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.findByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
