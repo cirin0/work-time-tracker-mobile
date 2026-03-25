@@ -7,7 +7,7 @@ import androidx.core.content.FileProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.flowOn
 import java.io.File
 import java.io.FileOutputStream
 import java.net.HttpURLConnection
@@ -15,51 +15,46 @@ import java.net.URL
 
 class AppUpdateManager(private val context: Context) {
 
-    /**
-     * Скачує APK файл і повертає прогрес скачування
-     * @param downloadUrl URL для скачування APK
-     * @return Flow з прогресом (0-100)
-     */
     fun downloadApk(downloadUrl: String): Flow<UpdateProgress> = flow {
-        withContext(Dispatchers.IO) {
-            try {
-                emit(UpdateProgress.Loading(0))
+        try {
+            emit(UpdateProgress.Loading(0))
 
-                val apkFile = getApkFile()
-                val url = URL(downloadUrl)
-                val connection = url.openConnection() as HttpURLConnection
+            val apkFile = getApkFile()
+            val url = URL(downloadUrl)
+            val connection = url.openConnection() as HttpURLConnection
+
+            try {
                 connection.requestMethod = "GET"
                 connection.connect()
 
                 val fileLength = connection.contentLength
-                val input = connection.inputStream
-                val output = FileOutputStream(apkFile)
+                connection.inputStream.use { input ->
+                    FileOutputStream(apkFile).use { output ->
+                        val buffer = ByteArray(1024 * 10)
+                        var count: Int
+                        var downloaded: Long = 0
 
-                val buffer = ByteArray(1024 * 10)
-                var count: Int
-                var downloaded: Long = 0
+                        while (input.read(buffer).also { count = it } != -1) {
+                            output.write(buffer, 0, count)
+                            downloaded += count
 
-                while (input.read(buffer).also { count = it } != -1) {
-                    output.write(buffer, 0, count)
-                    downloaded += count
-                    val progress = ((downloaded * 100) / fileLength).toInt()
-                    emit(UpdateProgress.Loading(progress))
+                            if (fileLength > 0) {
+                                val progress = ((downloaded * 100) / fileLength).toInt()
+                                emit(UpdateProgress.Loading(progress))
+                            }
+                        }
+                    }
                 }
 
-                output.close()
-                input.close()
-                connection.disconnect()
-
                 emit(UpdateProgress.Success(apkFile))
-            } catch (e: Exception) {
-                emit(UpdateProgress.Error(e.message ?: "Unknown error"))
+            } finally {
+                connection.disconnect()
             }
+        } catch (e: Exception) {
+            emit(UpdateProgress.Error(e.message ?: "Unknown error"))
         }
-    }
+    }.flowOn(Dispatchers.IO)
 
-    /**
-     * Встановлює APK файл
-     */
     fun installApk(apkFile: File) {
         try {
             val uri = FileProvider.getUriForFile(
