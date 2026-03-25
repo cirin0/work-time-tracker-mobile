@@ -154,11 +154,14 @@ class AuthRepository @Inject constructor(
     }
 
     suspend fun logout(): ApiResponse<String> {
-        return apiCall {
-            val response = authApi.logout()
-            clearToken()
-            clearAllFeatureCaches()
-            response.message
+        clearToken()
+        clearAllFeatureCaches()
+
+        @Suppress("UNUSED_EXPRESSION")
+        apiCall {
+            authApi.logout()
         }
+
+        return ApiResponse.Success("Logged out successfully")
     }
 }
