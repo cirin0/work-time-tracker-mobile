@@ -37,13 +37,15 @@ jobs:
           echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
           echo "version_name=$BASE_VERSION_NAME" >> "$GITHUB_OUTPUT"
 
-      - name: Build Debug APK
+      - name: Build Debug APK (PR)
+        if: github.event_name == 'pull_request'
         run: |
           ./gradlew assembleDebug \
             -PciVersionCode=${{ steps.build_version.outputs.version_code }} \
             -PciVersionName=${{ steps.build_version.outputs.version_name }}
 
-      - name: Build Release APK
+      - name: Build Release APK (main)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           ./gradlew assembleRelease \
             -PciVersionCode=${{ steps.build_version.outputs.version_code }} \
@@ -51,6 +53,7 @@ jobs:
 
       - name: Resolve release APK path
         id: release_apk
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           RELEASE_APK_PATH=$(find app/build/outputs/apk/release -maxdepth 1 -type f -name "*.apk" | head -1)
           if [ -z "$RELEASE_APK_PATH" ]; then
@@ -61,7 +64,7 @@ jobs:
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
-        if: always()
+        if: github.event_name == 'pull_request'
         with:
           name: app-debug.apk
           path: app/build/outputs/apk/debug/app-debug.apk
@@ -69,7 +72,7 @@ jobs:
 
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
-        if: always()
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         with:
           name: app-release.apk
           path: ${{ steps.release_apk.outputs.path }}
