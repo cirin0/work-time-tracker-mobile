@@ -92,6 +92,10 @@
     <string name="settings_permission_request">Запросити</string>
     <string name="settings_open_system_settings">Системні налаштування</string>
     <string name="settings_logout">Вийти з акаунту</string>
+    <string name="settings_update_available">Доступне нове оновлення</string>
+    <string name="settings_download_update">Завантажити</string>
+    <string name="settings_update_ready">Оновлення готове до встановлення</string>
+    <string name="settings_install_update">Встановити та перезавантажити</string>
 
     <string name="home_title">Відстеження часу</string>
     <string name="home_subtitle">Керування робочим часом</string>

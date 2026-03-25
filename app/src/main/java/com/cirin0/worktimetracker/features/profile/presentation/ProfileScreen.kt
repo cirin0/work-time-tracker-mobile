@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -130,6 +131,7 @@ fun ProfileScreen(
                 showEditButton = state.user != null,
                 onRefresh = { viewModel.loadUserProfile() },
                 onChat = onNavigateToChat,
+                onSettings = onNavigateToSettings,
                 onEdit = { viewModel.openEditDialog() }
             )
 
@@ -269,29 +271,24 @@ fun ProfileScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
-                    ProfileSection(title = stringResource(R.string.profile_actions)) {
-                        ProfileRow(
-                            icon = Icons.Default.Edit,
-                            label = stringResource(R.string.profile_my_requests),
-                            value = stringResource(R.string.profile_requests_description),
-                            showArrow = true,
-                            onClick = onNavigateToRequests
-                        )
-                        RowDivider()
-                        ProfileRow(
-                            icon = Icons.AutoMirrored.Filled.Chat,
-                            label = stringResource(R.string.profile_settings),
-                            value = "",
-                            showArrow = true,
-                            onClick = onNavigateToSettings
-                        )
-                    }
-
-
-                    Spacer(modifier = Modifier.height(24.dp))
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (state.user != null) {
+                ProfileSection(title = stringResource(R.string.profile_actions)) {
+                    ProfileRow(
+                        icon = Icons.Default.Edit,
+                        label = stringResource(R.string.profile_my_requests),
+                        value = stringResource(R.string.profile_requests_description),
+                        showArrow = true,
+                        onClick = onNavigateToRequests
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
         }
 
         SnackbarHost(
@@ -351,6 +348,7 @@ private fun ProfileTopBar(
     showEditButton: Boolean,
     onRefresh: () -> Unit,
     onChat: () -> Unit,
+    onSettings: () -> Unit,
     onEdit: () -> Unit
 ) {
     Row(
@@ -378,6 +376,11 @@ private fun ProfileTopBar(
                 icon = Icons.AutoMirrored.Filled.Chat,
                 contentDescription = stringResource(R.string.profile_chat),
                 onClick = onChat
+            )
+            TopBarIconButton(
+                icon = Icons.Default.Settings,
+                contentDescription = stringResource(R.string.profile_settings),
+                onClick = onSettings
             )
             if (showEditButton) {
                 TopBarIconButton(

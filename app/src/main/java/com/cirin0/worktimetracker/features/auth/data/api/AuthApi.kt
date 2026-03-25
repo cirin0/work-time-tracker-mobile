@@ -11,11 +11,14 @@ import com.cirin0.worktimetracker.features.auth.data.model.RegisterRequest
 import com.cirin0.worktimetracker.features.auth.data.model.RegisterResponse
 import com.cirin0.worktimetracker.features.auth.data.model.ResendVerificationRequest
 import com.cirin0.worktimetracker.features.auth.data.model.ResendVerificationResponse
+import com.cirin0.worktimetracker.features.auth.data.model.UpdateCheckResponse
 import com.cirin0.worktimetracker.features.auth.data.model.VerifyEmailRequest
 import com.cirin0.worktimetracker.features.auth.data.model.VerifyEmailResponse
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.PATCH
 import retrofit2.http.POST
+import retrofit2.http.Query
 
 interface AuthApi {
 
@@ -39,4 +42,11 @@ interface AuthApi {
 
     @PATCH(Constants.ApiRoutes.FCM_TOKEN)
     suspend fun sendFcmToken(@Body request: FcmTokenRequest): FcmTokenResponse
+
+    @GET("app/update-check")
+    suspend fun checkForUpdates(
+        @Query("version_code") versionCode: Int,
+        @Query("platform") platform: String = "android",
+        @Query("channel") channel: String = "stable"
+    ): UpdateCheckResponse
 }
