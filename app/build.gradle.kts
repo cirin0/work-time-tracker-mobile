@@ -6,6 +6,13 @@ plugins {
     alias(libs.plugins.google.services)
 }
 
+val defaultVersionCode = 1
+val defaultVersionName = (project.findProperty("appVersionName") as String?) ?: "1.0.0"
+val resolvedVersionCode =
+    (project.findProperty("ciVersionCode") as String?)?.toIntOrNull() ?: defaultVersionCode
+val resolvedVersionName =
+    (project.findProperty("ciVersionName") as String?) ?: defaultVersionName
+
 android {
     namespace = "com.cirin0.worktimetracker"
     compileSdk {
@@ -16,8 +23,8 @@ android {
         applicationId = "com.cirin0.worktimetracker"
         minSdk = 31
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = resolvedVersionCode
+        versionName = resolvedVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

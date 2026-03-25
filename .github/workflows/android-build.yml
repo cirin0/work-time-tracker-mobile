@@ -26,11 +26,38 @@ jobs:
         run: |
           echo "$GOOGLE_SERVICES_JSON" > app/google-services.json
 
+      - name: Prepare build version
+        id: build_version
+        run: |
+          BASE_VERSION_NAME=$(grep -E '^appVersionName=' gradle.properties | head -1 | cut -d '=' -f2)
+          if [ -z "$BASE_VERSION_NAME" ]; then
+            BASE_VERSION_NAME="1.0.0"
+          fi
+          VERSION_CODE=$((10000 + GITHUB_RUN_NUMBER))
+          echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
+          echo "version_name=$BASE_VERSION_NAME" >> "$GITHUB_OUTPUT"
+
       - name: Build Debug APK
-        run: ./gradlew assembleDebug
+        run: |
+          ./gradlew assembleDebug \
+            -PciVersionCode=${{ steps.build_version.outputs.version_code }} \
+            -PciVersionName=${{ steps.build_version.outputs.version_name }}
 
       - name: Build Release APK
-        run: ./gradlew assembleRelease
+        run: |
+          ./gradlew assembleRelease \
+            -PciVersionCode=${{ steps.build_version.outputs.version_code }} \
+            -PciVersionName=${{ steps.build_version.outputs.version_name }}
+
+      - name: Resolve release APK path
+        id: release_apk
+        run: |
+          RELEASE_APK_PATH=$(find app/build/outputs/apk/release -maxdepth 1 -type f -name "*.apk" | head -1)
+          if [ -z "$RELEASE_APK_PATH" ]; then
+            echo "No release APK found in app/build/outputs/apk/release"
+            exit 1
+          fi
+          echo "path=$RELEASE_APK_PATH" >> "$GITHUB_OUTPUT"
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
@@ -45,25 +72,17 @@ jobs:
         if: always()
         with:
           name: app-release.apk
-          path: app/build/outputs/apk/release/app-release.apk
+          path: ${{ steps.release_apk.outputs.path }}
           retention-days: 30
-
-      - name: Extract app version metadata
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        id: app_version
-        run: |
-          VERSION_CODE=$(grep -E '^[[:space:]]*versionCode[[:space:]]*=' app/build.gradle.kts | head -1 | sed -E 's/.*=[[:space:]]*([0-9]+).*/\1/')
-          VERSION_NAME=$(grep -E '^[[:space:]]*versionName[[:space:]]*=' app/build.gradle.kts | head -1 | sed -E 's/.*=[[:space:]]*"([^"]+)".*/\1/')
-          echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
-          echo "version_name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
 
       - name: Upload Release APK to backend
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           RELEASE_UPLOAD_URL: ${{ secrets.RELEASE_UPLOAD_URL }}
           RELEASE_UPLOAD_TOKEN: ${{ secrets.RELEASE_UPLOAD_TOKEN }}
-          VERSION_CODE: ${{ steps.app_version.outputs.version_code }}
-          VERSION_NAME: ${{ steps.app_version.outputs.version_name }}
+          VERSION_CODE: ${{ steps.build_version.outputs.version_code }}
+          VERSION_NAME: ${{ steps.build_version.outputs.version_name }}
+          RELEASE_APK_PATH: ${{ steps.release_apk.outputs.path }}
         run: |
           curl --fail --show-error --location \
             -X POST "$RELEASE_UPLOAD_URL" \
@@ -73,5 +92,5 @@ jobs:
             -F "version_code=$VERSION_CODE" \
             -F "version_name=$VERSION_NAME" \
             -F "changelog=Automated build from commit $GITHUB_SHA" \
-            -F "apk=@app/build/outputs/apk/release/app-release.apk"
+            -F "apk=@$RELEASE_APK_PATH"
 
