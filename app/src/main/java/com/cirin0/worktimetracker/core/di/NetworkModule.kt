@@ -28,7 +28,7 @@ object NetworkModule {
     @Provides
     @Singleton
     @Named("active_domain")
-    fun provideActiveDomain(): String = LOCAL_DOMAIN
+    fun provideActiveDomain(): String = REMOTE_DOMAIN
 
     @Provides
     @Singleton

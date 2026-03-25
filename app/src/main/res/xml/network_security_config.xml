@@ -2,7 +2,9 @@
 <network-security-config>
     <!-- Production domain with HTTPS only -->
     <domain-config cleartextTrafficPermitted="false">
-        <domain includeSubdomains="true">worktimetrack.dev</domain>
+        <domain includeSubdomains="true">
+            work-time-tracker-api-cpdeb7e7b9axazd0.swedencentral-01.azurewebsites.net
+        </domain>
         <trust-anchors>
             <certificates src="system" />
         </trust-anchors>

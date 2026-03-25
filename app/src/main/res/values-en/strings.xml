@@ -92,6 +92,10 @@
     <string name="settings_permission_request">Request</string>
     <string name="settings_open_system_settings">System settings</string>
     <string name="settings_logout">Log out</string>
+    <string name="settings_update_available">New update available</string>
+    <string name="settings_download_update">Download</string>
+    <string name="settings_update_ready">Update ready to install</string>
+    <string name="settings_install_update">Install and restart</string>
 
     <string name="home_title">Time Tracking</string>
     <string name="home_subtitle">Manage your work time</string>

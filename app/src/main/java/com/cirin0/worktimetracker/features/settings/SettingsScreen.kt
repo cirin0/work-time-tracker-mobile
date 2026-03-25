@@ -66,8 +66,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.cirin0.worktimetracker.BuildConfig
 import com.cirin0.worktimetracker.R
 import com.cirin0.worktimetracker.core.localization.AppLocaleManager
 
@@ -75,6 +77,7 @@ import com.cirin0.worktimetracker.core.localization.AppLocaleManager
 fun SettingsScreen(
     themeViewModel: ThemeViewModel = hiltViewModel(),
     settingsViewModel: SettingsViewModel = hiltViewModel(),
+    updateCheckViewModel: UpdateCheckViewModel = hiltViewModel(),
     onNavigateBack: () -> Boolean,
     onLogoutSuccess: () -> Unit = {}
 ) {
@@ -82,6 +85,7 @@ fun SettingsScreen(
     val useDarkTheme by themeViewModel.userThemePreference.collectAsState()
     val settingsState by settingsViewModel.state.collectAsState()
     val logoutState by settingsViewModel.logoutState.collectAsState()
+    val updateState by updateCheckViewModel.state.collectAsState()
     val themeOptions = linkedMapOf(
         null to stringResource(R.string.settings_theme_system),
         false to stringResource(R.string.settings_theme_light),
@@ -91,6 +95,11 @@ fun SettingsScreen(
         AppLocaleManager.DEFAULT_LANGUAGE to stringResource(R.string.settings_language_ukrainian),
         AppLocaleManager.ENGLISH_LANGUAGE to stringResource(R.string.settings_language_english)
     )
+    val appVersionText = "v${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})"
+
+    LaunchedEffect(Unit) {
+        updateCheckViewModel.checkForUpdates()
+    }
 
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -276,6 +285,139 @@ fun SettingsScreen(
                     )
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // App Update Section
+            if (updateState.updateAvailable && !updateState.isUpdateReady) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = stringResource(R.string.settings_update_available),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                                Text(
+                                    text = updateState.versionName,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                )
+                            }
+                        }
+
+                        if (!updateState.changelog.isNullOrEmpty()) {
+                            Text(
+                                text = updateState.changelog ?: "",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+
+                        if (updateState.isDownloading) {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "${updateState.downloadProgress}%",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                    CircularProgressIndicator(
+                                        progress = { updateState.downloadProgress / 100f },
+                                        modifier = Modifier.size(20.dp),
+                                        color = MaterialTheme.colorScheme.primary,
+                                        strokeWidth = 2.dp
+                                    )
+                                }
+                            }
+                        } else {
+                            Button(
+                                onClick = { updateCheckViewModel.downloadUpdate(updateState.downloadUrl) },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary
+                                )
+                            ) {
+                                Text(stringResource(R.string.settings_download_update))
+                            }
+                        }
+                    }
+                }
+            } else if (updateState.isUpdateReady) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.settings_update_ready),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                        Button(
+                            onClick = { updateCheckViewModel.installUpdate() },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.tertiary
+                            )
+                        ) {
+                            Text(stringResource(R.string.settings_install_update))
+                        }
+                    }
+                }
+            }
+
+            if (updateState.error != null) {
+                Text(
+                    text = updateState.error ?: "Unknown error",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = appVersionText,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp)
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
         }
