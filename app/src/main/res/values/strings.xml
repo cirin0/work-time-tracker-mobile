@@ -186,7 +186,7 @@
     <string name="timesheet_this_month">Цього місяця</string>
     <string name="timesheet_period_summary">%1$d днів • %2$d сп. • %3$d вх.</string>
 
-    <string name="work_schedule_no_schedule">Графік роботи не призначено</string>
+    <string name="work_schedule_no_schedule">Графік роботи ще не призначено вашим менеджером</string>
     <string name="work_schedule_title">Графік роботи</string>
     <string name="work_schedule_subtitle">Ваш робочий розклад</string>
     <string name="work_schedule_section">Графік</string>

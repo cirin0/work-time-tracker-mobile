@@ -59,7 +59,7 @@ class AppUpdateManager(private val context: Context) {
         try {
             val uri = FileProvider.getUriForFile(
                 context,
-                "com.cirin0.worktimetracker.provider",
+                "${context.packageName}.provider",
                 apkFile
             )
 
@@ -86,5 +86,3 @@ sealed class UpdateProgress {
     data class Success(val apkFile: File) : UpdateProgress()
     data class Error(val message: String) : UpdateProgress()
 }
-
-
