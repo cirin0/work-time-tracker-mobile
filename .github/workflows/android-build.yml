@@ -3,8 +3,6 @@ name: Build Android APK
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 jobs:
   build:
@@ -58,13 +56,6 @@ jobs:
           echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
           echo "version_name=$BASE_VERSION_NAME" >> "$GITHUB_OUTPUT"
 
-      - name: Build Debug APK (PR)
-        if: github.event_name == 'pull_request'
-        run: |
-          ./gradlew assembleDebug \
-            -PciVersionCode=${{ steps.build_version.outputs.version_code }} \
-            -PciVersionName=${{ steps.build_version.outputs.version_name }}
-
       - name: Build Release APK (main)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
@@ -94,13 +85,6 @@ jobs:
 
           echo "path=$SIGNED_APK_PATH" >> "$GITHUB_OUTPUT"
 
-      - name: Upload Debug APK
-        uses: actions/upload-artifact@v4
-        if: github.event_name == 'pull_request'
-        with:
-          name: app-debug.apk
-          path: app/build/outputs/apk/debug/app-debug.apk
-          retention-days: 30
 
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
@@ -110,6 +94,19 @@ jobs:
           path: ${{ steps.release_apk.outputs.path }}
           retention-days: 30
 
+      - name: Prepare release changelog
+        id: release_changelog
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
+          COMMIT_TITLE="$(printf '%s' "$COMMIT_MESSAGE" | head -n 1 | xargs)"
+
+          if [ -z "$COMMIT_TITLE" ]; then
+            COMMIT_TITLE="$(git log -1 --pretty=%s | xargs)"
+          fi
+
+          echo "value=$COMMIT_TITLE" >> "$GITHUB_OUTPUT"
+
       - name: Upload Release APK to backend
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
@@ -118,6 +115,7 @@ jobs:
           VERSION_CODE: ${{ steps.build_version.outputs.version_code }}
           VERSION_NAME: ${{ steps.build_version.outputs.version_name }}
           RELEASE_APK_PATH: ${{ steps.release_apk.outputs.path }}
+          RELEASE_CHANGELOG: ${{ steps.release_changelog.outputs.value }}
         run: |
           curl --fail --show-error --location \
             -X POST "$RELEASE_UPLOAD_URL" \
@@ -126,6 +124,6 @@ jobs:
             -F "channel=stable" \
             -F "version_code=$VERSION_CODE" \
             -F "version_name=$VERSION_NAME" \
-            -F "changelog=Automated build from commit $GITHUB_SHA" \
+            -F "changelog=$RELEASE_CHANGELOG" \
             -F "apk=@$RELEASE_APK_PATH"
 
