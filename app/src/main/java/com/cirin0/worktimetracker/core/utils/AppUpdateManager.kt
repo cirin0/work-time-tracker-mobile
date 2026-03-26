@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Environment
 import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -15,12 +16,19 @@ import java.net.URL
 
 class AppUpdateManager(private val context: Context) {
 
+    private val forceHttpsHosts = setOf(
+        "work-time-tracker-api-cpdeb7e7b9axazd0.swedencentral-01.azurewebsites.net"
+    )
+
+    private val allowedHttpHosts = setOf("localhost", "10.0.2.2", "192.168.0.52")
+
     fun downloadApk(downloadUrl: String): Flow<UpdateProgress> = flow {
         try {
             emit(UpdateProgress.Loading(0))
 
             val apkFile = getApkFile()
-            val url = URL(downloadUrl)
+            val normalizedDownloadUrl = normalizeDownloadUrl(downloadUrl)
+            val url = URL(normalizedDownloadUrl)
             val connection = url.openConnection() as HttpURLConnection
 
             try {
@@ -78,6 +86,26 @@ class AppUpdateManager(private val context: Context) {
         val downloadsDir = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
             ?: throw Exception("Cannot access downloads directory")
         return File(downloadsDir, "app-update.apk")
+    }
+
+    private fun normalizeDownloadUrl(downloadUrl: String): String {
+        val parsed = downloadUrl.trim().toUri()
+        val host = parsed.host?.lowercase()
+        val scheme = parsed.scheme?.lowercase()
+
+        if (scheme == "https") {
+            return parsed.toString()
+        }
+
+        if (scheme == "http" && host in forceHttpsHosts) {
+            return parsed.buildUpon().scheme("https").build().toString()
+        }
+
+        if (scheme == "http" && host in allowedHttpHosts) {
+            return parsed.toString()
+        }
+
+        throw IllegalArgumentException("Invalid update URL. HTTPS is required.")
     }
 }
 
