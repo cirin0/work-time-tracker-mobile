@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MarkEmailRead
@@ -135,7 +136,8 @@ fun VerifyEmailScreen(
         Button(
             onClick = viewModel::verifyEmail,
             modifier = Modifier.fillMaxWidth(),
-            enabled = !state.isLoading && state.code.length == 6
+            enabled = !state.isLoading && state.code.length == 6,
+            shape = RoundedCornerShape(12.dp)
         ) {
             if (state.isLoading) {
                 CircularProgressIndicator(

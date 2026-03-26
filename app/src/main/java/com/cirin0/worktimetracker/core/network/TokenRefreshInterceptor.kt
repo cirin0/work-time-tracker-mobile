@@ -18,6 +18,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -26,8 +27,13 @@ class TokenRefreshInterceptor @Inject constructor(
     private val dataStore: DataStore<Preferences>,
     @param:Named("active_domain") private val domain: String
 ) : Interceptor {
+    private class RefreshRetriedTag
+
     companion object {
+        private const val AUTHORIZATION_HEADER = "Authorization"
+        private const val BEARER_PREFIX = "Bearer "
         private val TOKEN_KEY = stringPreferencesKey("auth_token")
+        private val JSON_MEDIA_TYPE = "application/json".toMediaType()
     }
 
     private val refreshMutex = Mutex()
@@ -36,25 +42,56 @@ class TokenRefreshInterceptor @Inject constructor(
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
         val response = chain.proceed(request)
+        if (!shouldAttemptRefresh(response, request.url.encodedPath)) {
+            return response
+        }
 
-        if (response.code == 401 && !isAuthEndpoint(request.url.encodedPath)) {
+        if (request.tag(RefreshRetriedTag::class.java) != null) {
+            return response
+        }
+
+        val newToken = runBlocking {
+            resolveTokenToUseOrRefresh(extractBearerToken(request))
+        }
+
+        if (newToken != null) {
             response.close()
-
-            val newToken = runBlocking {
-                refreshMutex.withLock {
-                    refreshToken()
-                }
-            }
-
-            if (newToken != null) {
-                val newRequest = request.newBuilder()
-                    .header("Authorization", "Bearer $newToken")
-                    .build()
-                return chain.proceed(newRequest)
-            }
+            return chain.proceed(rebuildRequestWithToken(request, newToken))
         }
 
         return response
+    }
+
+    private suspend fun resolveTokenToUseOrRefresh(requestToken: String?): String? {
+        return refreshMutex.withLock {
+            val latestToken = getStoredToken()
+
+            if (!latestToken.isNullOrBlank() && latestToken != requestToken) {
+                latestToken
+            } else {
+                refreshToken(latestToken ?: requestToken)
+            }
+        }
+    }
+
+    private fun rebuildRequestWithToken(request: Request, token: String): Request {
+        return request.newBuilder()
+            .header(AUTHORIZATION_HEADER, "$BEARER_PREFIX$token")
+            .tag(RefreshRetriedTag::class.java, RefreshRetriedTag())
+            .build()
+    }
+
+    private fun extractBearerToken(request: Request): String? {
+        val authorization = request.header(AUTHORIZATION_HEADER) ?: return null
+        if (!authorization.startsWith(BEARER_PREFIX, ignoreCase = true)) return null
+
+        val token = authorization.substringAfter(BEARER_PREFIX).trim()
+        return token.ifBlank { null }
+    }
+
+    private fun shouldAttemptRefresh(response: Response, path: String): Boolean {
+        if (isAuthEndpoint(path)) return false
+        return response.code == 401
     }
 
     private fun isAuthEndpoint(path: String): Boolean {
@@ -63,40 +100,59 @@ class TokenRefreshInterceptor @Inject constructor(
                 path.contains("/auth/refresh")
     }
 
-    private suspend fun refreshToken(): String? {
+    private suspend fun refreshToken(currentToken: String?): String? {
         return try {
-            val currentToken = dataStore.data.first()[TOKEN_KEY] ?: return null
-
-            val client = OkHttpClient.Builder().build()
-
-            val request = Request.Builder()
-                .url("$domain/api/${Constants.ApiRoutes.REFRESH}")
-                .post("".toRequestBody("application/json".toMediaType()))
-                .addHeader("Authorization", "Bearer $currentToken")
+            val client = OkHttpClient.Builder()
+                .connectTimeout(10, TimeUnit.SECONDS)
+                .readTimeout(30, TimeUnit.SECONDS)
                 .build()
+
+            val requestBuilder = Request.Builder()
+                .url("$domain/api/${Constants.ApiRoutes.REFRESH}")
+                .post("".toRequestBody(JSON_MEDIA_TYPE))
+                .header("Accept", "application/json")
+
+            currentToken?.let { requestBuilder.header(AUTHORIZATION_HEADER, "$BEARER_PREFIX$it") }
+
+            val request = requestBuilder.build()
 
             val response = client.newCall(request).execute()
 
-            if (response.isSuccessful) {
-                val body = response.body.string()
-                val refreshResponse = gson.fromJson(body, RefreshResponse::class.java)
+            response.use { refreshResponseHttp ->
+                if (refreshResponseHttp.isSuccessful) {
+                    val body = refreshResponseHttp.body.string()
+                    val refreshResponse = gson.fromJson(body, RefreshResponse::class.java)
 
-                dataStore.edit { prefs ->
-                    prefs[TOKEN_KEY] = refreshResponse.accessToken
-                }
+                    val accessToken = refreshResponse?.accessToken
+                    if (accessToken.isNullOrBlank()) {
+                        return@use null
+                    }
 
-                refreshResponse.accessToken
-            } else {
-                dataStore.edit { prefs ->
-                    prefs.remove(TOKEN_KEY)
+                    saveToken(accessToken)
+
+                    accessToken
+                } else {
+                    clearToken()
+                    null
                 }
-                null
             }
-        } catch (e: Exception) {
-            dataStore.edit { prefs ->
-                prefs.remove(TOKEN_KEY)
-            }
+        } catch (_: Exception) {
+            clearToken()
             null
+        }
+    }
+
+    private suspend fun getStoredToken(): String? = dataStore.data.first()[TOKEN_KEY]
+
+    private suspend fun saveToken(token: String) {
+        dataStore.edit { prefs ->
+            prefs[TOKEN_KEY] = token
+        }
+    }
+
+    private suspend fun clearToken() {
+        dataStore.edit { prefs ->
+            prefs.remove(TOKEN_KEY)
         }
     }
 }

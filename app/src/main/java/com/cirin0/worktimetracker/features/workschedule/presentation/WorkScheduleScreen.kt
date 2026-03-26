@@ -32,7 +32,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -86,39 +85,17 @@ fun ScheduleScreen(
                 }
 
                 state.error != null -> {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(300.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Text(
-                            text = state.error!!,
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        OutlinedButton(onClick = { viewModel.loadSchedules() }) {
-                            Text(stringResource(R.string.general_retry))
-                        }
-                    }
+                    EmptyScheduleState(
+                        message = state.error!!,
+                        isError = true
+                    )
                 }
 
                 state.schedule == null -> {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 48.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Spacer(modifier = Modifier.height(24.dp))
-                        Text(
-                            text = stringResource(R.string.work_schedule_no_schedule),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                    EmptyScheduleState(
+                        message = stringResource(R.string.work_schedule_no_schedule),
+                        isError = false
+                    )
                 }
 
                 else -> {
@@ -126,6 +103,74 @@ fun ScheduleScreen(
                     WorkScheduleContent(state.schedule!!)
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun EmptyScheduleState(
+    message: String,
+    isError: Boolean
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 32.dp),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isError) {
+                MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+            } else {
+                MaterialTheme.colorScheme.surfaceContainerLow
+            }
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Surface(
+                modifier = Modifier.size(72.dp),
+                shape = CircleShape,
+                color = if (isError) {
+                    MaterialTheme.colorScheme.errorContainer
+                } else {
+                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                }
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CalendarMonth,
+                        contentDescription = null,
+                        tint = if (isError) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            MaterialTheme.colorScheme.primary
+                        },
+                        modifier = Modifier.size(36.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyLarge,
+                color = if (isError) {
+                    MaterialTheme.colorScheme.error
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+                fontWeight = FontWeight.Medium
+            )
         }
     }
 }

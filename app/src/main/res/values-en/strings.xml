@@ -186,7 +186,7 @@
     <string name="timesheet_this_month">This month</string>
     <string name="timesheet_period_summary">%1$d days • %2$d late • %3$d early</string>
 
-    <string name="work_schedule_no_schedule">No work schedule assigned</string>
+    <string name="work_schedule_no_schedule">No work schedule assigned by your manager yet</string>
     <string name="work_schedule_title">Work schedule</string>
     <string name="work_schedule_subtitle">Your work timetable</string>
     <string name="work_schedule_section">Schedule</string>

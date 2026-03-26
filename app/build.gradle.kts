@@ -57,6 +57,11 @@ android {
     }
 
     buildTypes {
+        debug {
+            applicationIdSuffix = ".dev"
+            versionNameSuffix = "-dev"
+            resValue("string", "app_name", "Work Time Tracker Dev")
+        }
         release {
             isMinifyEnabled = false
             signingConfig = signingConfigs.findByName("release")
@@ -79,6 +84,7 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+        resValues = true
     }
 }
 
