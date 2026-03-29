@@ -12,15 +12,18 @@ import com.cirin0.worktimetracker.features.timeentries.data.model.PaginatedTimeE
 import com.cirin0.worktimetracker.features.timeentries.data.model.StopTimeEntryRequest
 import com.cirin0.worktimetracker.features.timeentries.data.model.TimeEntry
 import com.cirin0.worktimetracker.features.timeentries.data.model.TimeEntryRequest
+import com.cirin0.worktimetracker.features.timeentries.data.model.withNormalizedPaginationUrls
 import dagger.hilt.android.qualifiers.ApplicationContext
 import jakarta.inject.Inject
+import jakarta.inject.Named
 import jakarta.inject.Singleton
 
 @Singleton
 class TimeEntriesRepository @Inject constructor(
     private val api: TimeEntriesApi,
     private val timeEntryDao: TimeEntryDao,
-    @param:ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context,
+    @param:Named("active_domain") private val activeDomain: String
 ) {
     suspend fun startTimeEntry(
         startComment: String?,
@@ -76,7 +79,8 @@ class TimeEntriesRepository @Inject constructor(
     suspend fun getTimeEntries(page: Int = 1, perPage: Int = 5): ApiResponse<PaginatedTimeEntries> {
         return try {
             apiCall {
-                val response = api.getTimeEntries(page, perPage)
+                val response =
+                    api.getTimeEntries(page, perPage).withNormalizedPaginationUrls(activeDomain)
                 val entries = response.data
                 if (page == 1) {
                     timeEntryDao.cacheTimeEntries(entries.map { it.toCachedEntity() })

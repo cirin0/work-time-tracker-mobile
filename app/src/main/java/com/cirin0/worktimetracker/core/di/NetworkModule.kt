@@ -40,6 +40,24 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    @Named("no_auth_client")
+    fun provideNoAuthOkHttpClient(
+        contentTypeInterceptor: ContentTypeInterceptor,
+        loggingInterceptor: HttpLoggingInterceptor
+    ): OkHttpClient {
+        return OkHttpClient.Builder().apply {
+            addInterceptor(contentTypeInterceptor)
+            addInterceptor(loggingInterceptor)
+
+            connectTimeout(10, TimeUnit.SECONDS)
+            readTimeout(30, TimeUnit.SECONDS)
+            writeTimeout(30, TimeUnit.SECONDS)
+            retryOnConnectionFailure(true)
+        }.build()
+    }
+
+    @Provides
+    @Singleton
     fun provideOkHttpClient(
         authInterceptor: AuthInterceptor,
         contentTypeInterceptor: ContentTypeInterceptor,
