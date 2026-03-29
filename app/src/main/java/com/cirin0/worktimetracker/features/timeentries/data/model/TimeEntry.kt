@@ -1,5 +1,6 @@
 package com.cirin0.worktimetracker.features.timeentries.data.model
 
+import com.cirin0.worktimetracker.core.utils.UrlNormalizer
 import com.google.gson.annotations.SerializedName
 
 data class TimeEntry(
@@ -130,3 +131,31 @@ data class TimeEntryUser(
     @SerializedName("email")
     val email: String
 )
+
+fun TimeEntriesListResponse.withNormalizedPaginationUrls(activeDomain: String): TimeEntriesListResponse {
+    return copy(
+        links = links?.withNormalizedUrls(activeDomain),
+        meta = meta?.withNormalizedUrls(activeDomain)
+    )
+}
+
+private fun PaginationLinks.withNormalizedUrls(activeDomain: String): PaginationLinks {
+    return copy(
+        first = UrlNormalizer.normalizeRemoteHttpToHttps(first, activeDomain),
+        last = UrlNormalizer.normalizeRemoteHttpToHttps(last, activeDomain),
+        prev = UrlNormalizer.normalizeRemoteHttpToHttps(prev, activeDomain),
+        next = UrlNormalizer.normalizeRemoteHttpToHttps(next, activeDomain)
+    )
+}
+
+private fun PaginationMeta.withNormalizedUrls(activeDomain: String): PaginationMeta {
+    return copy(
+        path = UrlNormalizer.normalizeRemoteHttpToHttps(path, activeDomain) ?: path,
+        links = links.map { it.withNormalizedUrls(activeDomain) }
+    )
+}
+
+private fun PaginationLink.withNormalizedUrls(activeDomain: String): PaginationLink {
+    return copy(url = UrlNormalizer.normalizeRemoteHttpToHttps(url, activeDomain))
+}
+

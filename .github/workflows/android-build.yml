@@ -102,7 +102,7 @@ jobs:
           COMMIT_TITLE="$(printf '%s' "$COMMIT_MESSAGE" | head -n 1 | xargs)"
 
           if [ -z "$COMMIT_TITLE" ]; then
-            COMMIT_TITLE="$(git log -1 --pretty=%s | xargs)"
+            COMMIT_TITLE="$(git log -2 --pretty=%s | xargs)"
           fi
 
           echo "value=$COMMIT_TITLE" >> "$GITHUB_OUTPUT"

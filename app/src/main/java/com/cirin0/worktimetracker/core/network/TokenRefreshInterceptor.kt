@@ -18,14 +18,14 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class TokenRefreshInterceptor @Inject constructor(
     private val dataStore: DataStore<Preferences>,
-    @param:Named("active_domain") private val domain: String
+    @param:Named("active_domain") private val domain: String,
+    @param:Named("no_auth_client") private val noAuthClient: OkHttpClient
 ) : Interceptor {
     private class RefreshRetriedTag
 
@@ -102,21 +102,17 @@ class TokenRefreshInterceptor @Inject constructor(
 
     private suspend fun refreshToken(currentToken: String?): String? {
         return try {
-            val client = OkHttpClient.Builder()
-                .connectTimeout(10, TimeUnit.SECONDS)
-                .readTimeout(30, TimeUnit.SECONDS)
-                .build()
-
             val requestBuilder = Request.Builder()
                 .url("$domain/api/${Constants.ApiRoutes.REFRESH}")
                 .post("".toRequestBody(JSON_MEDIA_TYPE))
                 .header("Accept", "application/json")
+                .header("X-Requested-With", "XMLHttpRequest")
 
             currentToken?.let { requestBuilder.header(AUTHORIZATION_HEADER, "$BEARER_PREFIX$it") }
 
             val request = requestBuilder.build()
 
-            val response = client.newCall(request).execute()
+            val response = noAuthClient.newCall(request).execute()
 
             response.use { refreshResponseHttp ->
                 if (refreshResponseHttp.isSuccessful) {
@@ -132,12 +128,13 @@ class TokenRefreshInterceptor @Inject constructor(
 
                     accessToken
                 } else {
-                    clearToken()
+                    if (refreshResponseHttp.code == 401 || refreshResponseHttp.code == 403) {
+                        clearToken()
+                    }
                     null
                 }
             }
         } catch (_: Exception) {
-            clearToken()
             null
         }
     }

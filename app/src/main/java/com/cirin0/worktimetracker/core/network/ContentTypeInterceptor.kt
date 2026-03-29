@@ -9,16 +9,18 @@ import javax.inject.Singleton
 class ContentTypeInterceptor @Inject constructor() : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val originalRequest = chain.request()
+        val method = originalRequest.method
 
-        // For PATCH requests, ensure proper headers
-        val request = if (originalRequest.method == "PATCH") {
+        val request = if (method == "PATCH") {
             originalRequest.newBuilder()
                 .header("Accept", "application/json")
                 .removeHeader("Content-Type") // Remove auto-generated Content-Type
                 .header("Content-Type", "application/json") // Add clean Content-Type
                 .build()
         } else {
-            originalRequest
+            originalRequest.newBuilder()
+                .header("Accept", "application/json")
+                .build()
         }
 
         return chain.proceed(request)
