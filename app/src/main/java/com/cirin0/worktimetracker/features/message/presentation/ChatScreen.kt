@@ -7,12 +7,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -45,7 +44,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -67,9 +65,6 @@ fun ChatScreen(
     val state by viewModel.state.collectAsState()
     val listState = rememberLazyListState()
 
-    val imeInsets = WindowInsets.ime
-    val imeBottom = with(LocalDensity.current) { imeInsets.getBottom(this) }
-
     LaunchedEffect(receiverId) {
         viewModel.initChat(receiverId)
     }
@@ -82,13 +77,6 @@ fun ChatScreen(
 
     LaunchedEffect(state.messages.size) {
         if (state.messages.isNotEmpty()) {
-            listState.animateScrollToItem(state.messages.size - 1)
-        }
-    }
-
-    // Auto-scroll when keyboard opens/closes
-    LaunchedEffect(imeBottom) {
-        if (state.messages.isNotEmpty() && imeBottom > 0) {
             listState.animateScrollToItem(state.messages.size - 1)
         }
     }
@@ -173,7 +161,7 @@ fun ChatScreen(
                             start = 8.dp,
                             end = 8.dp,
                             top = 8.dp,
-                            bottom = with(LocalDensity.current) { imeBottom.toDp() }
+                            bottom = 8.dp
                         )
                     ) {
                         items(state.messages) { message ->
@@ -189,6 +177,7 @@ fun ChatScreen(
 
         // Fixed bottom input
         MessageInput(
+            modifier = Modifier.imePadding(),
             messageText = state.messageText,
             onMessageTextChange = viewModel::onMessageTextChange,
             onSendMessage = viewModel::sendMessage,
@@ -313,6 +302,7 @@ fun MessageBubble(
 
 @Composable
 fun MessageInput(
+    modifier: Modifier = Modifier,
     messageText: String,
     onMessageTextChange: (String) -> Unit,
     onSendMessage: () -> Unit,
@@ -320,7 +310,7 @@ fun MessageInput(
 ) {
     Surface(
         tonalElevation = 0.dp,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.surface
     ) {
         Row(
