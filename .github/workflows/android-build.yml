@@ -99,10 +99,14 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
-          COMMIT_TITLE="$(printf '%s' "$COMMIT_MESSAGE" | head -n 1 | xargs)"
+          COMMIT_TITLE="$(printf '%s\n' "$COMMIT_MESSAGE" | awk 'NF && $0 !~ /^Merge (pull request|branch)/ {print; exit}' | xargs)"
 
           if [ -z "$COMMIT_TITLE" ]; then
-            COMMIT_TITLE="$(git log -2 --pretty=%s | xargs)"
+            COMMIT_TITLE="$(git log -n 20 --pretty=%s | awk 'NF && $0 !~ /^Merge (pull request|branch)/ {print; exit}' | xargs)"
+          fi
+
+          if [ -z "$COMMIT_TITLE" ]; then
+            COMMIT_TITLE="Update"
           fi
 
           echo "value=$COMMIT_TITLE" >> "$GITHUB_OUTPUT"

@@ -20,6 +20,7 @@ class ChatListViewModel @Inject constructor(
 
     private val _state = MutableStateFlow(ChatListState())
     val state: StateFlow<ChatListState> = _state.asStateFlow()
+    private var currentUserId: Int? = null
 
     init {
         loadUsers()
@@ -27,29 +28,28 @@ class ChatListViewModel @Inject constructor(
 
     fun loadUsers() {
         viewModelScope.launch {
-            _state.value = _state.value.copy(isLoading = true, error = null)
+            _state.value = _state.value.copy(
+                isLoading = true,
+                isLoadingMore = false,
+                error = null,
+                loadMoreError = null,
+                currentPage = 1
+            )
 
-            // Get current user ID first
-            val currentUserId =
-                when (val currentUserResponse = profileRepository.getCurrentUser()) {
-                    is ApiResponse.Success -> currentUserResponse.data.id
-                    else -> null
-                }
+            ensureCurrentUserId()
 
-            when (val response = userRepository.getUsers()) {
+            when (val response = userRepository.getUsers(page = 1)) {
 
                 is ApiResponse.Success -> {
-                    // Filter out current user from the list
-                    val filteredUsers = if (currentUserId != null) {
-                        response.data.filter { it.id != currentUserId }
-                    } else {
-                        response.data
-                    }
-                    println(userRepository.getUsers())
+                    val filteredUsers = response.data.users.filter { it.id != currentUserId }
+                    val meta = response.data.meta
 
                     _state.value = _state.value.copy(
                         users = filteredUsers,
-                        isLoading = false
+                        isLoading = false,
+                        currentPage = meta?.currentPage ?: 1,
+                        hasMore = meta?.let { it.currentPage < it.lastPage }
+                            ?: filteredUsers.isNotEmpty()
                     )
                 }
 
@@ -64,6 +64,62 @@ class ChatListViewModel @Inject constructor(
                     _state.value = _state.value.copy(isLoading = true)
                 }
             }
+        }
+    }
+
+    fun loadMoreUsers() {
+        val state = _state.value
+        if (state.isLoading || state.isLoadingMore || !state.hasMore) {
+            return
+        }
+
+        viewModelScope.launch {
+            ensureCurrentUserId()
+
+            val nextPage = _state.value.currentPage + 1
+            _state.value = _state.value.copy(isLoadingMore = true, loadMoreError = null)
+
+            when (val response = userRepository.getUsers(page = nextPage)) {
+                is ApiResponse.Success -> {
+                    val oldUsers = _state.value.users
+                    val existingIds = oldUsers.map { it.id }.toSet()
+                    val newUsers = response.data.users
+                        .filter { it.id != currentUserId }
+                        .filter { it.id !in existingIds }
+
+                    val meta = response.data.meta
+
+                    _state.value = _state.value.copy(
+                        users = oldUsers + newUsers,
+                        isLoadingMore = false,
+                        currentPage = meta?.currentPage ?: nextPage,
+                        hasMore = meta?.let { it.currentPage < it.lastPage }
+                            ?: response.data.users.isNotEmpty()
+                    )
+                }
+
+                is ApiResponse.Error -> {
+                    _state.value = _state.value.copy(
+                        isLoadingMore = false,
+                        loadMoreError = response.message
+                    )
+                }
+
+                is ApiResponse.Loading -> {
+                    _state.value = _state.value.copy(isLoadingMore = true)
+                }
+            }
+        }
+    }
+
+    private suspend fun ensureCurrentUserId() {
+        if (currentUserId != null) {
+            return
+        }
+
+        currentUserId = when (val currentUserResponse = profileRepository.getCurrentUser()) {
+            is ApiResponse.Success -> currentUserResponse.data.id
+            else -> null
         }
     }
 }

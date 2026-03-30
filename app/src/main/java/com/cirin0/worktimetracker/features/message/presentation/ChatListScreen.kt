@@ -14,7 +14,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
@@ -27,8 +28,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,6 +51,29 @@ fun ChatListScreen(
     viewModel: ChatListViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(
+        listState,
+        state.users.size,
+        state.hasMore,
+        state.isLoadingMore,
+        state.isLoading
+    ) {
+        snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
+            .collect { lastVisibleIndex ->
+                val shouldLoadMore =
+                    state.users.isNotEmpty() &&
+                            state.hasMore &&
+                            !state.isLoading &&
+                            !state.isLoadingMore &&
+                            lastVisibleIndex >= state.users.lastIndex - 2
+
+                if (shouldLoadMore) {
+                    viewModel.loadMoreUsers()
+                }
+            }
+    }
 
     Column(
         modifier = Modifier.fillMaxSize()
@@ -126,15 +152,52 @@ fun ChatListScreen(
 
             else -> {
                 LazyColumn(
+                    state = listState,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = androidx.compose.foundation.layout.PaddingValues(8.dp)
                 ) {
-                    items(state.users) { user ->
+                    itemsIndexed(state.users, key = { _, user -> user.id }) { _, user ->
                         UserListItem(
                             user = user,
                             onClick = { onNavigateToChat(user.id, user.name, user.avatar) }
                         )
                         Spacer(modifier = Modifier.height(8.dp))
+                    }
+
+                    if (state.isLoadingMore) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 12.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                            }
+                        }
+                    }
+
+                    if (state.loadMoreError != null) {
+                        item {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = stringResource(
+                                        R.string.general_error_with_message,
+                                        state.loadMoreError ?: ""
+                                    ),
+                                    color = MaterialTheme.colorScheme.error,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                                OutlinedButton(onClick = { viewModel.loadMoreUsers() }) {
+                                    Text(stringResource(R.string.general_retry))
+                                }
+                            }
+                        }
                     }
                 }
             }

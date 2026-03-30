@@ -36,11 +36,7 @@ object Constants {
         const val MESSAGES_BY_RECEIVER = "messages/{receiverId}"
     }
 
-    object Reverb {
-        const val HOST = "192.168.0.52"
-        const val PORT = 8080
-        const val APP_KEY = "9smphaclcxahdff41mik"
-        const val CLUSTER = "eu"
-        const val USE_TLS = false
+    object Ably {
+        const val PUBLIC_KEY = "-_Zznw.SbvBHA"
     }
 }

@@ -87,25 +87,24 @@ class PusherService @Inject constructor(
         }
 
         val options = PusherOptions().apply {
-            setCluster(Constants.Reverb.CLUSTER)
-            setHost(Constants.Reverb.HOST)
-            setWsPort(Constants.Reverb.PORT)
-            setWssPort(Constants.Reverb.PORT)
-            isUseTLS = false
+            setHost("realtime-pusher.ably.io")
+            setWsPort(443)
+            setWssPort(443)
+            isUseTLS = true
             channelAuthorizer = authorizer
         }
 
-        pusher = Pusher(Constants.Reverb.APP_KEY, options).apply {
+        pusher = Pusher(Constants.Ably.PUBLIC_KEY, options).apply {
             connect(object : ConnectionEventListener {
                 override fun onConnectionStateChange(change: ConnectionStateChange) {
-                    println("🔄 Reverb state: ${change.previousState} -> ${change.currentState}")
+                    println("🔄 Ably state: ${change.previousState} -> ${change.currentState}")
                     if (change.currentState == ConnectionState.CONNECTED) {
                         println("✅ Pusher CONNECTED! Ready to receive events")
                     }
                 }
 
                 override fun onError(message: String, code: String?, e: Exception?) {
-                    println("❌ Reverb error: $message, code: $code")
+                    println("❌ Ably error: $message, code: $code")
                     e?.printStackTrace()
                 }
             }, ConnectionState.ALL)

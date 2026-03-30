@@ -21,6 +21,9 @@ import com.cirin0.worktimetracker.features.settings.ThemeViewModel
 import com.cirin0.worktimetracker.navigation.NavGraph
 import com.cirin0.worktimetracker.navigation.Screen
 import com.cirin0.worktimetracker.ui.theme.WorkTimeTrackerTheme
+import com.google.firebase.Firebase
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.analytics.analytics
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -30,9 +33,12 @@ class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var authRepository: AuthRepository
 
+    private lateinit var analytics: FirebaseAnalytics
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        analytics = Firebase.analytics
 
         setContent {
             val themeViewModel: ThemeViewModel = hiltViewModel()

@@ -7,6 +7,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,6 +27,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
@@ -56,14 +58,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -85,6 +92,8 @@ fun MainScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val workProgressState by viewModel.workProgressState.collectAsState()
+    val isStartCardBlocked =
+        state.activeEntry == null && !workProgressState.isWorkingDay && !workProgressState.isTracking
 
     RequestNotificationPermission()
 
@@ -134,7 +143,11 @@ fun MainScreen(
                 if (state.activeEntry != null) {
                     ActiveEntryCard(state.activeEntry!!, state, viewModel)
                 } else {
-                    StartEntryCard(state, viewModel)
+                    StartEntryCard(
+                        state = state,
+                        viewModel = viewModel,
+                        isStartBlocked = isStartCardBlocked
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -598,8 +611,12 @@ private fun TimeEntryCard(
 @Composable
 private fun StartEntryCard(
     state: TimeEntriesState,
-    viewModel: TimeEntriesViewModel
+    viewModel: TimeEntriesViewModel,
+    isStartBlocked: Boolean = false
 ) {
+    var cardSize by remember { mutableStateOf(IntSize.Zero) }
+    val density = LocalDensity.current
+
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -649,117 +666,153 @@ private fun StartEntryCard(
             modifier = Modifier.padding(start = 4.dp, bottom = 6.dp)
         )
 
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .onSizeChanged { cardSize = it }
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
-                user?.let {
-                    Text(
-                        text = when {
-                            isRemote -> stringResource(R.string.home_mode_remote)
-                            isOffice -> stringResource(R.string.home_mode_office)
-                            isHybrid -> stringResource(R.string.home_mode_hybrid)
-                            else -> ""
-                        },
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                if (isHybrid) {
-                    HybridToggleCard(state, viewModel)
-                }
-
-                val errorText = localizedTimeEntriesError(state)
-                if (errorText != null) {
-                    Text(
-                        text = errorText,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-
-                if (state.locationPermissionDenied && needsGPS) {
-                    Text(
-                        text = stringResource(R.string.home_location_access_required),
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-
-                if (state.cameraPermissionDenied) {
-                    Text(
-                        text = stringResource(R.string.home_camera_access_required),
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-
-                OutlinedTextField(
-                    value = state.startComment,
-                    onValueChange = viewModel::updateStartComment,
-                    label = { Text(stringResource(R.string.home_optional_comment)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !state.isLoading && !state.isLoadingLocation,
-                    shape = RoundedCornerShape(12.dp)
-                )
-
-                Button(
-                    onClick = {
-                        when {
-                            isOffice -> {
-                                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-                            }
-
-                            needsGPS && !viewModel.hasLocationPermission() -> {
-                                permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-                            }
-
-                            else -> {
-                                viewModel.startTimeEntry()
-                            }
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !state.isLoading && !state.isLoadingLocation,
-                    shape = RoundedCornerShape(12.dp)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    if (state.isLoadingLocation) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            color = MaterialTheme.colorScheme.onPrimary
+                    user?.let {
+                        Text(
+                            text = when {
+                                isRemote -> stringResource(R.string.home_mode_remote)
+                                isOffice -> stringResource(R.string.home_mode_office)
+                                isHybrid -> stringResource(R.string.home_mode_hybrid)
+                                else -> ""
+                            },
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        Spacer(Modifier.width(8.dp))
-                        Text(stringResource(R.string.home_loading_location))
-                    } else {
-                        Icon(Icons.Default.PlayArrow, contentDescription = null)
-                        Spacer(Modifier.width(8.dp))
-                        Text(stringResource(R.string.home_start_work))
+                    }
+
+                    if (isHybrid) {
+                        HybridToggleCard(
+                            state = state,
+                            viewModel = viewModel,
+                            isEnabled = !isStartBlocked && !state.isLoading && !state.isLoadingLocation
+                        )
+                    }
+
+                    val errorText = localizedTimeEntriesError(state)
+                    if (errorText != null) {
+                        Text(
+                            text = errorText,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+
+                    if (state.locationPermissionDenied && needsGPS) {
+                        Text(
+                            text = stringResource(R.string.home_location_access_required),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+
+                    if (state.cameraPermissionDenied) {
+                        Text(
+                            text = stringResource(R.string.home_camera_access_required),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+
+                    OutlinedTextField(
+                        value = state.startComment,
+                        onValueChange = viewModel::updateStartComment,
+                        label = { Text(stringResource(R.string.home_optional_comment)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isStartBlocked && !state.isLoading && !state.isLoadingLocation,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+
+                    Button(
+                        onClick = {
+                            if (isStartBlocked) return@Button
+
+                            when {
+                                isOffice -> {
+                                    cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                                }
+
+                                needsGPS && !viewModel.hasLocationPermission() -> {
+                                    permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                                }
+
+                                else -> {
+                                    viewModel.startTimeEntry()
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isStartBlocked && !state.isLoading && !state.isLoadingLocation,
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        if (state.isLoadingLocation) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(stringResource(R.string.home_loading_location))
+                        } else {
+                            Icon(Icons.Default.PlayArrow, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text(stringResource(R.string.home_start_work))
+                        }
+                    }
+
+                    if (state.showQRScanner) {
+                        Dialog(
+                            onDismissRequest = { viewModel.hideQRScanner() },
+                            properties = DialogProperties(usePlatformDefaultWidth = false)
+                        ) {
+                            QRCodeScannerScreen(
+                                onQRCodeScanned = { qrCode ->
+                                    viewModel.onQRCodeScanned(qrCode)
+                                },
+                                onDismiss = { viewModel.hideQRScanner() }
+                            )
+                        }
                     }
                 }
+            }
 
-                if (state.showQRScanner) {
-                    Dialog(
-                        onDismissRequest = { viewModel.hideQRScanner() },
-                        properties = DialogProperties(usePlatformDefaultWidth = false)
-                    ) {
-                        QRCodeScannerScreen(
-                            onQRCodeScanned = { qrCode ->
-                                viewModel.onQRCodeScanned(qrCode)
-                            },
-                            onDismiss = { viewModel.hideQRScanner() }
-                        )
-                    }
+            if (isStartBlocked) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(with(density) { cardSize.height.toDp() })
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color.White.copy(alpha = 0.10f))
+                        .clickable(
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() }
+                        ) { },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Block,
+                        contentDescription = stringResource(R.string.home_day_off_title),
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .size(72.dp)
+                    )
                 }
             }
         }
@@ -769,7 +822,8 @@ private fun StartEntryCard(
 @Composable
 private fun HybridToggleCard(
     state: TimeEntriesState,
-    viewModel: TimeEntriesViewModel
+    viewModel: TimeEntriesViewModel,
+    isEnabled: Boolean
 ) {
     Surface(
         modifier = Modifier
@@ -781,10 +835,11 @@ private fun HybridToggleCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable {
-                    if (!state.isLoading && !state.isLoadingLocation) {
+                    if (isEnabled) {
                         viewModel.toggleIsInOffice(!state.isInOffice)
                     }
                 }
+                .alpha(if (isEnabled) 1f else 0.45f)
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
@@ -806,7 +861,7 @@ private fun HybridToggleCard(
             Switch(
                 checked = state.isInOffice,
                 onCheckedChange = { viewModel.toggleIsInOffice(it) },
-                enabled = !state.isLoading && !state.isLoadingLocation
+                enabled = isEnabled
             )
         }
     }
