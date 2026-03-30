@@ -102,6 +102,7 @@ dependencies {
     implementation(libs.androidx.appcompat)
 
     implementation(libs.hilt.android)
+    implementation(libs.firebase.analytics)
     ksp(libs.hilt.android.compiler)
     implementation(libs.hilt.navigation.compose)
 
