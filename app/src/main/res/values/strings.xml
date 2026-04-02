@@ -126,13 +126,20 @@
     <string name="home_active_tracking">Активне відстеження</string>
     <string name="home_started_at">Початок: %1$s</string>
     <string name="home_comment_prefix">Коментар: %1$s</string>
-    <string name="home_stop_comment">Коментар до зупинки</string>
+    <string name="home_stop_comment">Коментар до зупинки (необов\'язково)</string>
     <string name="home_pin_code_label">PIN-код (4 цифри)</string>
     <string name="home_hide_pin">Сховати</string>
     <string name="home_show_pin">Показати</string>
     <string name="home_pin_must_be_four_digits">PIN має бути 4 цифри</string>
     <string name="home_pin_digits_only">PIN має містити тільки цифри</string>
+    <string name="home_pin_invalid">Невірний PIN-код</string>
     <string name="home_stop">Зупинити</string>
+    <string name="home_setup_pin_title">Встановіть PIN-код</string>
+    <string name="home_setup_pin_message">Перед початком роботи необхідно встановити 4-значний PIN-код для зупинки відстеження часу.</string>
+    <string name="home_new_pin_code">Новий PIN-код</string>
+    <string name="home_confirm_pin_code">Підтвердіть PIN-код</string>
+    <string name="home_pins_do_not_match">PIN-коди не співпадають</string>
+    <string name="home_setup_pin_confirm">Встановити</string>
 
     <string name="profile_pin_updated_success">PIN-код успішно оновлено</string>
     <string name="profile_updated_success">Профіль успішно оновлено</string>
@@ -185,6 +192,15 @@
     <string name="timesheet_this_week">Цього тижня</string>
     <string name="timesheet_this_month">Цього місяця</string>
     <string name="timesheet_period_summary">%1$d днів • %2$d сп. • %3$d вх.</string>
+    <string name="timesheet_weekly_chart">Тижневий графік</string>
+    <string name="timesheet_chart_subtitle">Сьогодні</string>
+    <string name="timesheet_monday_short">Пн</string>
+    <string name="timesheet_tuesday_short">Вт</string>
+    <string name="timesheet_wednesday_short">Ср</string>
+    <string name="timesheet_thursday_short">Чт</string>
+    <string name="timesheet_friday_short">Пт</string>
+    <string name="timesheet_saturday_short">Сб</string>
+    <string name="timesheet_sunday_short">Нд</string>
 
     <string name="work_schedule_no_schedule">Графік роботи ще не призначено вашим менеджером</string>
     <string name="work_schedule_title">Графік роботи</string>
@@ -272,4 +288,27 @@
 
     <string name="loading_state_default">Завантаження…</string>
     <string name="offline_badge_text">Офлайн-режим</string>
+    
+    <string name="manager_title">Менеджер</string>
+    <string name="manager_subtitle">Управління командою</string>
+    <string name="manager_tab_leave_requests">Заявки</string>
+    <string name="manager_tab_active_employees">Активні</string>
+    <string name="manager_no_leave_requests">Немає заявок на відпустку</string>
+    <string name="manager_no_active_employees">Немає активних працівників</string>
+    <string name="manager_leave_type">Тип відпустки</string>
+    <string name="manager_period">Період</string>
+    <string name="manager_reason">Причина</string>
+    <string name="manager_approve">Схвалити</string>
+    <string name="manager_reject">Відхилити</string>
+    <string name="manager_clock_in">Прихід</string>
+    <string name="manager_location">Локація</string>
+    <string name="manager_button">Менеджер</string>
+    <string name="manager_active">Активний</string>
+    <string name="manager_approve_title">Схвалити заявку</string>
+    <string name="manager_approve_message">Ви можете додати коментар (необов\'язково)</string>
+    <string name="manager_reject_title">Відхилити заявку</string>
+    <string name="manager_reject_message">Вкажіть причину відхилення</string>
+    <string name="manager_comment_label">Коментар</string>
+    <string name="manager_comment_placeholder">Введіть коментар...</string>
 </resources>
+

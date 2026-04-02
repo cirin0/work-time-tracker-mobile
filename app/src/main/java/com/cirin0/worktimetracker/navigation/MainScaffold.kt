@@ -42,6 +42,7 @@ import com.cirin0.worktimetracker.features.company.presentation.CompanyScreen
 import com.cirin0.worktimetracker.features.home.ConnectivityViewModel
 import com.cirin0.worktimetracker.features.home.MainScreen
 import com.cirin0.worktimetracker.features.leaverequests.presentation.LeaveRequestsScreen
+import com.cirin0.worktimetracker.features.manager.presentation.ManagerScreen
 import com.cirin0.worktimetracker.features.message.presentation.ChatListScreen
 import com.cirin0.worktimetracker.features.message.presentation.ChatScreen
 import com.cirin0.worktimetracker.features.profile.presentation.ProfileScreen
@@ -276,6 +277,9 @@ fun MainScaffold(
                         },
                         onNavigateToSchedule = {
                             navController.navigate(Screen.Schedule.route)
+                        },
+                        onNavigateToManager = {
+                            navController.navigate(Screen.Manager.route)
                         }
                     )
                 }
@@ -310,6 +314,9 @@ fun MainScaffold(
                             navController.popBackStack()
                         }
                     )
+                }
+                composable(Screen.Manager.route) {
+                    ManagerScreen()
                 }
             }
         }

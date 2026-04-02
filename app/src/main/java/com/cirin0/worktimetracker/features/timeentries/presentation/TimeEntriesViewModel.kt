@@ -168,9 +168,17 @@ class TimeEntriesViewModel @Inject constructor(
 
     fun startTimeEntry() {
         viewModelScope.launch {
-            _state.value = _state.value.copy(qrCodeScanSuccess = false)
-
+            // Check if user has PIN code set up
             val user = _state.value.user
+            if (user?.hasPinCode == false) {
+                _state.value = _state.value.copy(
+                    showSetupPinDialog = true,
+                    error = null
+                )
+                return@launch
+            }
+
+            _state.value = _state.value.copy(qrCodeScanSuccess = false)
 
             val needsGPS = when {
                 user == null -> true // Default to requiring GPS if user data not loaded
@@ -332,7 +340,15 @@ class TimeEntriesViewModel @Inject constructor(
 
     fun updatePinCode(pinCode: String) {
         if (pinCode.all { it.isDigit() } && pinCode.length <= 4) {
-            _state.value = _state.value.copy(pinCode = pinCode, uiError = null, error = null)
+            _state.value = _state.value.copy(
+                pinCode = pinCode,
+                uiError = null,
+                error = if (_state.value.error?.contains(
+                        "Invalid pin code",
+                        ignoreCase = true
+                    ) == true
+                ) null else _state.value.error
+            )
         }
     }
 
@@ -449,5 +465,71 @@ class TimeEntriesViewModel @Inject constructor(
                 is ApiResponse.Loading -> {}
             }
         }
+    }
+
+    fun updateSetupPinCode(pin: String) {
+        if (pin.all { it.isDigit() } && pin.length <= 4) {
+            _state.value = _state.value.copy(setupPinCode = pin)
+        }
+    }
+
+    fun updateSetupPinConfirm(pin: String) {
+        if (pin.all { it.isDigit() } && pin.length <= 4) {
+            _state.value = _state.value.copy(setupPinConfirm = pin)
+        }
+    }
+
+    fun setupPinCode() {
+        viewModelScope.launch {
+            val pin = _state.value.setupPinCode
+            val confirm = _state.value.setupPinConfirm
+
+            if (pin.length != 4) {
+                _state.value = _state.value.copy(
+                    error = "PIN code must be 4 digits"
+                )
+                return@launch
+            }
+
+            if (pin != confirm) {
+                _state.value = _state.value.copy(
+                    error = "PIN codes do not match"
+                )
+                return@launch
+            }
+
+            _state.value = _state.value.copy(isSettingUpPin = true, error = null)
+
+            when (val result = profileRepository.setupPinCode(pin)) {
+                is ApiResponse.Success -> {
+                    // Reload user data to get updated hasPinCode status
+                    loadUserData()
+                    _state.value = _state.value.copy(
+                        isSettingUpPin = false,
+                        showSetupPinDialog = false,
+                        setupPinCode = "",
+                        setupPinConfirm = ""
+                    )
+                }
+
+                is ApiResponse.Error -> {
+                    _state.value = _state.value.copy(
+                        isSettingUpPin = false,
+                        error = result.message
+                    )
+                }
+
+                is ApiResponse.Loading -> {}
+            }
+        }
+    }
+
+    fun closeSetupPinDialog() {
+        _state.value = _state.value.copy(
+            showSetupPinDialog = false,
+            setupPinCode = "",
+            setupPinConfirm = "",
+            error = null
+        )
     }
 }

@@ -160,267 +160,272 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .navigationBarsPadding()
-                .padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .weight(1f)
         ) {
-
-            SettingsSection(title = stringResource(R.string.settings_appearance)) {
-                SelectionPreferenceRow(
-                    icon = Icons.Default.Palette,
-                    label = stringResource(R.string.settings_theme),
-                    selectedValue = useDarkTheme,
-                    selectedText = themeOptions[useDarkTheme]
-                        ?: stringResource(R.string.settings_theme_system),
-                    options = themeOptions,
-                    onOptionSelected = themeViewModel::setTheme
-                )
-                HorizontalDivider(
-                    modifier = Modifier.padding(start = 62.dp),
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                    thickness = 0.5.dp
-                )
-                SelectionPreferenceRow(
-                    icon = Icons.Default.Language,
-                    label = stringResource(R.string.settings_language),
-                    selectedValue = settingsState.appLanguage,
-                    selectedText = languageOptions[settingsState.appLanguage]
-                        ?: stringResource(R.string.settings_language_ukrainian),
-                    options = languageOptions,
-                    onOptionSelected = { language ->
-                        settingsViewModel.setAppLanguage(language)
-                        // Ensure resources rebind immediately after language switch.
-                        (context as? Activity)?.recreate()
-                    }
-                )
-            }
-
-            SettingsSection(title = stringResource(R.string.settings_permissions)) {
-                PermissionRow(
-                    icon = Icons.Default.CameraAlt,
-                    title = stringResource(R.string.settings_permission_camera),
-                    description = stringResource(R.string.settings_permission_camera_description),
-                    isGranted = settingsState.hasCameraPermission,
-                    onRequestPermission = {
-                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-                    },
-                    onOpenSettings = {
-                        context.startActivity(
-                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                data = Uri.fromParts("package", context.packageName, null)
-                            }
-                        )
-                    }
-                )
-                HorizontalDivider(
-                    modifier = Modifier.padding(start = 62.dp),
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                    thickness = 0.5.dp
-                )
-                PermissionRow(
-                    icon = Icons.Default.LocationOn,
-                    title = stringResource(R.string.settings_permission_location),
-                    description = stringResource(R.string.settings_permission_location_description),
-                    isGranted = settingsState.hasLocationPermission,
-                    onRequestPermission = {
-                        locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-                    },
-                    onOpenSettings = {
-                        context.startActivity(
-                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                data = Uri.fromParts("package", context.packageName, null)
-                            }
-                        )
-                    }
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Button(
-                onClick = { settingsViewModel.logout() },
-                enabled = !logoutState.isLoading,
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error,
-                    contentColor = MaterialTheme.colorScheme.onError,
-                    disabledContainerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.6f)
-                )
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                AnimatedContent(
-                    targetState = logoutState.isLoading,
-                    transitionSpec = { fadeIn() togetherWith fadeOut() },
-                    label = "logout_button"
-                ) { isLoading ->
-                    if (isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(22.dp),
-                            color = MaterialTheme.colorScheme.onError,
-                            strokeWidth = 2.5.dp
-                        )
-                    } else {
-                        Text(
-                            text = stringResource(R.string.settings_logout),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                }
-            }
 
-            AnimatedVisibility(visible = logoutState.error != null) {
-                logoutState.error?.let { err ->
-                    Text(
-                        text = err,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(top = 6.dp)
+                SettingsSection(title = stringResource(R.string.settings_appearance)) {
+                    SelectionPreferenceRow(
+                        icon = Icons.Default.Palette,
+                        label = stringResource(R.string.settings_theme),
+                        selectedValue = useDarkTheme,
+                        selectedText = themeOptions[useDarkTheme]
+                            ?: stringResource(R.string.settings_theme_system),
+                        options = themeOptions,
+                        onOptionSelected = themeViewModel::setTheme
+                    )
+                    HorizontalDivider(
+                        modifier = Modifier.padding(start = 62.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                        thickness = 0.5.dp
+                    )
+                    SelectionPreferenceRow(
+                        icon = Icons.Default.Language,
+                        label = stringResource(R.string.settings_language),
+                        selectedValue = settingsState.appLanguage,
+                        selectedText = languageOptions[settingsState.appLanguage]
+                            ?: stringResource(R.string.settings_language_ukrainian),
+                        options = languageOptions,
+                        onOptionSelected = { language ->
+                            settingsViewModel.setAppLanguage(language)
+                            // Ensure resources rebind immediately after language switch.
+                            (context as? Activity)?.recreate()
+                        }
                     )
                 }
-            }
 
-            Spacer(modifier = Modifier.height(16.dp))
+                SettingsSection(title = stringResource(R.string.settings_permissions)) {
+                    PermissionRow(
+                        icon = Icons.Default.CameraAlt,
+                        title = stringResource(R.string.settings_permission_camera),
+                        description = stringResource(R.string.settings_permission_camera_description),
+                        isGranted = settingsState.hasCameraPermission,
+                        onRequestPermission = {
+                            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                        },
+                        onOpenSettings = {
+                            context.startActivity(
+                                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                    data = Uri.fromParts("package", context.packageName, null)
+                                }
+                            )
+                        }
+                    )
+                    HorizontalDivider(
+                        modifier = Modifier.padding(start = 62.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                        thickness = 0.5.dp
+                    )
+                    PermissionRow(
+                        icon = Icons.Default.LocationOn,
+                        title = stringResource(R.string.settings_permission_location),
+                        description = stringResource(R.string.settings_permission_location_description),
+                        isGranted = settingsState.hasLocationPermission,
+                        onRequestPermission = {
+                            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                        },
+                        onOpenSettings = {
+                            context.startActivity(
+                                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                    data = Uri.fromParts("package", context.packageName, null)
+                                }
+                            )
+                        }
+                    )
+                }
 
-            // App Update Section
-            if (updateState.updateAvailable && !updateState.isUpdateReady) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
+
+                Button(
+                    onClick = { settingsViewModel.logout() },
+                    enabled = !logoutState.isLoading,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError,
+                        disabledContainerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.6f)
                     )
                 ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Check,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp)
+                    AnimatedContent(
+                        targetState = logoutState.isLoading,
+                        transitionSpec = { fadeIn() togetherWith fadeOut() },
+                        label = "logout_button"
+                    ) { isLoading ->
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(22.dp),
+                                color = MaterialTheme.colorScheme.onError,
+                                strokeWidth = 2.5.dp
                             )
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = stringResource(R.string.settings_update_available),
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                                Text(
-                                    text = updateState.versionName,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                                )
-                            }
-                        }
-
-                        if (!updateState.changelog.isNullOrEmpty()) {
+                        } else {
                             Text(
-                                text = updateState.changelog ?: "",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                                text = stringResource(R.string.settings_logout),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold
                             )
                         }
+                    }
+                }
 
-                        if (updateState.isDownloading) {
-                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
+                AnimatedVisibility(visible = logoutState.error != null) {
+                    logoutState.error?.let { err ->
+                        Text(
+                            text = err,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(top = 6.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // App Update Section
+                if (updateState.updateAvailable && !updateState.isUpdateReady) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        text = "${updateState.downloadProgress}%",
-                                        style = MaterialTheme.typography.bodySmall,
+                                        text = stringResource(R.string.settings_update_available),
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.onPrimaryContainer
                                     )
-                                    CircularProgressIndicator(
-                                        progress = { updateState.downloadProgress / 100f },
-                                        modifier = Modifier.size(20.dp),
-                                        color = MaterialTheme.colorScheme.primary,
-                                        strokeWidth = 2.dp
+                                    Text(
+                                        text = updateState.versionName,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(
+                                            alpha = 0.7f
+                                        )
                                     )
                                 }
                             }
-                        } else {
+
+                            if (!updateState.changelog.isNullOrEmpty()) {
+                                Text(
+                                    text = updateState.changelog ?: "",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+
+                            if (updateState.isDownloading) {
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "${updateState.downloadProgress}%",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
+                                        CircularProgressIndicator(
+                                            progress = { updateState.downloadProgress / 100f },
+                                            modifier = Modifier.size(20.dp),
+                                            color = MaterialTheme.colorScheme.primary,
+                                            strokeWidth = 2.dp
+                                        )
+                                    }
+                                }
+                            } else {
+                                Button(
+                                    onClick = { updateCheckViewModel.downloadUpdate(updateState.downloadUrl) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.primary
+                                    )
+                                ) {
+                                    Text(stringResource(R.string.settings_download_update))
+                                }
+                            }
+                        }
+                    }
+                } else if (updateState.isUpdateReady) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.settings_update_ready),
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
                             Button(
-                                onClick = { updateCheckViewModel.downloadUpdate(updateState.downloadUrl) },
+                                onClick = { updateCheckViewModel.installUpdate() },
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.primary
+                                    containerColor = MaterialTheme.colorScheme.tertiary
                                 )
                             ) {
-                                Text(stringResource(R.string.settings_download_update))
+                                Text(stringResource(R.string.settings_install_update))
                             }
                         }
                     }
                 }
-            } else if (updateState.isUpdateReady) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer
+
+                if (updateState.error != null) {
+                    Text(
+                        text = updateState.error ?: "Unknown error",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 8.dp)
                     )
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.settings_update_ready),
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onTertiaryContainer
-                        )
-                        Button(
-                            onClick = { updateCheckViewModel.installUpdate() },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.tertiary
-                            )
-                        ) {
-                            Text(stringResource(R.string.settings_install_update))
-                        }
-                    }
                 }
+
+                Spacer(modifier = Modifier.height(80.dp))
             }
-
-            if (updateState.error != null) {
-                Text(
-                    text = updateState.error ?: "Unknown error",
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = appVersionText,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp)
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
         }
+
+        Text(
+            text = appVersionText,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(bottom = 16.dp)
+        )
     }
 }
 

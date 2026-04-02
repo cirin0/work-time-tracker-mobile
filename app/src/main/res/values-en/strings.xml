@@ -126,13 +126,20 @@
     <string name="home_active_tracking">Active tracking</string>
     <string name="home_started_at">Started at: %1$s</string>
     <string name="home_comment_prefix">Comment: %1$s</string>
-    <string name="home_stop_comment">Comment before stopping</string>
+    <string name="home_stop_comment">Comment before stopping (optional)</string>
     <string name="home_pin_code_label">PIN code (4 digits)</string>
     <string name="home_hide_pin">Hide</string>
     <string name="home_show_pin">Show</string>
     <string name="home_pin_must_be_four_digits">PIN must be 4 digits</string>
     <string name="home_pin_digits_only">PIN must contain digits only</string>
+    <string name="home_pin_invalid">Invalid PIN code</string>
     <string name="home_stop">Stop</string>
+    <string name="home_setup_pin_title">Set up PIN code</string>
+    <string name="home_setup_pin_message">Before starting work, you need to set up a 4-digit PIN code to stop time tracking.</string>
+    <string name="home_new_pin_code">New PIN code</string>
+    <string name="home_confirm_pin_code">Confirm PIN code</string>
+    <string name="home_pins_do_not_match">PIN codes do not match</string>
+    <string name="home_setup_pin_confirm">Set up</string>
 
     <string name="profile_pin_updated_success">PIN code updated successfully</string>
     <string name="profile_updated_success">Profile updated successfully</string>
@@ -185,6 +192,15 @@
     <string name="timesheet_this_week">This week</string>
     <string name="timesheet_this_month">This month</string>
     <string name="timesheet_period_summary">%1$d days • %2$d late • %3$d early</string>
+    <string name="timesheet_weekly_chart">Weekly chart</string>
+    <string name="timesheet_chart_subtitle">Today</string>
+    <string name="timesheet_monday_short">Mon</string>
+    <string name="timesheet_tuesday_short">Tue</string>
+    <string name="timesheet_wednesday_short">Wed</string>
+    <string name="timesheet_thursday_short">Thu</string>
+    <string name="timesheet_friday_short">Fri</string>
+    <string name="timesheet_saturday_short">Sat</string>
+    <string name="timesheet_sunday_short">Sun</string>
 
     <string name="work_schedule_no_schedule">No work schedule assigned by your manager yet</string>
     <string name="work_schedule_title">Work schedule</string>
@@ -272,5 +288,28 @@
 
     <string name="loading_state_default">Loading…</string>
     <string name="offline_badge_text">Offline mode</string>
+    
+    <string name="manager_title">Manager</string>
+    <string name="manager_subtitle">Team management</string>
+    <string name="manager_tab_leave_requests">Requests</string>
+    <string name="manager_tab_active_employees">Active</string>
+    <string name="manager_no_leave_requests">No leave requests</string>
+    <string name="manager_no_active_employees">No active employees</string>
+    <string name="manager_leave_type">Leave type</string>
+    <string name="manager_period">Period</string>
+    <string name="manager_reason">Reason</string>
+    <string name="manager_approve">Approve</string>
+    <string name="manager_reject">Reject</string>
+    <string name="manager_clock_in">Clock in</string>
+    <string name="manager_location">Location</string>
+    <string name="manager_button">Manager</string>
+    <string name="manager_active">Active</string>
+    <string name="manager_approve_title">Approve Request</string>
+    <string name="manager_approve_message">You can add a comment (optional)</string>
+    <string name="manager_reject_title">Reject Request</string>
+    <string name="manager_reject_message">Please specify the reason for rejection</string>
+    <string name="manager_comment_label">Comment</string>
+    <string name="manager_comment_placeholder">Enter comment...</string>
 </resources>
+
 
