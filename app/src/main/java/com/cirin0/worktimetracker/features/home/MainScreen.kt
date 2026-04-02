@@ -29,12 +29,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -49,6 +51,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -160,6 +163,19 @@ fun MainScreen(
                     onLoadMore = { viewModel.loadMoreTimeEntries() }
                 )
             }
+        }
+
+        if (state.showSetupPinDialog) {
+            SetupPinDialog(
+                setupPinCode = state.setupPinCode,
+                setupPinConfirm = state.setupPinConfirm,
+                error = state.error,
+                isLoading = state.isSettingUpPin,
+                onPinChange = viewModel::updateSetupPinCode,
+                onConfirmChange = viewModel::updateSetupPinConfirm,
+                onConfirm = viewModel::setupPinCode,
+                onDismiss = viewModel::closeSetupPinDialog
+            )
         }
     }
 }
@@ -491,6 +507,8 @@ private fun TimeEntriesSection(
                 }
             }
         }
+
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 
@@ -707,12 +725,33 @@ private fun StartEntryCard(
                     }
 
                     val errorText = localizedTimeEntriesError(state)
-                    if (errorText != null) {
-                        Text(
-                            text = errorText,
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall
-                        )
+                    // Don't show server unavailable error in card if it's already shown in banner
+                    val shouldShowError = errorText != null && !state.showServerUnavailableWarning
+                    if (shouldShowError) {
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.errorContainer
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Error,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Text(
+                                    text = errorText!!,
+                                    color = MaterialTheme.colorScheme.onErrorContainer,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
                     }
 
                     if (state.locationPermissionDenied && needsGPS) {
@@ -949,11 +988,30 @@ private fun ActiveEntryCard(
 
                 val errorText = localizedTimeEntriesError(state)
                 if (errorText != null) {
-                    Text(
-                        text = errorText,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall
-                    )
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.errorContainer
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Error,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                text = errorText,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
                 }
 
                 OutlinedTextField(
@@ -989,7 +1047,8 @@ private fun ActiveEntryCard(
                             )
                         }
                     },
-                    isError = state.pinCode.isNotEmpty() && state.pinCode.length != 4,
+                    isError = (state.pinCode.isNotEmpty() && state.pinCode.length != 4) ||
+                            (state.error?.contains("Invalid pin code", ignoreCase = true) == true),
                     supportingText = if (state.pinCode.isNotEmpty() && state.pinCode.length != 4) {
                         { Text(stringResource(R.string.home_pin_must_be_four_digits)) }
                     } else null,
@@ -1035,7 +1094,138 @@ private fun localizedTimeEntriesError(state: TimeEntriesState): String? {
     return when (state.uiError) {
         TimeEntriesUiError.PIN_LENGTH -> stringResource(R.string.home_pin_must_be_four_digits)
         TimeEntriesUiError.PIN_DIGITS_ONLY -> stringResource(R.string.general_error)
-        null -> state.error
+        null -> {
+            // Check if error message contains "Invalid pin code"
+            if (state.error?.contains("Invalid pin code", ignoreCase = true) == true) {
+                stringResource(R.string.home_pin_invalid)
+            } else {
+                state.error
+            }
+        }
     }
 }
 
+@Composable
+private fun SetupPinDialog(
+    setupPinCode: String,
+    setupPinConfirm: String,
+    error: String?,
+    isLoading: Boolean,
+    onPinChange: (String) -> Unit,
+    onConfirmChange: (String) -> Unit,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    var isPinVisible by remember { mutableStateOf(false) }
+    var isConfirmVisible by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = { if (!isLoading) onDismiss() },
+        title = {
+            Text(
+                text = stringResource(R.string.home_setup_pin_title),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.home_setup_pin_message),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                OutlinedTextField(
+                    value = setupPinCode,
+                    onValueChange = onPinChange,
+                    label = { Text(stringResource(R.string.home_new_pin_code)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isLoading,
+                    visualTransformation = if (isPinVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                    trailingIcon = {
+                        IconButton(onClick = { isPinVisible = !isPinVisible }) {
+                            Icon(
+                                imageVector = if (isPinVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                contentDescription = if (isPinVisible) {
+                                    stringResource(R.string.home_hide_pin)
+                                } else {
+                                    stringResource(R.string.home_show_pin)
+                                }
+                            )
+                        }
+                    },
+                    isError = setupPinCode.isNotEmpty() && setupPinCode.length != 4,
+                    supportingText = if (setupPinCode.isNotEmpty() && setupPinCode.length != 4) {
+                        { Text(stringResource(R.string.home_pin_must_be_four_digits)) }
+                    } else null,
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                OutlinedTextField(
+                    value = setupPinConfirm,
+                    onValueChange = onConfirmChange,
+                    label = { Text(stringResource(R.string.home_confirm_pin_code)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isLoading,
+                    visualTransformation = if (isConfirmVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                    trailingIcon = {
+                        IconButton(onClick = { isConfirmVisible = !isConfirmVisible }) {
+                            Icon(
+                                imageVector = if (isConfirmVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                contentDescription = if (isConfirmVisible) {
+                                    stringResource(R.string.home_hide_pin)
+                                } else {
+                                    stringResource(R.string.home_show_pin)
+                                }
+                            )
+                        }
+                    },
+                    isError = setupPinConfirm.isNotEmpty() && setupPinConfirm != setupPinCode,
+                    supportingText = if (setupPinConfirm.isNotEmpty() && setupPinConfirm != setupPinCode) {
+                        { Text(stringResource(R.string.home_pins_do_not_match)) }
+                    } else null,
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                if (error != null) {
+                    Text(
+                        text = error,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                enabled = !isLoading && setupPinCode.length == 4 && setupPinCode == setupPinConfirm,
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    Text(stringResource(R.string.home_setup_pin_confirm))
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !isLoading
+            ) {
+                Text(stringResource(R.string.general_cancel))
+            }
+        },
+        shape = RoundedCornerShape(16.dp)
+    )
+}

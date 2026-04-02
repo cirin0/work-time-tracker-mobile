@@ -36,5 +36,9 @@ data class TimeEntriesState(
     val showServerUnavailableWarning: Boolean = false,
     val workSchedule: WorkSchedule? = null,
     val targetHours: Float = 8f,
-    val isWorkingDay: Boolean = true
+    val isWorkingDay: Boolean = true,
+    val showSetupPinDialog: Boolean = false,
+    val setupPinCode: String = "",
+    val setupPinConfirm: String = "",
+    val isSettingUpPin: Boolean = false
 )

@@ -1,11 +1,13 @@
 package com.cirin0.worktimetracker.features.timesheet.presentation
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -40,17 +42,23 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.cirin0.worktimetracker.R
 import com.cirin0.worktimetracker.core.localization.AppLocaleManager
 import com.cirin0.worktimetracker.core.utils.DateUtils
+import com.cirin0.worktimetracker.features.timeentries.data.model.TimeEntry
 import com.cirin0.worktimetracker.features.timesheet.data.model.PeriodSummary
 import com.cirin0.worktimetracker.features.timesheet.data.model.TimeSummary
+import java.time.DayOfWeek
 
 @Composable
 fun TimesheetScreen(
@@ -128,7 +136,7 @@ fun TimesheetScreen(
 
                 else -> {
                     Spacer(modifier = Modifier.height(16.dp))
-                    TimeSummaryContent(state.summary!!)
+                    TimeSummaryContent(state.summary!!, viewModel)
                 }
             }
         }
@@ -189,11 +197,15 @@ private fun TopBarIconButton(
 }
 
 @Composable
-private fun TimeSummaryContent(summary: TimeSummary) {
+private fun TimeSummaryContent(summary: TimeSummary, viewModel: TimeSheetViewModel) {
+    val state by viewModel.state.collectAsState()
+
     Column(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         StatsSection(summary)
+
+        WeeklyChartSection(summary, state.weeklyEntries)
 
         PeriodSection(summary)
 
@@ -520,4 +532,210 @@ private fun RowDivider() {
         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
         thickness = 0.5.dp
     )
+}
+
+@Composable
+private fun WeeklyChartSection(summary: TimeSummary, weeklyEntries: List<TimeEntry>) {
+    val today = java.time.LocalDate.now()
+    val startOfWeek = today.with(DayOfWeek.MONDAY)
+
+    val entriesByDay = weeklyEntries
+        .filter { entry ->
+            try {
+                val entryDate = java.time.LocalDate.parse(entry.date)
+                !entryDate.isBefore(startOfWeek) && !entryDate.isAfter(today)
+            } catch (e: Exception) {
+                false
+            }
+        }
+        .groupBy { entry ->
+            try {
+                java.time.LocalDate.parse(entry.date).dayOfWeek
+            } catch (e: Exception) {
+                null
+            }
+        }
+
+    val weekData = listOf(
+        DayOfWeek.MONDAY to stringResource(R.string.timesheet_monday_short),
+        DayOfWeek.TUESDAY to stringResource(R.string.timesheet_tuesday_short),
+        DayOfWeek.WEDNESDAY to stringResource(R.string.timesheet_wednesday_short),
+        DayOfWeek.THURSDAY to stringResource(R.string.timesheet_thursday_short),
+        DayOfWeek.FRIDAY to stringResource(R.string.timesheet_friday_short),
+        DayOfWeek.SATURDAY to stringResource(R.string.timesheet_saturday_short),
+        DayOfWeek.SUNDAY to stringResource(R.string.timesheet_sunday_short)
+    ).map { (dayOfWeek, label) ->
+        val dayEntries = entriesByDay[dayOfWeek] ?: emptyList()
+        val totalSeconds = dayEntries.sumOf { it.duration ?: 0 }
+        val hours = totalSeconds / 3600.0
+        DayData(label, hours)
+    }
+
+    val weekHours = summary.summary.week.hours + summary.summary.week.minutes / 60.0
+    val maxHours = weekData.maxOfOrNull { it.hours }?.coerceAtLeast(8.0) ?: 12.0
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = stringResource(R.string.timesheet_weekly_chart).uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 4.dp, bottom = 6.dp)
+        )
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.timesheet_this_week),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = DateUtils.formatHours(weekHours),
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = stringResource(R.string.timesheet_chart_subtitle),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                WeeklyBarChart(
+                    data = weekData,
+                    maxHours = maxHours,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                )
+            }
+        }
+    }
+}
+
+data class DayData(val label: String, val hours: Double)
+
+
+@Composable
+private fun WeeklyBarChart(
+    data: List<DayData>,
+    maxHours: Double,
+    modifier: Modifier = Modifier
+) {
+    val barColor = MaterialTheme.colorScheme.primary
+    val gridColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+    val textColor = MaterialTheme.colorScheme.onSurfaceVariant
+
+    Column(modifier = modifier) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+        ) {
+            Column(
+                modifier = Modifier
+                    .width(36.dp)
+                    .fillMaxHeight(),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                for (i in 4 downTo 0) {
+                    Text(
+                        text = "${(maxHours * i / 4).toInt()}г",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = textColor
+                    )
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+            ) {
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val canvasWidth = size.width
+                    val canvasHeight = size.height
+
+                    val totalBars = data.size
+                    val totalSpacing = canvasWidth * 0.3f
+                    val totalBarWidth = canvasWidth - totalSpacing
+                    val barWidth = totalBarWidth / totalBars
+                    val spacing = totalSpacing / (totalBars + 1)
+
+                    for (i in 0..4) {
+                        val y = canvasHeight * (i / 4f)
+                        drawLine(
+                            color = gridColor,
+                            start = Offset(0f, y),
+                            end = Offset(canvasWidth, y),
+                            strokeWidth = 1.dp.toPx()
+                        )
+                    }
+
+                    data.forEachIndexed { index, dayData ->
+                        val barHeight = if (maxHours > 0) {
+                            (dayData.hours / maxHours * canvasHeight).toFloat()
+                        } else 0f
+
+                        val x = spacing + index * (barWidth + spacing)
+
+                        if (barHeight > 0) {
+                            drawRoundRect(
+                                color = barColor,
+                                topLeft = Offset(x, canvasHeight - barHeight),
+                                size = Size(barWidth, barHeight),
+                                cornerRadius = CornerRadius(6.dp.toPx(), 6.dp.toPx())
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Spacer(modifier = Modifier.width(36.dp))
+            Row(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                data.forEach { dayData ->
+                    Text(
+                        text = dayData.label,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = textColor,
+                        modifier = Modifier.weight(1f),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
+    }
 }

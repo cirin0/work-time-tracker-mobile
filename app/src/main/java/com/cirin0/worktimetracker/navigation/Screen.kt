@@ -47,4 +47,6 @@ sealed class Screen(val route: String) {
                 } ?: "null"
             }"
     }
+
+    object Manager : Screen("manager")
 }

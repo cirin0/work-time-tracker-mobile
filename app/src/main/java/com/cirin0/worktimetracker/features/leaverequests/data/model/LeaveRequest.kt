@@ -8,7 +8,7 @@ enum class LeaveRequestType(val value: String) {
     PERSONAL("personal"),
     UNPAID("unpaid"),
     BUSINESS_TRIP("business_trip");
-    
+
     companion object {
         fun fromValue(value: String): LeaveRequestType? {
             return entries.find { it.value == value }

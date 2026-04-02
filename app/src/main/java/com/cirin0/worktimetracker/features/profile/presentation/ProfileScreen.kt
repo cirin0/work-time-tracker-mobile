@@ -84,7 +84,8 @@ fun ProfileScreen(
     onNavigateToChat: () -> Unit = {},
     onNavigateToRequests: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
-    onNavigateToSchedule: () -> Unit = {}
+    onNavigateToSchedule: () -> Unit = {},
+    onNavigateToManager: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
@@ -285,6 +286,17 @@ fun ProfileScreen(
                         showArrow = true,
                         onClick = onNavigateToRequests
                     )
+
+                    if (state.user!!.role.equals("manager", ignoreCase = true)) {
+                        RowDivider()
+                        ProfileRow(
+                            icon = Icons.Default.Business,
+                            label = stringResource(R.string.manager_button),
+                            value = stringResource(R.string.manager_subtitle),
+                            showArrow = true,
+                            onClick = onNavigateToManager
+                        )
+                    }
                 }
             }
 

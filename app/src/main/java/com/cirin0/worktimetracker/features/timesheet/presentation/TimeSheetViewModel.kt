@@ -3,6 +3,7 @@ package com.cirin0.worktimetracker.features.timesheet.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cirin0.worktimetracker.core.network.ApiResponse
+import com.cirin0.worktimetracker.features.timeentries.data.repository.TimeEntriesRepository
 import com.cirin0.worktimetracker.features.timesheet.data.repository.TimeSheetRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,7 +14,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class TimeSheetViewModel @Inject constructor(
-    private val repository: TimeSheetRepository
+    private val repository: TimeSheetRepository,
+    private val timeEntriesRepository: TimeEntriesRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(TimeSheetState())
@@ -21,6 +23,7 @@ class TimeSheetViewModel @Inject constructor(
 
     init {
         loadTimeSummary()
+        loadWeeklyEntries()
     }
 
     fun loadTimeSummary() {
@@ -45,6 +48,34 @@ class TimeSheetViewModel @Inject constructor(
 
                 is ApiResponse.Loading -> {
                     _state.value = _state.value.copy(isLoading = true)
+                }
+            }
+        }
+    }
+
+    private fun loadWeeklyEntries() {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isLoadingWeekly = true)
+
+            when (val response = timeEntriesRepository.getTimeEntries(page = 1, perPage = 50)) {
+                is ApiResponse.Success -> {
+                    _state.value = _state.value.copy(
+                        isLoadingWeekly = false,
+                        weeklyEntries = response.data.data
+                    )
+                }
+
+                is ApiResponse.Error -> {
+                    // Try to use cached entries
+                    val cached = timeEntriesRepository.getCachedTimeEntries()
+                    _state.value = _state.value.copy(
+                        isLoadingWeekly = false,
+                        weeklyEntries = cached
+                    )
+                }
+
+                is ApiResponse.Loading -> {
+                    _state.value = _state.value.copy(isLoadingWeekly = true)
                 }
             }
         }
