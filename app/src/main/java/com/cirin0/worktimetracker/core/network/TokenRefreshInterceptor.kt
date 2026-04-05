@@ -3,7 +3,6 @@ package com.cirin0.worktimetracker.core.network
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
 import com.cirin0.worktimetracker.core.utils.Constants
 import com.cirin0.worktimetracker.features.auth.data.model.RefreshResponse
 import com.google.gson.Gson
@@ -32,7 +31,6 @@ class TokenRefreshInterceptor @Inject constructor(
     companion object {
         private const val AUTHORIZATION_HEADER = "Authorization"
         private const val BEARER_PREFIX = "Bearer "
-        private val TOKEN_KEY = stringPreferencesKey("auth_token")
         private val JSON_MEDIA_TYPE = "application/json".toMediaType()
     }
 
@@ -139,17 +137,17 @@ class TokenRefreshInterceptor @Inject constructor(
         }
     }
 
-    private suspend fun getStoredToken(): String? = dataStore.data.first()[TOKEN_KEY]
+    private suspend fun getStoredToken(): String? = dataStore.data.first()[Constants.AUTH_TOKEN_KEY]
 
     private suspend fun saveToken(token: String) {
         dataStore.edit { prefs ->
-            prefs[TOKEN_KEY] = token
+            prefs[Constants.AUTH_TOKEN_KEY] = token
         }
     }
 
     private suspend fun clearToken() {
         dataStore.edit { prefs ->
-            prefs.remove(TOKEN_KEY)
+            prefs.remove(Constants.AUTH_TOKEN_KEY)
         }
     }
 }

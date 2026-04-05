@@ -1,4 +1,3 @@
-
 package com.cirin0.worktimetracker.data
 
 import android.content.Context

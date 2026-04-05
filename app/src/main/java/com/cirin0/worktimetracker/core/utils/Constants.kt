@@ -1,9 +1,13 @@
 package com.cirin0.worktimetracker.core.utils
 
+import androidx.datastore.preferences.core.stringPreferencesKey
+
 object Constants {
     const val DATABASE_NAME = "app_database"
     const val PREFS_NAME = "app_prefs"
     const val NAMED_IMAGE_URL = "image_base_url"
+
+    val AUTH_TOKEN_KEY = stringPreferencesKey("auth_token")
 
     object Validation {
         const val MIN_PASSWORD_LENGTH = 8

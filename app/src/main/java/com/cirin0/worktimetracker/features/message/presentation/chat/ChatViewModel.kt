@@ -25,6 +25,7 @@ class ChatViewModel @Inject constructor(
     val state: StateFlow<ChatState> = _state.asStateFlow()
 
     private var subscriptionJob: Job? = null
+    private var isSubscribed = false
 
     fun initChat(receiverId: Int) {
         viewModelScope.launch {
@@ -78,6 +79,7 @@ class ChatViewModel @Inject constructor(
             val currentUserId = _state.value.currentUserId
             val receiverId = _state.value.receiverId
 
+            isSubscribed = true
             messageRepository.subscribeToMessages(currentUserId)
                 .collect { newMessage ->
                     val isFromChatPartner =
@@ -100,8 +102,10 @@ class ChatViewModel @Inject constructor(
     fun cleanup() {
         subscriptionJob?.cancel()
         subscriptionJob = null
-        if (_state.value.currentUserId != 0) {
+
+        if (isSubscribed) {
             messageRepository.unsubscribeFromMessages(_state.value.currentUserId)
+            isSubscribed = false
         }
     }
 

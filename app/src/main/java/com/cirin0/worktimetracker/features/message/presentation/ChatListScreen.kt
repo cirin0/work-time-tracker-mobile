@@ -53,26 +53,24 @@ fun ChatListScreen(
     val state by viewModel.state.collectAsState()
     val listState = rememberLazyListState()
 
-    LaunchedEffect(
-        listState,
-        state.users.size,
-        state.hasMore,
-        state.isLoadingMore,
-        state.isLoading
-    ) {
-        snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
-            .collect { lastVisibleIndex ->
-                val shouldLoadMore =
-                    state.users.isNotEmpty() &&
-                            state.hasMore &&
-                            !state.isLoading &&
-                            !state.isLoadingMore &&
-                            lastVisibleIndex >= state.users.lastIndex - 2
+    LaunchedEffect(listState) {
+        snapshotFlow {
+            val lastVisibleIndex = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
+            val currentState = viewModel.state.value
 
-                if (shouldLoadMore) {
-                    viewModel.loadMoreUsers()
-                }
+            lastVisibleIndex to currentState
+        }.collect { (lastVisibleIndex, currentState) ->
+            val shouldLoadMore =
+                currentState.users.isNotEmpty() &&
+                        currentState.hasMore &&
+                        !currentState.isLoading &&
+                        !currentState.isLoadingMore &&
+                        lastVisibleIndex >= currentState.users.lastIndex - 2
+
+            if (shouldLoadMore) {
+                viewModel.loadMoreUsers()
             }
+        }
     }
 
     Column(
