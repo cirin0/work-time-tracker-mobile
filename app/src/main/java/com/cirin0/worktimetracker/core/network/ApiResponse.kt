@@ -25,6 +25,7 @@ data class ErrorResponse(
 )
 
 private val errorMapper = ErrorMapper()
+private val gson = Gson()
 
 private fun localizedUnknownError(): String {
     return if (AppLocaleManager.getCurrentLanguage() == AppLocaleManager.DEFAULT_LANGUAGE) {
@@ -40,7 +41,7 @@ suspend fun <T> apiCall(call: suspend () -> T): ApiResponse<T> {
     } catch (e: HttpException) {
         val errorBody = e.response()?.errorBody()?.string()
         val errorResponse = try {
-            Gson().fromJson(errorBody, ErrorResponse::class.java)
+            gson.fromJson(errorBody, ErrorResponse::class.java)
         } catch (_: Exception) {
             null
         }

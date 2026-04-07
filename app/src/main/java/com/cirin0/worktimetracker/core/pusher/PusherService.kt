@@ -22,7 +22,8 @@ import javax.inject.Singleton
 
 @Singleton
 class PusherService @Inject constructor(
-    @param:Named("active_domain") private val domain: String
+    @param:Named("active_domain") private val domain: String,
+    @param:Named("no_auth_client") private val httpClient: OkHttpClient
 ) {
     private var pusher: Pusher? = null
     private val channels = mutableMapOf<String, Channel>()
@@ -33,18 +34,13 @@ class PusherService @Inject constructor(
         }
 
         val authUrl = "$domain/broadcasting/auth"
-        println("🔐 Broadcasting auth URL: $authUrl")
 
         val authorizer = object : HttpChannelAuthorizer(authUrl) {
-            private val httpClient = OkHttpClient()
-
             override fun authorize(
                 channelName: String?,
                 socketId: String?
             ): String? {
                 try {
-                    println("📡 Authorizing channel: $channelName, socketId: $socketId")
-
                     val body = FormBody.Builder()
                         .add("socket_id", socketId ?: "")
                         .add("channel_name", channelName ?: "")
@@ -63,27 +59,15 @@ class PusherService @Inject constructor(
                     val response = httpClient.newCall(request).execute()
                     val responseBody = response.body.string()
 
-                    println("📥 Auth response code: ${response.code}")
-                    println("📥 Auth response body: $responseBody")
-
                     if (!response.isSuccessful) {
-                        println("❌ Auth failed with code ${response.code}")
                         return null
                     }
 
                     return responseBody
                 } catch (e: Exception) {
-                    println("❌ Auth exception: ${e.message}")
-                    e.printStackTrace()
                     return null
                 }
             }
-        }
-
-        authToken?.let { token ->
-            println("🔑 Auth token set for broadcasting: ${token.take(20)}...")
-        } ?: run {
-            println("⚠️ No auth token provided for broadcasting")
         }
 
         val options = PusherOptions().apply {
@@ -97,15 +81,11 @@ class PusherService @Inject constructor(
         pusher = Pusher(Constants.Ably.PUBLIC_KEY, options).apply {
             connect(object : ConnectionEventListener {
                 override fun onConnectionStateChange(change: ConnectionStateChange) {
-                    println("🔄 Ably state: ${change.previousState} -> ${change.currentState}")
-                    if (change.currentState == ConnectionState.CONNECTED) {
-                        println("✅ Pusher CONNECTED! Ready to receive events")
-                    }
+                    // Connection state changed
                 }
 
                 override fun onError(message: String, code: String?, e: Exception?) {
-                    println("❌ Ably error: $message, code: $code")
-                    e?.printStackTrace()
+                    // Connection error occurred
                 }
             }, ConnectionState.ALL)
         }
@@ -158,13 +138,12 @@ class PusherService @Inject constructor(
                             trySend(parsedData)
                         }
                     } catch (e: Exception) {
-                        e.printStackTrace()
+                        // Parsing error
                     }
                 }
 
                 override fun onAuthenticationFailure(message: String?, e: Exception?) {
-                    e?.printStackTrace()
-                    close(Exception("Authentication failed: $message", e))
+                    close(Exception("Authentication failed"))
                 }
 
                 override fun onSubscriptionSucceeded(channelName: String?) {
@@ -177,7 +156,7 @@ class PusherService @Inject constructor(
                     val data = parser(event.data)
                     trySend(data)
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    // Parsing error
                 }
             }
         }

@@ -12,6 +12,7 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -64,10 +65,7 @@ class LocationManager @Inject constructor(
                                 )
                             )
                         } else {
-                            // If last location is null, request a fresh location
-                            requestFreshLocation { result ->
-                                continuation.resume(result)
-                            }
+                            requestFreshLocation(continuation)
                         }
                     }
                     .addOnFailureListener { exception: Exception ->
@@ -83,7 +81,7 @@ class LocationManager @Inject constructor(
         }
     }
 
-    private fun requestFreshLocation(callback: (GpsLocationResult) -> Unit) {
+    private fun requestFreshLocation(continuation: CancellableContinuation<GpsLocationResult>) {
         val locationRequest = LocationRequest.Builder(
             Priority.PRIORITY_HIGH_ACCURACY,
             10000L // 10 seconds
@@ -96,7 +94,7 @@ class LocationManager @Inject constructor(
             override fun onLocationResult(locationResult: com.google.android.gms.location.LocationResult) {
                 val location = locationResult.lastLocation
                 if (location != null) {
-                    callback(
+                    continuation.resume(
                         GpsLocationResult.Success(
                             GpsLocationData(
                                 latitude = location.latitude,
@@ -105,7 +103,7 @@ class LocationManager @Inject constructor(
                         )
                     )
                 } else {
-                    callback(GpsLocationResult.Error("Unable to get location"))
+                    continuation.resume(GpsLocationResult.Error("Unable to get location"))
                 }
                 fusedLocationClient.removeLocationUpdates(this)
             }
@@ -117,8 +115,12 @@ class LocationManager @Inject constructor(
                 locationCallback,
                 Looper.getMainLooper()
             )
+
+            continuation.invokeOnCancellation {
+                fusedLocationClient.removeLocationUpdates(locationCallback)
+            }
         } catch (_: SecurityException) {
-            callback(GpsLocationResult.Error("Location permission denied"))
+            continuation.resume(GpsLocationResult.Error("Location permission denied"))
         }
     }
 

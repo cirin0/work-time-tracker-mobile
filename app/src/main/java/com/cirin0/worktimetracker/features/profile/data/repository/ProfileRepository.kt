@@ -18,11 +18,13 @@ import com.cirin0.worktimetracker.features.profile.data.model.User
 import dagger.hilt.android.qualifiers.ApplicationContext
 import jakarta.inject.Inject
 import jakarta.inject.Named
+import jakarta.inject.Singleton
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
 
+@Singleton
 class ProfileRepository @Inject constructor(
     private val profileApi: ProfileApi,
     private val userDao: UserDao,

@@ -2,7 +2,6 @@ package com.cirin0.worktimetracker.core.fcm
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.cirin0.worktimetracker.features.auth.data.repository.AuthRepository
 import com.google.firebase.messaging.FirebaseMessagingService
@@ -12,6 +11,7 @@ import jakarta.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -24,9 +24,6 @@ class WorkTimeTrackerFCMService : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
-        Log.d(TAG, "New FCM token: $token")
-
-        // Send token to server
         serviceScope.launch {
             authRepository.sendFcmToken(token)
         }
@@ -57,7 +54,15 @@ class WorkTimeTrackerFCMService : FirebaseMessagingService() {
             .setAutoCancel(true)
             .build()
 
-        notificationManager.notify(System.currentTimeMillis().toInt(), notification)
+        notificationManager.notify(
+            (System.currentTimeMillis() % Int.MAX_VALUE).toInt(),
+            notification
+        )
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        serviceScope.cancel()
     }
 
     companion object {
