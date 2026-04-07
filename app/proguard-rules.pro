@@ -39,3 +39,8 @@
 -keepclassmembernames class kotlinx.** {
     volatile <fields>;
 }
+
+# SLF4J - Pusher uses slf4j but we don't need the implementation
+-dontwarn org.slf4j.impl.StaticLoggerBinder
+-dontwarn org.slf4j.impl.StaticMDCBinder
+-dontwarn org.slf4j.impl.StaticMarkerBinder
