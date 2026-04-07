@@ -745,7 +745,7 @@ private fun StartEntryCard(
                                     modifier = Modifier.size(20.dp)
                                 )
                                 Text(
-                                    text = errorText!!,
+                                    text = errorText,
                                     color = MaterialTheme.colorScheme.onErrorContainer,
                                     style = MaterialTheme.typography.bodySmall,
                                     fontWeight = FontWeight.Medium

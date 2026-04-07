@@ -4,7 +4,6 @@ import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
 import com.cirin0.worktimetracker.core.database.dao.CompanyDao
 import com.cirin0.worktimetracker.core.database.dao.LeaveRequestDao
 import com.cirin0.worktimetracker.core.database.dao.TimeEntryDao
@@ -13,6 +12,7 @@ import com.cirin0.worktimetracker.core.database.dao.UserDao
 import com.cirin0.worktimetracker.core.database.dao.WorkScheduleDao
 import com.cirin0.worktimetracker.core.network.ApiResponse
 import com.cirin0.worktimetracker.core.network.apiCall
+import com.cirin0.worktimetracker.core.utils.Constants
 import com.cirin0.worktimetracker.features.auth.data.api.AuthApi
 import com.cirin0.worktimetracker.features.auth.data.model.FcmTokenRequest
 import com.cirin0.worktimetracker.features.auth.data.model.LoginRequest
@@ -46,31 +46,30 @@ class AuthRepository @Inject constructor(
 ) {
     companion object {
         private const val TAG = "AuthRepository"
-        private val TOKEN_KEY = stringPreferencesKey("auth_token")
     }
 
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     val authToken: Flow<String?> = dataStore.data.map { prefs ->
-        prefs[TOKEN_KEY]
+        prefs[Constants.AUTH_TOKEN_KEY]
     }
 
     val isAuthenticated: Flow<Boolean> = authToken.map { it != null }
 
     private suspend fun saveToken(token: String) {
         dataStore.edit { prefs ->
-            prefs[TOKEN_KEY] = token
+            prefs[Constants.AUTH_TOKEN_KEY] = token
         }
     }
 
     suspend fun clearToken() {
         dataStore.edit { prefs ->
-            prefs.remove(TOKEN_KEY)
+            prefs.remove(Constants.AUTH_TOKEN_KEY)
         }
     }
 
     suspend fun getToken(): String? {
-        return dataStore.data.first()[TOKEN_KEY]
+        return dataStore.data.first()[Constants.AUTH_TOKEN_KEY]
     }
 
     suspend fun login(email: String, password: String): ApiResponse<User> {

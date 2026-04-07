@@ -39,7 +39,7 @@ class MessageRepository @Inject constructor(
 
             val senderId = event.senderId ?: event.user.id
             val receiverId = event.receiverId ?: userId
-            val messageId = event.id ?: System.currentTimeMillis().toInt()
+            val messageId = event.id ?: (System.currentTimeMillis() % Int.MAX_VALUE).toInt()
 
             Message(
                 id = messageId,
