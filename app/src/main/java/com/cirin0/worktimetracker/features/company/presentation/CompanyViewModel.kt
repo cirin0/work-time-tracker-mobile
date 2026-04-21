@@ -19,11 +19,11 @@ class CompanyViewModel @Inject constructor(
     private val _state = MutableStateFlow(CompanyState())
     val state = _state.asStateFlow()
 
-    fun loadCompany(companyId: Int) {
+    fun loadCompany() {
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
 
-            when (val response = companyRepository.getCompanyById(companyId)) {
+            when (val response = companyRepository.getCompany()) {
                 is ApiResponse.Success -> {
                     _state.update {
                         it.copy(

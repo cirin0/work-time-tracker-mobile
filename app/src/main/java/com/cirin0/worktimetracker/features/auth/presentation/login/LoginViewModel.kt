@@ -59,14 +59,24 @@ class LoginViewModel @Inject constructor(
     }
 
     fun login() {
-        if (!validateInput()) return
+        val normalizedEmail = _state.value.email.trim()
+        val normalizedPassword = _state.value.password.trim()
+
+        _state.update {
+            it.copy(
+                email = normalizedEmail,
+                password = normalizedPassword
+            )
+        }
+
+        if (!validateInput(normalizedEmail, normalizedPassword)) return
 
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
 
             when (val result = authRepository.login(
-                email = _state.value.email,
-                password = _state.value.password
+                email = normalizedEmail,
+                password = normalizedPassword
             )) {
                 is ApiResponse.Success -> {
                     _state.update {
@@ -95,12 +105,9 @@ class LoginViewModel @Inject constructor(
         }
     }
 
-    private fun validateInput(): Boolean {
-        val currentState = _state.value
-        var isValid: Boolean
-
-        val emailError = validateEmail(currentState.email, true)
-        val passwordError = validatePassword(currentState.password, true)
+    private fun validateInput(email: String, password: String): Boolean {
+        val emailError = validateEmail(email, true)
+        val passwordError = validatePassword(password, true)
 
         _state.update {
             it.copy(
@@ -109,8 +116,7 @@ class LoginViewModel @Inject constructor(
             )
         }
 
-        isValid = emailError == null && passwordError == null
-        return isValid
+        return emailError == null && passwordError == null
     }
 
     private fun validateEmail(email: String, hasInteracted: Boolean): String? {

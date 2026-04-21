@@ -24,10 +24,10 @@ class CompanyRepository @Inject constructor(
     @param:Named(Constants.NAMED_IMAGE_URL) private val imageBaseUrl: String,
     @param:ApplicationContext private val context: Context
 ) {
-    suspend fun getCompanyById(companyId: Int): ApiResponse<CompanyDetail> {
+    suspend fun getCompany(): ApiResponse<CompanyDetail> {
         if (!connectivityObserver.isConnected()) {
             val cachedCompany = companyDao.getCompany()
-            return if (cachedCompany != null && cachedCompany.companyId == companyId) {
+            return if (cachedCompany != null) {
                 ApiResponse.Success(cachedCompany.toCompanyDetail(), fromCache = true)
             } else {
                 ApiResponse.Error(context.getString(R.string.general_no_internet))
@@ -35,7 +35,7 @@ class CompanyRepository @Inject constructor(
         }
 
         val result = apiCall {
-            val rawCompany = companyApi.getCompanyById(companyId)
+            val rawCompany = companyApi.getCompany()
             val company = rawCompany.copy(
                 logo = rawCompany.logo?.let { path ->
                     if (path.startsWith("http")) path else "$imageBaseUrl$path"
@@ -60,7 +60,7 @@ class CompanyRepository @Inject constructor(
 
         return if (result is ApiResponse.Error) {
             val cachedCompany = companyDao.getCompany()
-            if (cachedCompany != null && cachedCompany.companyId == companyId) {
+            if (cachedCompany != null) {
                 ApiResponse.Success(cachedCompany.toCompanyDetail(), fromCache = true)
             } else {
                 result

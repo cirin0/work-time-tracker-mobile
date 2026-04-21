@@ -80,7 +80,7 @@ import java.io.FileOutputStream
 @Composable
 fun ProfileScreen(
     viewModel: ProfileViewModel = hiltViewModel(),
-    onNavigateToCompany: (Int) -> Unit = {},
+    onNavigateToCompany: () -> Unit = {},
     onNavigateToChat: () -> Unit = {},
     onNavigateToRequests: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
@@ -246,7 +246,7 @@ fun ProfileScreen(
                                     label = stringResource(R.string.profile_company),
                                     value = company.name,
                                     showArrow = true,
-                                    onClick = { onNavigateToCompany(company.id) }
+                                    onClick = { onNavigateToCompany() }
                                 )
                                 addDivider = true
                             }

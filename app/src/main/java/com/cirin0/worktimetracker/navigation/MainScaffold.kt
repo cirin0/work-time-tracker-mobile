@@ -263,8 +263,8 @@ fun MainScaffold(
                 }
                 composable(Screen.Profile.route) {
                     ProfileScreen(
-                        onNavigateToCompany = { companyId ->
-                            navController.navigate(Screen.Company.createRoute(companyId))
+                        onNavigateToCompany = {
+                            navController.navigate(Screen.Company.createRoute())
                         },
                         onNavigateToChat = {
                             navController.navigate(Screen.ChatList.route)
@@ -303,13 +303,8 @@ fun MainScaffold(
                         }
                     )
                 }
-                composable(
-                    route = Screen.Company.route,
-                    arguments = listOf(navArgument("companyId") { type = NavType.IntType })
-                ) { backStackEntry ->
-                    val companyId = backStackEntry.arguments?.getInt("companyId") ?: 0
+                composable(Screen.Company.route) {
                     CompanyScreen(
-                        companyId = companyId,
                         onNavigateBack = {
                             navController.popBackStack()
                         }
