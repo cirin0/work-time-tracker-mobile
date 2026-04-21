@@ -33,7 +33,7 @@ object Constants {
         const val UPDATE_PIN_CODE = "me/pin-code"
         const val FCM_TOKEN = "me/fcm-token"
         const val USERS = "users"
-        const val COMPANIES = "companies"
+        const val COMPANY = "company"
         const val TIME_ENTRIES = "time-entries"
         const val LEAVE_REQUESTS = "leave-requests"
         const val MESSAGES = "messages"

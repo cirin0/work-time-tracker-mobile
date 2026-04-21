@@ -73,8 +73,11 @@ class AuthRepository @Inject constructor(
     }
 
     suspend fun login(email: String, password: String): ApiResponse<User> {
+        val normalizedEmail = email.trim()
+        val normalizedPassword = password.trim()
+
         val result = apiCall {
-            authApi.login(LoginRequest(email, password))
+            authApi.login(LoginRequest(normalizedEmail, normalizedPassword))
         }
 
         when (result) {
@@ -124,21 +127,31 @@ class AuthRepository @Inject constructor(
         email: String,
         password: String
     ): ApiResponse<RegisterResponse> {
+        val normalizedName = name.trim()
+        val normalizedEmail = email.trim()
+        val normalizedPassword = password.trim()
+
         return apiCall {
-            authApi.register(RegisterRequest(name, email, password))
+            authApi.register(RegisterRequest(normalizedName, normalizedEmail, normalizedPassword))
         }
     }
 
     suspend fun verifyEmail(email: String, code: String): ApiResponse<String> {
+        val normalizedEmail = email.trim()
+        val normalizedCode = code.trim()
+
         return apiCall {
-            val response = authApi.verifyEmail(VerifyEmailRequest(email, code))
+            val response = authApi.verifyEmail(VerifyEmailRequest(normalizedEmail, normalizedCode))
             response.message
         }
     }
 
     suspend fun resendVerificationCode(email: String): ApiResponse<String> {
+        val normalizedEmail = email.trim()
+
         return apiCall {
-            val response = authApi.resendVerificationCode(ResendVerificationRequest(email))
+            val response =
+                authApi.resendVerificationCode(ResendVerificationRequest(normalizedEmail))
             response.message
         }
     }

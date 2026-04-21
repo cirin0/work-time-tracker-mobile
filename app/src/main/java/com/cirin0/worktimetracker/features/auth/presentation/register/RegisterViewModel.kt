@@ -70,15 +70,27 @@ class RegisterViewModel @Inject constructor(
     }
 
     fun register() {
-        if (!validateInput()) return
+        val normalizedName = _state.value.name.trim()
+        val normalizedEmail = _state.value.email.trim()
+        val normalizedPassword = _state.value.password.trim()
+
+        _state.update {
+            it.copy(
+                name = normalizedName,
+                email = normalizedEmail,
+                password = normalizedPassword
+            )
+        }
+
+        if (!validateInput(normalizedName, normalizedEmail, normalizedPassword)) return
 
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
 
             when (val result = authRepository.register(
-                _state.value.name,
-                _state.value.email,
-                _state.value.password
+                normalizedName,
+                normalizedEmail,
+                normalizedPassword
             )) {
                 is ApiResponse.Success -> {
                     _state.update {
@@ -105,12 +117,10 @@ class RegisterViewModel @Inject constructor(
         }
     }
 
-    private fun validateInput(): Boolean {
-        val currentState = _state.value
-
-        val nameError = validateName(currentState.name, true)
-        val emailError = validateEmail(currentState.email, true)
-        val passwordError = validatePassword(currentState.password, true)
+    private fun validateInput(name: String, email: String, password: String): Boolean {
+        val nameError = validateName(name, true)
+        val emailError = validateEmail(email, true)
+        val passwordError = validatePassword(password, true)
 
         _state.update {
             it.copy(

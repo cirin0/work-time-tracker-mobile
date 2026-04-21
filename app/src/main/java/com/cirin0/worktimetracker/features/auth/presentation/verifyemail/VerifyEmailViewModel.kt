@@ -18,16 +18,17 @@ class VerifyEmailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private val email: String = savedStateHandle.get<String>("email") ?: ""
+    private val email: String = (savedStateHandle.get<String>("email") ?: "").trim()
 
     private val _state = MutableStateFlow(VerifyEmailState())
     val state = _state.asStateFlow()
 
     fun onCodeChange(code: String) {
-        if (code.length <= 6 && code.all { it.isDigit() }) {
+        val normalizedCode = code.trim()
+        if (normalizedCode.length <= 6 && normalizedCode.all { it.isDigit() }) {
             _state.update {
                 val newState = it.copy(
-                    code = code,
+                    code = normalizedCode,
                     codeError = null,
                     error = null,
                     hasInteracted = true
@@ -38,12 +39,18 @@ class VerifyEmailViewModel @Inject constructor(
     }
 
     fun verifyEmail() {
-        if (!validateInput()) return
+        val normalizedCode = _state.value.code.trim()
+
+        _state.update {
+            it.copy(code = normalizedCode)
+        }
+
+        if (!validateInput(normalizedCode)) return
 
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
 
-            when (val result = authRepository.verifyEmail(email, _state.value.code)) {
+            when (val result = authRepository.verifyEmail(email, normalizedCode)) {
                 is ApiResponse.Success -> {
                     _state.update {
                         it.copy(
@@ -95,8 +102,8 @@ class VerifyEmailViewModel @Inject constructor(
         }
     }
 
-    private fun validateInput(): Boolean {
-        val codeError = validateCode(_state.value.code, true)
+    private fun validateInput(code: String): Boolean {
+        val codeError = validateCode(code, true)
 
         _state.update {
             it.copy(codeError = codeError)
@@ -112,4 +119,3 @@ class VerifyEmailViewModel @Inject constructor(
         return null
     }
 }
-

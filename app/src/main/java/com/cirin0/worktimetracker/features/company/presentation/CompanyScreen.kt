@@ -54,14 +54,13 @@ import com.cirin0.worktimetracker.features.company.data.model.CompanyDetail
 
 @Composable
 fun CompanyScreen(
-    companyId: Int,
     onNavigateBack: () -> Unit,
     viewModel: CompanyViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
 
-    LaunchedEffect(companyId) {
-        viewModel.loadCompany(companyId)
+    LaunchedEffect(Unit) {
+        viewModel.loadCompany()
     }
 
     Box(
@@ -79,7 +78,7 @@ fun CompanyScreen(
         ) {
             TopBarSection(
                 onBack = onNavigateBack,
-                onRefresh = { viewModel.loadCompany(companyId) }
+                onRefresh = { viewModel.loadCompany() }
             )
 
             when {
@@ -111,7 +110,7 @@ fun CompanyScreen(
                             style = MaterialTheme.typography.bodyLarge
                         )
                         Spacer(modifier = Modifier.height(16.dp))
-                        OutlinedButton(onClick = { viewModel.loadCompany(companyId) }) {
+                        OutlinedButton(onClick = { viewModel.loadCompany() }) {
                             Text(stringResource(R.string.general_retry))
                         }
                     }
