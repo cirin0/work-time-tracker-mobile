@@ -97,6 +97,12 @@
     <string name="settings_update_ready">Оновлення готове до встановлення</string>
     <string name="settings_install_update">Встановити та перезавантажити</string>
 
+    <string name="settings_notifications">Сповіщення</string>
+    <string name="settings_notification_before_work">Сповіщення перед роботою</string>
+    <string name="settings_notification_before_work_desc">Нагадування про початок робочого дня</string>
+    <string name="settings_notification_time">Час до початку</string>
+    <string name="settings_notification_time_mins">%1$d хв</string>
+
     <string name="home_title">Відстеження часу</string>
     <string name="home_subtitle">Керування робочим часом</string>
     <string name="home_day_off_title">Сьогодні вихідний</string>

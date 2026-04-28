@@ -1,22 +1,26 @@
 package com.cirin0.worktimetracker.features.timeentries.presentation
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cirin0.worktimetracker.core.network.ApiResponse
+import com.cirin0.worktimetracker.core.notifications.WorkNotificationScheduler
 import com.cirin0.worktimetracker.core.utils.DateUtils
 import com.cirin0.worktimetracker.core.utils.GpsLocationResult
 import com.cirin0.worktimetracker.core.utils.LocationManager
+import com.cirin0.worktimetracker.data.UserPreferencesRepository
 import com.cirin0.worktimetracker.features.profile.data.repository.ProfileRepository
 import com.cirin0.worktimetracker.features.timeentries.data.repository.TimeEntriesRepository
 import com.cirin0.worktimetracker.features.workschedule.data.repository.WorkScheduleRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import jakarta.inject.Inject
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -25,13 +29,16 @@ import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import javax.inject.Inject
 
 @HiltViewModel
 class TimeEntriesViewModel @Inject constructor(
     private val repository: TimeEntriesRepository,
     private val locationManager: LocationManager,
     private val profileRepository: ProfileRepository,
-    private val workScheduleRepository: WorkScheduleRepository
+    private val workScheduleRepository: WorkScheduleRepository,
+    private val userPreferencesRepository: UserPreferencesRepository,
+    @param:ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(TimeEntriesState())
@@ -55,19 +62,8 @@ class TimeEntriesViewModel @Inject constructor(
 
         val workedMinutes = if (activeEntry != null) {
             val currentTime = LocalTime.now()
-            val startTime = try {
-                if (activeEntry.startTime.contains("T")) {
-                    ZonedDateTime.parse(activeEntry.startTime)
-                        .withZoneSameInstant(ZoneId.systemDefault())
-                        .toLocalTime()
-                } else {
-                    LocalTime.parse(activeEntry.startTime, DateTimeFormatter.ofPattern("HH:mm:ss"))
-                }
-            } catch (_: Exception) {
-                LocalTime.now()
-            }
-            val activeMinutes = Duration.between(startTime, currentTime)
-                .toMinutes().toInt().coerceAtLeast(0)
+            val startTime = parseActiveEntryStartTime(activeEntry.startTime)
+            val activeMinutes = calculateMinutesBetween(startTime, currentTime).toInt()
             activeMinutes + todayEntries
                 .filter { it.id != activeEntry.id }
                 .sumOf { (it.duration ?: 0) / 60 }
@@ -113,16 +109,19 @@ class TimeEntriesViewModel @Inject constructor(
                     val schedule = result.data
                     val currentDay = DateUtils.getCurrentDayOfWeek()
                     val todaySchedule =
-                        schedule?.dailySchedules?.find { it.dayOfWeek.lowercase() == currentDay }
+                        schedule?.dailySchedules?.firstOrNull {
+                            DateUtils.normalizeDayOfWeek(it.dayOfWeek) == currentDay
+                        }
 
                     val isWorkingDay = todaySchedule?.isWorkingDay ?: true
                     val targetHours = if (todaySchedule != null && isWorkingDay) {
-                        try {
-                            val start = LocalTime.parse(todaySchedule.startTime)
-                            val end = LocalTime.parse(todaySchedule.endTime)
-                            val durationMinutes = Duration.between(start, end).toMinutes()
-                            (durationMinutes - todaySchedule.breakDuration) / 60f
-                        } catch (_: Exception) {
+                        val durationMinutes = DateUtils.getShiftDurationMinutes(
+                            todaySchedule.startTime,
+                            todaySchedule.endTime
+                        )
+                        if (durationMinutes > 0) {
+                            durationMinutes / 60f
+                        } else {
                             8f
                         }
                     } else {
@@ -134,6 +133,18 @@ class TimeEntriesViewModel @Inject constructor(
                         targetHours = targetHours,
                         isWorkingDay = isWorkingDay
                     )
+
+                    // Reschedule pre-work notification if enabled
+                    viewModelScope.launch {
+                        val enabled = userPreferencesRepository.isPreWorkNotificationEnabled.first()
+                        if (enabled) {
+                            val minutes =
+                                userPreferencesRepository.preWorkNotificationMinutes.first()
+                            schedule?.let {
+                                WorkNotificationScheduler.scheduleNotification(context, it, minutes)
+                            }
+                        }
+                    }
                 }
 
                 is ApiResponse.Error -> {}
@@ -531,5 +542,32 @@ class TimeEntriesViewModel @Inject constructor(
             setupPinConfirm = "",
             error = null
         )
+    }
+
+    private fun parseActiveEntryStartTime(startTime: String): LocalTime {
+        return try {
+            if (startTime.contains("T")) {
+                ZonedDateTime.parse(startTime)
+                    .withZoneSameInstant(ZoneId.systemDefault())
+                    .toLocalTime()
+            } else {
+                try {
+                    LocalTime.parse(startTime, DateTimeFormatter.ofPattern("HH:mm:ss"))
+                } catch (_: Exception) {
+                    LocalTime.parse(startTime, DateTimeFormatter.ofPattern("HH:mm"))
+                }
+            }
+        } catch (_: Exception) {
+            LocalTime.now()
+        }
+    }
+
+    private fun calculateMinutesBetween(startTime: LocalTime, endTime: LocalTime): Long {
+        val minutes = Duration.between(startTime, endTime).toMinutes()
+        return if (minutes >= 0) {
+            minutes
+        } else {
+            minutes + Duration.ofDays(1).toMinutes()
+        }
     }
 }
