@@ -1,9 +1,13 @@
+@file:Suppress("unused")
+
 package com.cirin0.worktimetracker.core.utils
 
 import com.cirin0.worktimetracker.core.localization.AppLocaleManager
 import java.time.DayOfWeek
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
@@ -30,6 +34,36 @@ object DateUtils {
 
     private fun displayTimeFormatter(): DateTimeFormatter {
         return DateTimeFormatter.ofPattern("HH:mm", currentLocale())
+    }
+
+    fun normalizeDayOfWeek(dayOfWeek: String): String {
+        return dayOfWeek.trim().lowercase(Locale.US)
+    }
+
+    fun parseWorkTime(timeString: String?): LocalTime? {
+        if (timeString.isNullOrBlank()) return null
+        val normalizedTime = timeString.trim()
+        return try {
+            LocalTime.parse(normalizedTime, DateTimeFormatter.ofPattern("HH:mm:ss"))
+        } catch (_: Exception) {
+            try {
+                LocalTime.parse(normalizedTime, DateTimeFormatter.ofPattern("HH:mm"))
+            } catch (_: Exception) {
+                null
+            }
+        }
+    }
+
+    @Suppress("unused")
+    fun getShiftDurationMinutes(startTime: String, endTime: String): Long {
+        val start = parseWorkTime(startTime) ?: return 0L
+        val end = parseWorkTime(endTime) ?: return 0L
+        val durationMinutes = Duration.between(start, end).toMinutes()
+        return if (durationMinutes >= 0) {
+            durationMinutes
+        } else {
+            durationMinutes + Duration.ofDays(1).toMinutes()
+        }
     }
 
     /**
@@ -132,11 +166,12 @@ object DateUtils {
         }
     }
 
+    @Suppress("unused")
     fun getDayNameUkrainian(dayOfWeek: String): String = getDayDisplayName(dayOfWeek)
 
     // Day order: "monday" → 1, "sunday" → 7
     fun getDayOrder(dayOfWeek: String): Int {
-        return when (dayOfWeek.lowercase()) {
+        return when (normalizeDayOfWeek(dayOfWeek)) {
             "monday" -> 1
             "tuesday" -> 2
             "wednesday" -> 3
@@ -150,7 +185,7 @@ object DateUtils {
 
     // Get the current day of the week in English lowercase
     fun getCurrentDayOfWeek(): String {
-        return LocalDate.now().dayOfWeek.name.lowercase()
+        return normalizeDayOfWeek(LocalDate.now().dayOfWeek.name)
     }
 
     // Get the current date-time in ISO format

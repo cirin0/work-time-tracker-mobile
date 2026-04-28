@@ -97,6 +97,12 @@
     <string name="settings_update_ready">Update ready to install</string>
     <string name="settings_install_update">Install and restart</string>
 
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_notification_before_work">Notification before work</string>
+    <string name="settings_notification_before_work_desc">Reminder of the start of the work day</string>
+    <string name="settings_notification_time">Time before start</string>
+    <string name="settings_notification_time_mins">%1$d min</string>
+
     <string name="home_title">Time Tracking</string>
     <string name="home_subtitle">Manage your work time</string>
     <string name="home_day_off_title">Today is a day off</string>

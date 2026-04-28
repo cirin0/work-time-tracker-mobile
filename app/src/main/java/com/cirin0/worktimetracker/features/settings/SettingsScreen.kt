@@ -38,7 +38,9 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -52,6 +54,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -201,6 +205,41 @@ fun SettingsScreen(
                             (context as? Activity)?.recreate()
                         }
                     )
+                }
+
+                SettingsSection(title = stringResource(R.string.settings_notifications)) {
+                    val notificationTimeOptions = linkedMapOf(
+                        5 to stringResource(R.string.settings_notification_time_mins, 5),
+                        10 to stringResource(R.string.settings_notification_time_mins, 10),
+                        15 to stringResource(R.string.settings_notification_time_mins, 15),
+                        30 to stringResource(R.string.settings_notification_time_mins, 30),
+                        60 to stringResource(R.string.settings_notification_time_mins, 60)
+                    )
+
+                    SwitchPreferenceRow(
+                        icon = Icons.Default.Notifications,
+                        label = stringResource(R.string.settings_notification_before_work),
+                        description = stringResource(R.string.settings_notification_before_work_desc),
+                        checked = settingsState.preWorkNotificationEnabled,
+                        onCheckedChange = { settingsViewModel.setPreWorkNotificationEnabled(it) }
+                    )
+
+                    if (settingsState.preWorkNotificationEnabled) {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(start = 62.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                            thickness = 0.5.dp
+                        )
+                        SelectionPreferenceRow(
+                            icon = Icons.Default.Timer,
+                            label = stringResource(R.string.settings_notification_time),
+                            selectedValue = settingsState.preWorkNotificationMinutes,
+                            selectedText = notificationTimeOptions[settingsState.preWorkNotificationMinutes]
+                                ?: stringResource(R.string.settings_notification_time_mins, 15),
+                            options = notificationTimeOptions,
+                            onOptionSelected = { settingsViewModel.setPreWorkNotificationMinutes(it) }
+                        )
+                    }
                 }
 
                 SettingsSection(title = stringResource(R.string.settings_permissions)) {
@@ -424,7 +463,7 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .navigationBarsPadding()
-                .padding(bottom = 16.dp)
+                .padding(8.dp)
         )
     }
 }
@@ -531,6 +570,72 @@ private fun <T> SelectionPreferenceRow(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun SwitchPreferenceRow(
+    icon: ImageVector,
+    label: String,
+    description: String? = null,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onCheckedChange(!checked) }
+            .padding(horizontal = 16.dp, vertical = 13.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Surface(
+            modifier = Modifier.size(34.dp),
+            shape = RoundedCornerShape(10.dp),
+            color = if (checked)
+                MaterialTheme.colorScheme.primaryContainer
+            else
+                MaterialTheme.colorScheme.surfaceVariant
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = if (checked)
+                        MaterialTheme.colorScheme.primary
+                    else
+                        MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium
+            )
+            if (description != null) {
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = MaterialTheme.colorScheme.primary,
+                checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
+                uncheckedThumbColor = MaterialTheme.colorScheme.outline,
+                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        )
     }
 }
 
