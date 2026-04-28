@@ -24,7 +24,7 @@ import com.cirin0.worktimetracker.core.database.entity.CachedWorkScheduleEntity
         CachedWorkScheduleEntity::class,
         CachedLeaveRequestEntity::class
     ],
-    version = 6,
+    version = 8,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

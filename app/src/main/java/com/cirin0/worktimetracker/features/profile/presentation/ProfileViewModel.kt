@@ -57,7 +57,6 @@ class ProfileViewModel @Inject constructor(
                             isLoading = false,
                             error = null,
                             editName = response.data.name,
-                            editEmail = response.data.email,
                             isCachedData = response.fromCache,
                             showServerUnavailableWarning = response.fromCache && !isOffline
                         )
@@ -85,9 +84,7 @@ class ProfileViewModel @Inject constructor(
             it.copy(
                 isEditDialogOpen = true,
                 editName = it.user?.name ?: "",
-                editEmail = it.user?.email ?: "",
                 nameError = null,
-                emailError = null,
                 updateError = null
             )
         }
@@ -98,7 +95,6 @@ class ProfileViewModel @Inject constructor(
             it.copy(
                 isEditDialogOpen = false,
                 nameError = null,
-                emailError = null,
                 updateError = null
             )
         }
@@ -114,27 +110,16 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun onEmailChange(email: String) {
-        _state.update {
-            it.copy(
-                editEmail = email,
-                emailError = null,
-                updateError = null
-            )
-        }
-    }
-
     fun updateProfile() {
         val currentState = _state.value
+        val userEmail = currentState.user?.email ?: ""
 
         val nameValidation = ValidationRules.isValidName(currentState.editName)
-        val emailValidation = ValidationRules.isValidEmail(currentState.editEmail)
 
-        if (!nameValidation.isValid || !emailValidation.isValid) {
+        if (!nameValidation.isValid) {
             _state.update {
                 it.copy(
-                    nameError = (nameValidation as? ValidationResult.Error)?.resolve(context),
-                    emailError = (emailValidation as? ValidationResult.Error)?.resolve(context)
+                    nameError = (nameValidation as? ValidationResult.Error)?.resolve(context)
                 )
             }
             return
@@ -144,7 +129,7 @@ class ProfileViewModel @Inject constructor(
             _state.update { it.copy(isUpdating = true, updateError = null, updateSuccess = false) }
             when (val response = profileRepository.updateProfile(
                 currentState.editName,
-                currentState.editEmail
+                userEmail
             )) {
                 is ApiResponse.Success -> {
                     _state.update {
@@ -153,8 +138,7 @@ class ProfileViewModel @Inject constructor(
                             isUpdating = false,
                             updateSuccess = true,
                             isEditDialogOpen = false,
-                            editName = response.data.name,
-                            editEmail = response.data.email
+                            editName = response.data.name
                         )
                     }
                 }

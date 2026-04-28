@@ -1,5 +1,6 @@
 package com.cirin0.worktimetracker.features.auth.presentation.verifyemail
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -30,11 +31,13 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import kotlinx.coroutines.delay
 
 @Composable
 fun VerifyEmailScreen(
@@ -44,9 +47,19 @@ fun VerifyEmailScreen(
     viewModel: VerifyEmailViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { message ->
+            Toast.makeText(context.applicationContext, message, Toast.LENGTH_LONG).show()
+        }
+    }
 
     LaunchedEffect(state.isVerified) {
         if (state.isVerified) {
+            if (state.isAutoLoginSuccess) {
+                delay(1000)
+            }
             onVerificationSuccess()
         }
     }

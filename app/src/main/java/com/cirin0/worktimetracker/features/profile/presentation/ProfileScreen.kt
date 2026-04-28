@@ -129,11 +129,9 @@ fun ProfileScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             ProfileTopBar(
-                showEditButton = state.user != null,
                 onRefresh = { viewModel.loadUserProfile() },
                 onChat = onNavigateToChat,
-                onSettings = onNavigateToSettings,
-                onEdit = { viewModel.openEditDialog() }
+                onSettings = onNavigateToSettings
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -164,12 +162,36 @@ fun ProfileScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    Text(
-                        text = user.name,
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = user.name,
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Surface(
+                            modifier = Modifier.size(32.dp),
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            tonalElevation = 1.dp
+                        ) {
+                            IconButton(
+                                onClick = { viewModel.openEditDialog() }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = stringResource(R.string.profile_edit),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+                    }
+
                     Spacer(modifier = Modifier.height(4.dp))
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -342,13 +364,10 @@ fun ProfileScreen(
     if (state.isEditDialogOpen) {
         EditProfileDialog(
             name = state.editName,
-            email = state.editEmail,
             nameError = state.nameError,
-            emailError = state.emailError,
             updateError = state.updateError,
             isUpdating = state.isUpdating,
             onNameChange = { viewModel.onNameChange(it) },
-            onEmailChange = { viewModel.onEmailChange(it) },
             onConfirm = { viewModel.updateProfile() },
             onDismiss = { viewModel.closeEditDialog() }
         )
@@ -357,11 +376,9 @@ fun ProfileScreen(
 
 @Composable
 private fun ProfileTopBar(
-    showEditButton: Boolean,
     onRefresh: () -> Unit,
     onChat: () -> Unit,
-    onSettings: () -> Unit,
-    onEdit: () -> Unit
+    onSettings: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -394,13 +411,6 @@ private fun ProfileTopBar(
                 contentDescription = stringResource(R.string.profile_settings),
                 onClick = onSettings
             )
-            if (showEditButton) {
-                TopBarIconButton(
-                    icon = Icons.Default.Edit,
-                    contentDescription = stringResource(R.string.profile_edit),
-                    onClick = onEdit
-                )
-            }
             TopBarIconButton(
                 icon = Icons.Default.Refresh,
                 contentDescription = stringResource(R.string.general_refresh),
@@ -797,13 +807,10 @@ private fun UpdatePinCodeDialog(
 @Composable
 private fun EditProfileDialog(
     name: String,
-    email: String,
     nameError: String?,
-    emailError: String?,
     updateError: String?,
     isUpdating: Boolean,
     onNameChange: (String) -> Unit,
-    onEmailChange: (String) -> Unit,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -818,15 +825,6 @@ private fun EditProfileDialog(
                     label = { Text(stringResource(R.string.profile_name)) },
                     isError = nameError != null,
                     supportingText = nameError?.let { { Text(it) } },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = onEmailChange,
-                    label = { Text(stringResource(R.string.general_email)) },
-                    isError = emailError != null,
-                    supportingText = emailError?.let { { Text(it) } },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )

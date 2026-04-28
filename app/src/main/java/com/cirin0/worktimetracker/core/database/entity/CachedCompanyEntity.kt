@@ -21,6 +21,8 @@ data class CachedCompanyEntity(
     val latitude: String?,
     val longitude: String?,
     val radiusMeters: Int?,
+    val latenessGraceMinutes: Int?,
+    val overtimeThresholdHours: Double?,
     val managerId: Int,
     val managerName: String,
     val managerEmail: String,
@@ -49,6 +51,8 @@ fun CachedCompanyEntity.toCompanyDetail(): CompanyDetail {
         latitude = latitude,
         longitude = longitude,
         radiusMeters = radiusMeters,
+        latenessGraceMinutes = latenessGraceMinutes,
+        overtimeThresholdHours = overtimeThresholdHours,
         manager = BaseUser(
             id = managerId,
             name = managerName,
@@ -75,6 +79,8 @@ fun CompanyDetail.toCachedEntity(): CachedCompanyEntity {
         latitude = latitude,
         longitude = longitude,
         radiusMeters = radiusMeters,
+        latenessGraceMinutes = latenessGraceMinutes,
+        overtimeThresholdHours = overtimeThresholdHours,
         managerId = manager.id,
         managerName = manager.name,
         managerEmail = manager.email,
@@ -85,4 +91,3 @@ fun CompanyDetail.toCachedEntity(): CachedCompanyEntity {
         updatedAt = updatedAt
     )
 }
-

@@ -9,8 +9,10 @@ sealed class Screen(val route: String) {
     object Login : Screen("login")
     object Register : Screen("register")
 
-    object VerifyEmail : Screen("verify_email/{email}") {
-        fun createRoute(email: String) = "verify_email/${Uri.encode(email)}"
+    object VerifyEmail : Screen("verify_email/{email}?password={password}") {
+        fun createRoute(email: String, password: String? = null) =
+            "verify_email/${Uri.encode(email)}" +
+                    (if (password != null) "?password=${Uri.encode(password)}" else "")
     }
 
     object Main : Screen("main")

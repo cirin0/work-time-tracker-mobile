@@ -282,13 +282,20 @@
     <string name="company_employees_section">EMPLOYEES</string>
     <string name="company_employee_avatar_content_description">Employee avatar</string>
 
+    <string name="company_latitude">Latitude</string>
+    <string name="company_longitude">Longitude</string>
+    <string name="company_radius">Radius (m)</string>
+    <string name="company_lateness_grace">Lateness grace period</string>
+    <string name="company_overtime_threshold">Overtime threshold</string>
+    <string name="company_stats_section">STATS &amp; SETTINGS</string>
+
     <string name="qr_scanner_title">Scan QR code</string>
     <string name="qr_scanner_close">Close</string>
     <string name="qr_scanner_instruction">Point the camera at the QR code</string>
 
     <string name="loading_state_default">Loading…</string>
     <string name="offline_badge_text">Offline mode</string>
-    
+
     <string name="manager_title">Manager</string>
     <string name="manager_subtitle">Team management</string>
     <string name="manager_tab_leave_requests">Requests</string>
@@ -309,7 +316,7 @@
     <string name="manager_reject_title">Reject Request</string>
     <string name="manager_reject_message">Please specify the reason for rejection</string>
     <string name="manager_comment_label">Comment</string>
-    <string name="manager_comment_placeholder">Enter comment...</string>
+    <string name="manager_comment_placeholder">Enter comment…</string>
 </resources>
 
 
