@@ -31,7 +31,7 @@ object ValidationRules {
         return when {
             name.isBlank() -> ValidationResult.Error(R.string.validation_name_required)
             name.length < 2 -> ValidationResult.Error(R.string.validation_name_too_short)
-            !name.all { it.isLetter() || it.isWhitespace() } ->
+            !name.all { it.isLetter() || it.isWhitespace() || it == '\'' || it == '’' || it == 'ʼ' || it == '-' } ->
                 ValidationResult.Error(R.string.validation_name_letters_only)
 
             else -> ValidationResult.Success

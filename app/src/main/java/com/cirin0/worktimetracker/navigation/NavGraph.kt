@@ -55,8 +55,8 @@ fun NavGraph(
                         }
                     }
                 },
-                onRegisterSuccess = { _: Int, email: String ->
-                    navController.navigate(Screen.VerifyEmail.createRoute(email)) {
+                onRegisterSuccess = { email: String, password: String ->
+                    navController.navigate(Screen.VerifyEmail.createRoute(email, password)) {
                         popUpTo(Screen.Register.route) {
                             inclusive = true
                         }
@@ -67,14 +67,19 @@ fun NavGraph(
         composable(
             route = Screen.VerifyEmail.route,
             arguments = listOf(
-                navArgument("email") { type = NavType.StringType }
+                navArgument("email") { type = NavType.StringType },
+                navArgument("password") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
             )
         ) { backStackEntry ->
             val email = Uri.decode(backStackEntry.arguments?.getString("email") ?: "")
             VerifyEmailScreen(
                 email = email,
                 onVerificationSuccess = {
-                    navController.navigate(Screen.Login.route) {
+                    navController.navigate(Screen.Main.route) {
                         popUpTo(Screen.VerifyEmail.route) {
                             inclusive = true
                         }

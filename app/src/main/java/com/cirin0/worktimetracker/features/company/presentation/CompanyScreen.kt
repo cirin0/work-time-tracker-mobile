@@ -19,11 +19,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material.icons.filled.Adjust
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -294,6 +298,64 @@ private fun CompanyInfoSection(company: CompanyDetail) {
                     icon = Icons.Default.LocationOn,
                     label = stringResource(R.string.company_screen_address),
                     value = company.address ?: stringResource(R.string.company_screen_no_data)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = stringResource(R.string.company_stats_section),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 4.dp, bottom = 6.dp)
+        )
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                DetailRow(
+                    icon = Icons.Default.Map,
+                    label = stringResource(R.string.company_latitude),
+                    value = company.latitude ?: stringResource(R.string.company_screen_no_data)
+                )
+                RowDivider()
+                DetailRow(
+                    icon = Icons.Default.Map,
+                    label = stringResource(R.string.company_longitude),
+                    value = company.longitude ?: stringResource(R.string.company_screen_no_data)
+                )
+                RowDivider()
+                DetailRow(
+                    icon = Icons.Default.Adjust,
+                    label = stringResource(R.string.company_radius),
+                    value = company.radiusMeters?.toString()
+                        ?: stringResource(R.string.company_screen_no_data)
+                )
+                RowDivider()
+                DetailRow(
+                    icon = Icons.Default.Timer,
+                    label = stringResource(R.string.company_lateness_grace),
+                    value = company.latenessGraceMinutes?.let {
+                        stringResource(
+                            R.string.general_minutes_short_format,
+                            it
+                        )
+                    }
+                        ?: stringResource(R.string.company_screen_no_data)
+                )
+                RowDivider()
+                DetailRow(
+                    icon = Icons.AutoMirrored.Filled.TrendingUp,
+                    label = stringResource(R.string.company_overtime_threshold),
+                    value = company.overtimeThresholdHours?.toString()
+                        ?: stringResource(R.string.company_screen_no_data)
                 )
             }
         }

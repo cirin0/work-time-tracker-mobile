@@ -8,5 +8,6 @@ data class VerifyEmailState(
     val isVerified: Boolean = false,
     val hasInteracted: Boolean = false,
     val isResending: Boolean = false,
-    val resendSuccess: String? = null
+    val resendSuccess: String? = null,
+    val isAutoLoginSuccess: Boolean = false
 )

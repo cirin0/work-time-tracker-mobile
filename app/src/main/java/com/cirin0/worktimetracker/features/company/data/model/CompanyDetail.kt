@@ -19,6 +19,10 @@ data class CompanyDetail(
     val longitude: String?,
     @SerializedName("radius_meters")
     val radiusMeters: Int?,
+    @SerializedName("lateness_grace_minutes")
+    val latenessGraceMinutes: Int?,
+    @SerializedName("overtime_threshold_hours")
+    val overtimeThresholdHours: Double?,
     val manager: BaseUser,
     @JsonAdapter(EmployeesDeserializer::class)
     val employees: List<BaseUser>?,

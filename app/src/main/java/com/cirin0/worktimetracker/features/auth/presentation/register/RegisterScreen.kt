@@ -45,7 +45,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 @Composable
 fun RegisterScreen(
     onNavigateToLogin: () -> Unit,
-    onRegisterSuccess: (userId: Int, email: String) -> Unit,
+    onRegisterSuccess: (email: String, password: String) -> Unit,
     viewModel: RegisterViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -53,7 +53,7 @@ fun RegisterScreen(
 
     LaunchedEffect(state.isRegistered) {
         if (state.isRegistered && state.userId != null) {
-            onRegisterSuccess(state.userId!!, state.email)
+            onRegisterSuccess(state.email, state.password)
         }
     }
 

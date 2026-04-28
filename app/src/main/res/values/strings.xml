@@ -282,13 +282,20 @@
     <string name="company_employees_section">ПРАЦІВНИКИ</string>
     <string name="company_employee_avatar_content_description">Аватар працівника</string>
 
+    <string name="company_latitude">Широта</string>
+    <string name="company_longitude">Довгота</string>
+    <string name="company_radius">Радіус (м)</string>
+    <string name="company_lateness_grace">Пільговий період спізнення</string>
+    <string name="company_overtime_threshold">Поріг переробітку</string>
+    <string name="company_stats_section">СТАТИСТИКА ТА НАЛАШТУВАННЯ</string>
+
     <string name="qr_scanner_title">Скануйте QR-код</string>
     <string name="qr_scanner_close">Закрити</string>
     <string name="qr_scanner_instruction">Наведіть камеру на QR-код</string>
 
     <string name="loading_state_default">Завантаження…</string>
     <string name="offline_badge_text">Офлайн-режим</string>
-    
+
     <string name="manager_title">Менеджер</string>
     <string name="manager_subtitle">Управління командою</string>
     <string name="manager_tab_leave_requests">Заявки</string>
@@ -309,6 +316,6 @@
     <string name="manager_reject_title">Відхилити заявку</string>
     <string name="manager_reject_message">Вкажіть причину відхилення</string>
     <string name="manager_comment_label">Коментар</string>
-    <string name="manager_comment_placeholder">Введіть коментар...</string>
+    <string name="manager_comment_placeholder">Введіть коментар…</string>
 </resources>
 
