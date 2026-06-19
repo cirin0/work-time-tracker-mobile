@@ -541,19 +541,11 @@ private fun WeeklyChartSection(summary: TimeSummary, weeklyEntries: List<TimeEnt
 
     val entriesByDay = weeklyEntries
         .filter { entry ->
-            try {
-                val entryDate = java.time.LocalDate.parse(entry.date)
-                !entryDate.isBefore(startOfWeek) && !entryDate.isAfter(today)
-            } catch (e: Exception) {
-                false
-            }
+            val entryDate = DateUtils.parseLocalDate(entry.date)
+            entryDate != null && !entryDate.isBefore(startOfWeek) && !entryDate.isAfter(today)
         }
         .groupBy { entry ->
-            try {
-                java.time.LocalDate.parse(entry.date).dayOfWeek
-            } catch (e: Exception) {
-                null
-            }
+            DateUtils.parseLocalDate(entry.date)?.dayOfWeek
         }
 
     val weekData = listOf(
