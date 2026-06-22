@@ -77,6 +77,25 @@ object DateUtils {
         null
     }
 
+    /**
+     * Parses a date string into a LocalDate.
+     * Handles both simple "yyyy-MM-dd" and full ISO "yyyy-MM-ddTHH:mm:ssZ" formats.
+     */
+    fun parseLocalDate(dateString: String?): LocalDate? {
+        if (dateString.isNullOrBlank()) return null
+        return try {
+            if (dateString.contains('T')) {
+                parseInstant(dateString)
+                    ?.atZone(ZoneId.systemDefault())
+                    ?.toLocalDate()
+            } else {
+                LocalDate.parse(dateString, isoDateFormatter)
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
     // Format date: "2024-03-02" → "02.03.2024"
     fun formatDate(dateString: String?): String {
         if (dateString.isNullOrBlank()) return "-"
